@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<parent>
+		<groupId>org.scijava</groupId>
+		<artifactId>pom-scijava</artifactId>
+		<version>16.1.0</version>
+		<relativePath />
+	</parent>
+
+	<groupId>ilastik4ij</groupId>
+	<artifactId>ilastik-pixel-classification-prediction</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<name>ilastik pixel classification prediction</name>
+	<description>This command wraps the pixel classification</description>
+	<url>https://github.com/ilastik/</url>
+	<inceptionYear>2017</inceptionYear>
+	<organization>
+		<name>ilastik</name>
+		<url>ilastik.org</url>
+	</organization>
+	<licenses>
+		<license>
+			<name>BSD</name>
+			<url></url>
+			<distribution>repo</distribution>
+		</license>
+	</licenses>
+
+	<developers>
+		<developer>
+			<id>chaubold</id>
+			<name>Carsten Haubold</name>
+			<url></url>
+		</developer>
+	</developers>
+	<contributors>
+		<contributor>
+			<name>Carsten Haubold</name>
+		</contributor>
+	</contributors>
+
+	<mailingLists>
+		<mailingList>
+			<name>ImageJ Forum</name>
+			<archive>http://forum.imagej.net/</archive>
+		</mailingList>
+	</mailingLists>
+
+	<scm>
+		<connection>scm:git:git://github.com/ilastik/imagej-modules</connection>
+		<developerConnection>scm:git:git@github.com:ilastik/imagej-modules</developerConnection>
+		<tag>HEAD</tag>
+		<url>https://github.com/ilastik/imagej-modules</url>
+	</scm>
+	<issueManagement>
+		<system>GitHub Issues</system>
+		<url>http://github.com/ilastik/imagej-modules/issues</url>
+	</issueManagement>
+	<ciManagement>
+		<system>None</system>
+	</ciManagement>
+
+	<properties>
+		<main-class>IlastikPixelClassificationPrediction`</main-class>
+		<license.licenseName>BSD</license.licenseName>
+		<license.copyrightOwners>N/A</license.copyrightOwners>
+		<license.projectName>ilastik</license.projectName>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>imagej.public</id>
+			<url>http://maven.imagej.net/content/groups/public</url>
+		</repository>
+	</repositories>
+
+	<dependencies>
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+		</dependency>
+	</dependencies>
+</project>
