@@ -1,27 +1,27 @@
 /**
-MIT License
-
-Copyright (c) 2017 ilastik
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-
-Author: Carsten Haubold
+ * MIT License
+ * 
+ * Copyright (c) 2017 ilastik
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ * 
+ * Author: Carsten Haubold
  */
 
 package org.ilastik.ilastik4ij;
@@ -33,7 +33,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.scijava.ItemIO;
 import org.scijava.command.Command;
@@ -41,6 +40,7 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import ij.ImagePlus;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
 import net.imagej.ImageJ;
@@ -105,7 +105,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 		
 		String tempOutFileName;
 		try {
-			tempOutFileName = IlastikUtilities.getTemporaryFileName(".tif");
+			tempOutFileName = IlastikUtilities.getTemporaryFileName(".h5");
 		} catch (IOException e) {
 			log.error("Could not create a temporary file for obtaining the results from ilastik");
 			e.printStackTrace();
@@ -115,12 +115,15 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 		runIlastik(tempInFileName, tempOutFileName);
 		log.info("Reading resulting probabilities from " + tempOutFileName);
 		
-		try {
-			predictions = new ImgPlus<FloatType>(new ImgOpener().openImg(tempOutFileName, new ArrayImgFactory< FloatType >(), new FloatType()));
-		} catch (ImgIOException e) {
-			log.error("Wasn't able to read ilastik result");
-			e.printStackTrace();
-		}
+//		try {
+			ImagePlus predictionsImage = IlastikUtilities.readFloatHdf5VolumeIntoImage(tempOutFileName, "exported_data", "txyzc");
+//			predictions = new ImgPlus<FloatType>(new ImgOpener().openImg(tempOutFileName, new ArrayImgFactory< FloatType >(), new FloatType()));
+//		} catch (ImgIOException e) {
+//			log.error("Wasn't able to read ilastik result");
+//			e.printStackTrace();
+//		}
+//		predictions = 
+		predictionsImage.show();
 	}
 
 	private void runIlastik(String tempInFileName, String tempOutFileName) {
@@ -129,7 +132,8 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 		commandLine.add("--headless");
 		commandLine.add("--project=" + projectFileName); 
 		commandLine.add("--output_filename_format=" + tempOutFileName);
-		commandLine.add("--output_format=multipage tiff");
+		commandLine.add("--output_format=hdf5");
+		commandLine.add("--output_axis_order=txyzc");
 		commandLine.add(tempInFileName);
 		
 		log.info("Running ilastik headless command:");
@@ -155,8 +159,8 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 	        }
 
 	        // 0 indicates successful execution
-			
-			if (p.exitValue() != 0) {
+			if (p.exitValue() != 0) 
+			{
 				log.error("ilastik crashed");
 	            throw new IllegalStateException("Execution of ilastik was not successful.");
 	        }
