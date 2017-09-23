@@ -46,6 +46,7 @@ import io.scif.img.ImgOpener;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
+import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
@@ -91,9 +92,18 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 			log.error("ilastik service must be configured before use!");
 		}
 		
-//		String tempInFileName = "/tmp/blaIn.tif";
-		String tempInFileName = "/Users/chaubold/hci/data/divisionTestDataset/dataset_003.tif";
+		String tempInFileName;
+		try {
+			tempInFileName = IlastikUtilities.getTemporaryFileName(".h5");
+		} catch (IOException e) {
+			log.error("Could not create a temporary file for sending raw data to ilastik");
+			e.printStackTrace();
+			return;
+		}
+
 		log.info("Dumping input image to temporary file " + tempInFileName);
+		ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputImage, "inputimage");
+		IlastikUtilities.writeImageToHDF5Volume(img, tempInFileName, "data", 0, log);
 
 		if(saveOnly)
 		{
@@ -115,15 +125,8 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 		runIlastik(tempInFileName, tempOutFileName);
 		log.info("Reading resulting probabilities from " + tempOutFileName);
 		
-//		try {
-			ImagePlus predictionsImage = IlastikUtilities.readFloatHdf5VolumeIntoImage(tempOutFileName, "exported_data", "txyzc");
-//			predictions = new ImgPlus<FloatType>(new ImgOpener().openImg(tempOutFileName, new ArrayImgFactory< FloatType >(), new FloatType()));
-//		} catch (ImgIOException e) {
-//			log.error("Wasn't able to read ilastik result");
-//			e.printStackTrace();
-//		}
-//		predictions = 
-		predictionsImage.show();
+		ImagePlus predictionsImage = IlastikUtilities.readFloatHdf5VolumeIntoImage(tempOutFileName, "exported_data", "txyzc");
+		predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
 	}
 
 	private void runIlastik(String tempInFileName, String tempOutFileName) {
@@ -208,10 +211,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 	 * A {@code main()} method for testing: starts up ImageJ with some image, and then invokes this command.
 	 */
 	public static void main(final String... args) {
-		
 		// Launch ImageJ as usual.
-//		Context c = new Context(IlastikService.class);
-		
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 		
