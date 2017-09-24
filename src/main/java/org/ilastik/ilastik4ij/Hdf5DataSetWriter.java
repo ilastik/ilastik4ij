@@ -19,9 +19,9 @@ import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5F_ACC_TRUNC;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5P_DATASET_CREATE;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5P_DEFAULT;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5S_ALL;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_FLOAT;
+import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
+import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
 
 import org.scijava.log.LogService;
 
@@ -34,8 +34,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 public class Hdf5DataSetWriter {
 	private ImagePlus image;
 	private ImageStack stack;
-	private long[] channel_Dims;
-	private long[] iniDims;
 	
 	private int nFrames;
 	private int nChannels;

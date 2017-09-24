@@ -26,11 +26,7 @@
 
 package org.ilastik.ilastik4ij;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -151,8 +147,8 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 			p = pB.start();
 			
 	        // write ilastik output to IJ log
-	        redirectOutputToLogService(p.getInputStream(), log, false);
-	        redirectOutputToLogService(p.getErrorStream(), log, true);
+	        IlastikUtilities.redirectOutputToLogService(p.getInputStream(), log, false);
+	        IlastikUtilities.redirectOutputToLogService(p.getErrorStream(), log, true);
 
 	        try {
 	            p.waitFor();
@@ -172,39 +168,6 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 		}
 		log.info("ilastik finished successfully!");
 	}
-	
-    /**
-     * Redirect an input stream to the log service (used for command line output)
-     *
-     * @param in input stream
-     * @param logService
-     * @throws IOException
-     */
-    private void redirectOutputToLogService(final InputStream in, final LogService logger, final Boolean isErrorStream) {
-
-        Thread t = new Thread() {
-            @Override
-            public void run() {
-
-                String line;
-
-                try (BufferedReader bis = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
-                    while ((line = bis.readLine()) != null) {
-                        if (isErrorStream) {
-                            logger.error(line);
-                        } else {
-                            logger.info(line);
-                        }
-                    }
-                } catch (IOException ioe) {
-                    throw new RuntimeException("Could not read ilastik output", ioe);
-                }
-            }
-        };
-
-//        t.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(KNIPGateway.log()));
-        t.start();
-    }
 
 	/**
 	 * A {@code main()} method for testing: starts up ImageJ with some image, and then invokes this command.

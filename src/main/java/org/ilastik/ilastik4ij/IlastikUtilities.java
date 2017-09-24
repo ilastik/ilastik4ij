@@ -26,51 +26,20 @@
 
 package org.ilastik.ilastik4ij;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 
 import org.scijava.log.LogService;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ch.systemsx.cisd.base.mdarray.MDByteArray;
 import ch.systemsx.cisd.base.mdarray.MDFloatArray;
-import ch.systemsx.cisd.base.mdarray.MDShortArray;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
-
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5P.H5Pset_chunk;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5P.H5Pclose;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5P.H5Pcreate;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5P.H5Pset_deflate;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5P_DATASET_CREATE;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5S.H5Screate_simple;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5S.H5Sclose;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dcreate;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dclose;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5F.H5Fcreate;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5F.H5Fclose;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dwrite;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5A.H5Acreate;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5A.H5Awrite;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5A.H5Aclose;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dset_extent;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dget_space;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5S.H5Sselect_all;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5S.H5Sselect_hyperslab;
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5S.H5Sget_simple_extent_dims;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5F_ACC_TRUNC;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5P_DEFAULT;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5S_ALL;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_FLOAT;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_STD_I8BE;
-import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_STRING;
 import ij.IJ;
 import ij.ImagePlus;
-import ij.ImageStack;
-import ij.process.ColorProcessor;
 import ij.process.ImageProcessor;
 
 public class IlastikUtilities {
@@ -87,6 +56,38 @@ public class IlastikUtilities {
 		f.delete();
 		return filename;
 	}
+	
+    /**
+     * Redirect an input stream to the log service (used for command line output)
+     *
+     * @param in input stream
+     * @param logService
+     * @throws IOException
+     */
+    public static void redirectOutputToLogService(final InputStream in, final LogService logger, final Boolean isErrorStream) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+
+                String line;
+
+                try (BufferedReader bis = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
+                    while ((line = bis.readLine()) != null) {
+                        if (isErrorStream) {
+                            logger.error(line);
+                        } else {
+                            logger.info(line);
+                        }
+                    }
+                } catch (IOException ioe) {
+                    throw new RuntimeException("Could not read ilastik output", ioe);
+                }
+            }
+        };
+
+//        t.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(KNIPGateway.log()));
+        t.start();
+    }
 	
 	public static ImagePlus readFloatHdf5VolumeIntoImage(String filename, String dataset, String axesorder)
 	{
