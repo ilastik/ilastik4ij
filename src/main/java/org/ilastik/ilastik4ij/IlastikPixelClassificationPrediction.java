@@ -103,7 +103,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 
 		log.info("Dumping input image to temporary file " + tempInFileName);
 		ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputImage, "inputimage");
-		IlastikUtilities.writeImageToHDF5Volume(img, tempInFileName, "data", 0, log);
+		new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
 
 		if(saveOnly)
 		{
@@ -168,7 +168,6 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 	            throw new IllegalStateException("Execution of ilastik was not successful.");
 	        }
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		log.info("ilastik finished successfully!");
