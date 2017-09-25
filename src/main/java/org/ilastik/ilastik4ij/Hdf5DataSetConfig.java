@@ -15,6 +15,7 @@ public class Hdf5DataSetConfig {
 	public int dimZ;
 	public int numChannels;
 	public String typeInfo;
+        public int bitdepth;
 
 	/**
 	 * @brief [brief description]
@@ -69,6 +70,7 @@ public class Hdf5DataSetConfig {
 	private String getTypeInfo(HDF5DataSetInformation dsInfo)
 	{
 		HDF5DataTypeInformation dsType = dsInfo.getTypeInformation();
+                bitdepth = 8 * dsType.getElementSize();
 		String type = "";
 
 		if (dsType.isSigned() == false) {
@@ -78,10 +80,10 @@ public class Hdf5DataSetConfig {
 		switch( dsType.getDataClass())
 		{
 		case INTEGER:
-			type += "int" + 8*dsType.getElementSize();
+			type += "int" + bitdepth;
 			break;
 		case FLOAT:
-			type += "float" + 8*dsType.getElementSize();
+			type += "float" + bitdepth;
 			break;
 		default:
 			type += dsInfo.toString();
