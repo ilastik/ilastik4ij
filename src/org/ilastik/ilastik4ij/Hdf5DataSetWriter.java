@@ -29,6 +29,7 @@ import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
 import ij.ImagePlus;
 import ij.ImageStack;
 import ij.process.ColorProcessor;
+import static java.lang.Integer.min;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 public class Hdf5DataSetWriter {
@@ -50,7 +51,6 @@ public class Hdf5DataSetWriter {
 	private int dataspace_id = -1;
 	private int dataset_id = -1;
 	private int dcpl_id = -1 ;
-	private int attribute_id = -1;
 	private long[] maxdims = { 
 		HDF5Constants.H5S_UNLIMITED, 
 		HDF5Constants.H5S_UNLIMITED, 
@@ -76,44 +76,19 @@ public class Hdf5DataSetWriter {
 	
 	public void write() 
 	{
-		long[] chunk_dims = {1, nCols/8, nRows/8, nLevs, nChannels};
+		long[] chunk_dims = {1, 
+            min(nLevs, 256),
+            min(nRows, 256), 
+            min(nCols, 256), 
+            1
+        };
 		log.info("Export Dimensions in tzyxc: " + String.valueOf(nFrames) + "x" + String.valueOf(nLevs) + "x" 
 				+ String.valueOf(nRows) + "x" + String.valueOf(nCols) + "x" + String.valueOf(nChannels));
 
 		try
 		{
-			long[] channel_Dims = null;
-			if (nLevs < 1) 
-			{
-				log.error("got less than 1 z?");
-				nLevs = 1;
-			} 
-			else 
-			{
-				channel_Dims = new long[5];
-				channel_Dims[0] = nFrames; // t
-				channel_Dims[1] = nLevs; // z
-				channel_Dims[2] = nRows; //y
-				channel_Dims[3] = nCols; //x
-				channel_Dims[4] = nChannels; // c
-			}
-
-			long[] iniDims = new long[5];
-			iniDims[0] = 1;
-			iniDims[1] = 1;
-			iniDims[2] = nRows;
-			iniDims[3] = nCols;
-			iniDims[4] = 1;
-
 			try {
 				file_id = H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			try {
-				dataspace_id = H5Screate_simple(5, iniDims, maxdims);
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -140,23 +115,24 @@ public class Hdf5DataSetWriter {
 				e.printStackTrace();
 			}
 
-			log.debug("chunksize: " + "1" + "x" + String.valueOf(nCols/8) + "x" + String.valueOf(nRows/8) + "x" +  String.valueOf(nLevs) + "x" 
-					  +  String.valueOf(nChannels));
 			int imgColorType = image.getType();
-
 			if (imgColorType == ImagePlus.GRAY8 || imgColorType == ImagePlus.COLOR_256 )
 			{	
-				writeIndividualChannels(H5T_NATIVE_UINT8, channel_Dims, iniDims);
+                log.info("Writing uint 8");
+				writeIndividualChannels(H5T_NATIVE_UINT8);
 			}
 			else if (imgColorType == ImagePlus.GRAY16) 
 			{
-				writeIndividualChannels(H5T_NATIVE_UINT16, channel_Dims, iniDims);
+                log.info("Writing uint 16");
+				writeIndividualChannels(H5T_NATIVE_UINT16);
 			}
 			else if (imgColorType == ImagePlus.GRAY32)
 			{
-				writeIndividualChannels(H5T_NATIVE_FLOAT, channel_Dims, iniDims);
+                log.info("Writing uint 32");
+				writeIndividualChannels(H5T_NATIVE_FLOAT);
 			} 
 			else if (imgColorType == ImagePlus.COLOR_RGB){
+                log.info("Writing RGB to 3 uint8 channels");
 				writeRGB();
 			}
 			else {
@@ -164,8 +140,11 @@ public class Hdf5DataSetWriter {
 			}
 
 			try {
-				if (attribute_id >= 0)
-					H5Aclose(attribute_id);
+				if (dataspace_id >= 0)    
+				{
+					H5Sclose(dataspace_id);
+					dataspace_id = -1;
+				}
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -173,14 +152,6 @@ public class Hdf5DataSetWriter {
 
 			try {
 				H5Pclose(dcpl_id);
-			}
-			catch (Exception e) {
-				e.printStackTrace();
-			}
-
-			try {
-				if (dataspace_id >= 0)    
-					H5Sclose(dataspace_id);
 			}
 			catch (Exception e) {
 				e.printStackTrace();
@@ -257,18 +228,16 @@ public class Hdf5DataSetWriter {
 				byte[] blue  = cp.getChannel(3);
 
 				byte[][] color_target = new byte[3][red.length];
-
-				for (int y=0; y<nRows; y++){
-					for(int x=0; x<nCols; x++){
-						color_target[0][y + x*(nRows)] = red[x + y*(nCols)];
-						color_target[2][y + x*(nRows)] = blue[x + y*(nCols)];
-						color_target[1][y + x*(nRows)] = green[x + y*(nCols)];
-					}
-				}
+                color_target[0] = red;
+                color_target[1] = green;
+                color_target[2] = blue;
 
 				try {
-					if (dataspace_id >= 0)
+					if (dataspace_id >= 0)    
+					{
 						H5Sclose(dataspace_id);
+						dataspace_id = -1;
+					}
 				}
 				catch (Exception e) {
 					e.printStackTrace();
@@ -286,7 +255,7 @@ public class Hdf5DataSetWriter {
 
 				for (int c=0; c<3; c++){
 					try {
-						if (dataspace_id >= 0) {
+						if (dataset_id >= 0) {
 							dataspace_id = H5Dget_space(dataset_id);
 
 							long[] start = {t,z,0,0,c};
@@ -295,7 +264,7 @@ public class Hdf5DataSetWriter {
 							H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
 							int memspace = H5Screate_simple(5, iniDims, null);
 
-							if (dataset_id >= 0)
+							if (dataspace_id >= 0)
 								H5Dwrite(dataset_id, H5T_NATIVE_UINT8, memspace, dataspace_id, H5P_DEFAULT, color_target[c]);
 						}
 					}
@@ -312,8 +281,38 @@ public class Hdf5DataSetWriter {
 	}
 
 
-	private void writeIndividualChannels(int hdf5DataType, long[] channelDims, long[] iniDims)
+	private void writeIndividualChannels(int hdf5DataType)
 	{
+		long[] channel_Dims = null;
+		if (nLevs < 1) 
+		{
+			log.error("got less than 1 z?");
+			nLevs = 1;
+		} 
+		else 
+		{
+			channel_Dims = new long[5];
+			channel_Dims[0] = nFrames; // t
+			channel_Dims[1] = nLevs; // z
+			channel_Dims[2] = nRows; //y
+			channel_Dims[3] = nCols; //x
+			channel_Dims[4] = nChannels; // c
+		}
+
+		long[] iniDims = new long[5];
+		iniDims[0] = 1;
+		iniDims[1] = 1;
+		iniDims[2] = nRows;
+		iniDims[3] = nCols;
+		iniDims[4] = 1;
+
+		try {
+			dataspace_id = H5Screate_simple(5, iniDims, maxdims);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
 		try {
 			if ((file_id >= 0) && (dataspace_id >= 0))
 				dataset_id =  H5Dcreate(file_id, dataset, hdf5DataType, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
@@ -325,57 +324,22 @@ public class Hdf5DataSetWriter {
 		for (int stackIndex = 1; stackIndex <= stack.getSize(); stackIndex++){
 			int[] slicePosition = image.convertIndexToPosition(stackIndex); // contains (channel, slice, frame) indices
 			log.info("Slice " + stackIndex + " position is: [c:" + slicePosition[0] + ", s:" + slicePosition[1] + ", f:" + slicePosition[2] + "]");
-			
-			byte[] pixels_target_byte = null;
-			short[] pixels_target_short = null;
-			float[] pixels_target_float = null;
-			
-			if(hdf5DataType == H5T_NATIVE_UINT8) {
-				byte[] pixels = (byte[])stack.getPixels(stackIndex);
-				pixels_target_byte = new byte[pixels.length];
-
-				for (int y = 0; y < nRows; y++){
-					for(int x = 0; x < nCols; x++){
-						pixels_target_byte[y + x * nRows] = pixels[x + y * nCols];
-					}
-				}
-			}
-			else if(hdf5DataType == H5T_NATIVE_UINT16) {
-				short[] pixels = (short[])stack.getPixels(stackIndex);
-				pixels_target_short = new short[pixels.length];
-
-				for (int y = 0; y < nRows; y++){
-					for(int x = 0; x < nCols; x++){
-						pixels_target_short[y + x * nRows] = pixels[x + y * nCols];
-					}
-				}
-			}
-			else if(hdf5DataType == H5T_NATIVE_FLOAT) {
-				float[] pixels = (float[])stack.getPixels(stackIndex);
-				pixels_target_float = new float[pixels.length];
-
-				for (int y = 0; y < nRows; y++){
-					for(int x = 0; x < nCols; x++){
-						pixels_target_float[y + x * nRows] = pixels[x + y * nCols];
-					}
-				}
-			}
-			else {
-				throw new IllegalArgumentException("Trying to save dataset of unknown datatype");
-			}
 
 			if (stackIndex == 1){
 				try {
 					if (dataset_id >= 0) {
 						if(hdf5DataType == H5T_NATIVE_UINT8) {
-							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixels_target_byte);
+							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, (byte[])stack.getPixels(stackIndex));
 						}
 						else if(hdf5DataType == H5T_NATIVE_UINT16) {
-							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixels_target_short);
+							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, (short[])stack.getPixels(stackIndex));
 						}
 						else if(hdf5DataType == H5T_NATIVE_FLOAT) {
-							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixels_target_float);
+							H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, (float[])stack.getPixels(stackIndex));
 						}
+                        else {
+                            throw new IllegalArgumentException("Trying to save dataset of unknown datatype");
+                        }
 					}
 					else
 						throw new HDF5Exception("No active dataset for writing first chunk");
@@ -385,44 +349,41 @@ public class Hdf5DataSetWriter {
 				}
 
 				try {
-					if (dataspace_id >= 0)
+					if (dataspace_id >= 0)    
+					{
 						H5Sclose(dataspace_id);
+						dataspace_id = -1;
+					}
 				}
 				catch (Exception e) {
 					e.printStackTrace();
 				}
+
+                try {
+                    if (dataset_id >= 0)
+                        H5Dset_extent(dataset_id, channel_Dims);
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
 			}
 			else{
-				if (stackIndex == 2)
-				{
-					long[] extdims = new long[5];
-					extdims = channelDims;
-
-					try {
-						if (dataset_id >= 0)
-							H5Dset_extent(dataset_id, extdims);
-					}
-					catch (Exception e) {
-						e.printStackTrace();
-					}
-				}
-
 				try {
-					if (dataspace_id >= 0) {
+					if (dataset_id >= 0) {
 						dataspace_id = H5Dget_space(dataset_id);
 						long[] start = {slicePosition[2]-1, slicePosition[1]-1, 0, 0, slicePosition[0]-1}; // tzyxc
 						H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
 
 						int memspace = H5Screate_simple(5, iniDims, null);
-						if (dataset_id >= 0) {
+						if (dataspace_id >= 0) {
 							if(hdf5DataType == H5T_NATIVE_UINT8) {
-								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, pixels_target_byte);
+								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, (byte[])stack.getPixels(stackIndex));
 							}
 							else if(hdf5DataType == H5T_NATIVE_UINT16) {
-								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, pixels_target_short);
+								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, (short[])stack.getPixels(stackIndex));
 							}
 							else if(hdf5DataType == H5T_NATIVE_FLOAT) {
-								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, pixels_target_float);
+								H5Dwrite(dataset_id, hdf5DataType, memspace, dataspace_id, H5P_DEFAULT, (float[])stack.getPixels(stackIndex));
 							}
 						}
 						else
@@ -434,7 +395,7 @@ public class Hdf5DataSetWriter {
 				}
 			}
 		}
-
+		
 		log.info("write hdf5");
 		log.info("Done");
 	}
