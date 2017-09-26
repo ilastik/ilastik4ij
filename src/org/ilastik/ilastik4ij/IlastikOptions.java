@@ -31,87 +31,88 @@ import java.nio.file.Paths;
 import java.util.Map;
 
 import org.scijava.log.LogService;
-import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.options.OptionsPlugin;
+
 
 /**
- * The ilastik options let you configure where your ilastik installation is, and
- * how many processors and RAM it is allowed to use.
+ * The ilastik options let you configure where your ilastik installation is,
+ * and how many processors and RAM it is allowed to use.
  *
- * Because of the way option plugins work in ImageJ, there is always just one
- * instance of this class, that can be requested by every plugin to get these
- * values of shared configuration.
+ * Because of the way option plugins work in ImageJ, there is always just one instance
+ * of this class, that can be requested by every plugin to get these values of
+ * shared configuration.
  */
-@Plugin(type = OptionsPlugin.class, headless = true, menuPath = "Plugins>ilastik>Configure ilastik executable location")
+@Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
 public class IlastikOptions extends OptionsPlugin {
 
-        @Parameter
-        LogService log;
+    @Parameter
+    LogService log;
 
-        // own parameters:
-        @Parameter(label = "Path to ilastik executable")
-        private String executableFilePath = "/Users/chaubold/Desktop/ilastik-1.2.0-OSX.app";
+    // own parameters:
+    @Parameter(label = "Path to ilastik executable")
+    private String executableFilePath = "/Users/chaubold/Desktop/ilastik-1.2.0-OSX.app";
 
-        @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
-        private int numThreads = -1;
+    @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
+    private int numThreads = -1;
 
-        @Parameter(min = "256", label = "Maximum amount of RAM (in MB) that ilastik is allowed to use.")
-        private int maxRamMb = 4096;
+    @Parameter(min = "256", label="Maximum amount of RAM (in MB) that ilastik is allowed to use.")
+    private int maxRamMb = 4096;
+    
+    private static String getOS() {
+        return System.getProperty("os.name", "generic").toLowerCase();
+    }
 
-        private static String getOS() {
-                return System.getProperty("os.name", "generic").toLowerCase();
+    public String getExecutableFilePath() {
+        final String os = getOS();
+        String macExtension = "";
+        // On Mac OS X we must call the program within the app to be able to add arguments
+        if (os.contains("mac") || os.contains("darwin")) 
+        {
+            macExtension = "/Contents/MacOS/ilastik";
         }
+        return executableFilePath.concat(macExtension);
+    }
 
-        public String getExecutableFilePath() {
-                final String os = getOS();
-                String macExtension = "";
-                // On Mac OS X we must call the program within the app to be able to add arguments
-                if (os.contains("mac") || os.contains("darwin")) {
-                        macExtension = "/Contents/MacOS/ilastik";
-                }
-                return executableFilePath.concat(macExtension);
-        }
+    public int getMaxRamMb() {
+        return maxRamMb;
+    }
 
-        public int getMaxRamMb() {
-                return maxRamMb;
-        }
+    public int getNumThreads() {
+        return numThreads;
+    }
 
-        public int getNumThreads() {
-                return numThreads;
-        }
+    public void setExecutableFilePath(String executableFilePath) {
+        this.executableFilePath = executableFilePath;
+    }
 
-        public void setExecutableFilePath(String executableFilePath) {
-                this.executableFilePath = executableFilePath;
-        }
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
+    }
 
-        public void setNumThreads(int numThreads) {
-                this.numThreads = numThreads;
-        }
+    public void setMaxRamMb(int maxRamMb) {
+        this.maxRamMb = maxRamMb;
+    }
 
-        public void setMaxRamMb(int maxRamMb) {
-                this.maxRamMb = maxRamMb;
-        }
+    /**
+     * As soon as all parameters above have been set, the service is properly
+     * configured
+     * @return True if properly configured
+     */
+    public Boolean isConfigured() {
+        Path p = Paths.get(getExecutableFilePath());
+        return Files.exists(p) && maxRamMb > 0;
+    }
 
-        /**
-         * As soon as all parameters above have been set, the service is
-         * properly configured
-         * 
-         * @return True if properly configured
-         */
-        public Boolean isConfigured() {
-                Path p = Paths.get(getExecutableFilePath());
-                return Files.exists(p) && maxRamMb > 0;
+    public void configureProcessBuilderEnvironment(ProcessBuilder pb) {
+        final Map<String, String> env = pb.environment();
+        if (numThreads >= 0) {
+            env.put("LAZYFLOW_THREADS", String.valueOf(numThreads));
         }
-
-        public void configureProcessBuilderEnvironment(ProcessBuilder pb) {
-                final Map<String, String> env = pb.environment();
-                if (numThreads >= 0) {
-                        env.put("LAZYFLOW_THREADS", String.valueOf(numThreads));
-                }
-                env.put("LAZYFLOW_TOTAL_RAM_MB", String.valueOf(maxRamMb));
-                env.put("LANG", "en_US.UTF-8");
-                env.put("LC_ALL", "en_US.UTF-8");
-                env.put("LC_CTYPE", "en_US.UTF-8");
-        }
+        env.put("LAZYFLOW_TOTAL_RAM_MB", String.valueOf(maxRamMb));
+        env.put("LANG", "en_US.UTF-8");
+        env.put("LC_ALL", "en_US.UTF-8");
+        env.put("LC_CTYPE", "en_US.UTF-8");
+    }
 }

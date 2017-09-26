@@ -23,7 +23,6 @@
  *
  * Author: Carsten Haubold
  */
-
 package org.ilastik.ilastik4ij;
 
 import java.io.IOException;
@@ -76,7 +75,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
         @Parameter(label = "Raw input image")
         private ImgPlus<T> inputImage;
 
-        @Parameter(label = "Output type", choices = {"Probabilities", "Segmentation"})
+        @Parameter(label = "Output type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
         private String chosenOutputType = "Probabilities";
 
         @Parameter(type = ItemIO.OUTPUT)
@@ -133,7 +132,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 runIlastik(tempInFileName, tempOutFileName);
                 log.info("Reading resulting probabilities from " + tempOutFileName);
 
-                ImagePlus predictionsImage = IlastikUtilities.readFloatHdf5VolumeIntoImage(tempOutFileName, "exported_data", "txyzc");
+                ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "txyzc", log).read();
                 predictionsImage.setTitle(chosenOutputType);
                 predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
         }
@@ -146,6 +145,9 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 commandLine.add("--output_filename_format=" + tempOutFileName);
                 commandLine.add("--output_format=hdf5");
                 commandLine.add("--output_axis_order=txyzc");
+                if (chosenOutputType.equals("Segmentation")) {
+                        commandLine.add("--export_source=Simple Segmentation");
+                }
                 commandLine.add(tempInFileName);
 
                 log.info("Running ilastik headless command:");
