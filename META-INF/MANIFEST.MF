@@ -1,0 +1,27 @@
+Manifest-Version: 1.0
+Bundle-Name: ImageJ and KNIME ilastik workflows
+Bundle-SymbolicName: org.ilastik.ilastik4ij;singleton:=true
+Bundle-ManifestVersion: 2
+Bundle-Version: 0.0.1.qualifier
+Bundle-Vendor: University of Heidelberg
+Eclipse-RegisterBuddy: org.knime.core, org.knime.knip.imagej2.core
+Require-Bundle: org.knime.base,
+ org.knime.workbench.repository,
+ org.apache.log4j;bundle-version="1.2.15",
+ org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.knime.knip.imagej2.core;bundle-version="0.1.0",
+ org.knime.knip.core;bundle-version="1.4.0",
+ imglib2;bundle-version="2.2.0",
+ scijava-common;bundle-version="2.36.0",
+ ij;bundle-version="1.51.0",
+ imglib2-ij;bundle-version="2.0.37",
+ imagej-common;bundle-version="0.24.4",
+ imagej-ops;bundle-version="0.38.0",
+ scifio;bundle-version="0.32.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.8
+Bundle-ClassPath: ilastik4ij.jar,
+ lib/jhdf5-14.12.5.jar,
+ lib/imagej-2.0.0-rc-61.jar
+Bundle-ActivationPolicy: lazy
+
