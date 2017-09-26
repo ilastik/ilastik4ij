@@ -132,7 +132,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 runIlastik(tempInFileName, tempOutFileName);
                 log.info("Reading resulting probabilities from " + tempOutFileName);
 
-                ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "txyzc", log).read();
+                ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
                 predictionsImage.setTitle(chosenOutputType);
                 predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
         }
@@ -144,7 +144,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 commandLine.add("--project=" + projectFileName);
                 commandLine.add("--output_filename_format=" + tempOutFileName);
                 commandLine.add("--output_format=hdf5");
-                commandLine.add("--output_axis_order=txyzc");
+                commandLine.add("--output_axis_order=tzyxc");
                 if (chosenOutputType.equals("Segmentation")) {
                         commandLine.add("--export_source=Simple Segmentation");
                 }
@@ -192,7 +192,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 final ImageJ ij = new ImageJ();
                 ij.ui().showUI();
 
-                final String filename = "/Users/chaubold/hci/data/divisionTestDataset/dataset_001.tif";
+                final String filename = "/Users/chaubold/hci/projects/fijiHackathon/org.ilastik.ilastik4ij/example/2d_cells_apoptotic_1channel.png";
                 Img<UnsignedShortType> img;
                 try {
                         img = new ImgOpener().openImg(filename, new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());

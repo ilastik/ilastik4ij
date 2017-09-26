@@ -77,8 +77,8 @@ public class Hdf5DataSetWriter {
 	public void write() 
 	{
 		long[] chunk_dims = {1, nCols/8, nRows/8, nLevs, nChannels};
-		log.info("Export Dimensions: " + String.valueOf(nFrames) + "x" + String.valueOf(nCols) + "x" 
-				+ String.valueOf(nRows) + "x" + String.valueOf(nLevs) + "x" + String.valueOf(nChannels));
+		log.info("Export Dimensions in tzyxc: " + String.valueOf(nFrames) + "x" + String.valueOf(nLevs) + "x" 
+				+ String.valueOf(nRows) + "x" + String.valueOf(nCols) + "x" + String.valueOf(nChannels));
 
 		try
 		{
@@ -92,17 +92,17 @@ public class Hdf5DataSetWriter {
 			{
 				channel_Dims = new long[5];
 				channel_Dims[0] = nFrames; // t
-				channel_Dims[1] = nCols; //x
+				channel_Dims[1] = nLevs; // z
 				channel_Dims[2] = nRows; //y
-				channel_Dims[3] = nLevs; // z
+				channel_Dims[3] = nCols; //x
 				channel_Dims[4] = nChannels; // c
 			}
 
 			long[] iniDims = new long[5];
 			iniDims[0] = 1;
-			iniDims[1] = nCols;
+			iniDims[1] = 1;
 			iniDims[2] = nRows;
-			iniDims[3] = 1;
+			iniDims[3] = nCols;
 			iniDims[4] = 1;
 
 			try {
@@ -221,16 +221,16 @@ public class Hdf5DataSetWriter {
 		long[] channelDimsRGB = null;
 		channelDimsRGB = new long[5];
 		channelDimsRGB[0] = nFrames; //t
-		channelDimsRGB[1] = nCols; //x
+		channelDimsRGB[1] = nLevs ; //z
 		channelDimsRGB[2] = nRows; //y
-		channelDimsRGB[3] = nLevs ; //z
+		channelDimsRGB[3] = nCols; //x
 		channelDimsRGB[4] = 3;
 		
 		long[] color_iniDims = new long[5];
 		color_iniDims[0] = 1;
-		color_iniDims[1] = nCols;
+		color_iniDims[1] = 1;
 		color_iniDims[2] = nRows;
-		color_iniDims[3] = 1;
+		color_iniDims[3] = nCols;
 		color_iniDims[4] = 3;
 
 		try {
@@ -289,8 +289,8 @@ public class Hdf5DataSetWriter {
 						if (dataspace_id >= 0) {
 							dataspace_id = H5Dget_space(dataset_id);
 
-							long[] start = {t,0,0,z,c};
-							long[] iniDims = {0,nCols,nRows,0,1};
+							long[] start = {t,z,0,0,c};
+							long[] iniDims = {0,0,nCols,nRows,1};
 
 							H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
 							int memspace = H5Screate_simple(5, iniDims, null);
@@ -410,7 +410,7 @@ public class Hdf5DataSetWriter {
 				try {
 					if (dataspace_id >= 0) {
 						dataspace_id = H5Dget_space(dataset_id);
-						long[] start = {slicePosition[2]-1, 0, 0, slicePosition[1]-1, slicePosition[0]-1};
+						long[] start = {slicePosition[2]-1, slicePosition[1]-1, 0, 0, slicePosition[0]-1}; // tzyxc
 						H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
 
 						int memspace = H5Screate_simple(5, iniDims, null);
