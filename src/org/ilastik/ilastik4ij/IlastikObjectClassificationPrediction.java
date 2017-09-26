@@ -108,7 +108,7 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         
         String tempInFileName;
         try {
-            tempInFileName = IlastikUtilities.getTemporaryFileName(".h5");
+            tempInFileName = IlastikUtilities.getTemporaryFileName("_raw.h5");
         } catch (IOException e) {
             log.error("Could not create a temporary file for sending raw data to ilastik");
             e.printStackTrace();
@@ -117,7 +117,7 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         
         String tempProbOrSegFileName;
         try {
-            tempProbOrSegFileName = IlastikUtilities.getTemporaryFileName(".h5");
+            tempProbOrSegFileName = IlastikUtilities.getTemporaryFileName("_probOrSeg.h5");
         } catch (IOException e) {
             log.error("Could not create a temporary file for sending prob or seg data to ilastik");
             e.printStackTrace();

@@ -104,7 +104,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 
                 String tempInFileName;
                 try {
-                        tempInFileName = IlastikUtilities.getTemporaryFileName(".h5");
+                        tempInFileName = IlastikUtilities.getTemporaryFileName("_raw.h5");
                 } catch (IOException e) {
                         log.error("Could not create a temporary file for sending raw data to ilastik");
                         e.printStackTrace();
@@ -123,16 +123,15 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
 
                 String tempOutFileName;
                 try {
-                        tempOutFileName = IlastikUtilities.getTemporaryFileName(".h5");
+                        tempOutFileName = IlastikUtilities.getTemporaryFileName("_out" + chosenOutputType + ".h5");
                 } catch (IOException e) {
                         log.error("Could not create a temporary file for obtaining the results from ilastik");
                         e.printStackTrace();
                         return;
                 }
 
-                // TODO: handle different output types
                 runIlastik(tempInFileName, tempOutFileName);
-                log.info("Reading resulting probabilities from " + tempOutFileName);
+                log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
 
                 ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
                 predictionsImage.setTitle(chosenOutputType);
