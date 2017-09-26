@@ -136,6 +136,10 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
                 predictionsImage.setTitle(chosenOutputType);
                 predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
+                
+                // get rid of temporary files
+                new File(tempInFileName).delete();
+                new File(tempOutFileName).delete();
         }
 
         private void runIlastik(String tempInFileName, String tempOutFileName) {
@@ -192,8 +196,8 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 // Launch ImageJ as usual.
                 final ImageJ ij = new ImageJ();
                 ij.ui().showUI();
-
-                final String filename = "/Users/chaubold/hci/projects/fijiHackathon/org.ilastik.ilastik4ij/example/2d_cells_apoptotic_1channel.png";
+                
+                final String filename = "/Users/chaubold/hci/projects/fijiHackathon/org.ilastik.ilastik4ij/example/2d_cells_apoptotic_1channel.tiff";
                 Img<UnsignedShortType> img;
                 try {
                         img = new ImgOpener().openImg(filename, new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());
@@ -205,5 +209,4 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                         e.printStackTrace();
                 }
         }
-
 }

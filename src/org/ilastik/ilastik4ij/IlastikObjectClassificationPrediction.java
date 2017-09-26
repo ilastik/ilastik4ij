@@ -158,6 +158,11 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         
         ImagePlus objectPredictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
         predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
+        
+        // get rid of temporary files
+        new File(tempInFileName).delete();
+        new File(tempProbOrSegFileName).delete();
+        new File(tempOutFileName).delete();
     }
 
     private void runIlastik(String tempInRawFileName, String tempProbOrSegFilename, String tempOutFileName) {
@@ -168,7 +173,6 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         commandLine.add("--output_filename_format=" + tempOutFileName);
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
-        // raw data
         commandLine.add("--raw_data="+tempInRawFileName);
         
         if(secondInputType.equals("Segmentation"))
