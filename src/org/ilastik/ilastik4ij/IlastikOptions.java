@@ -25,6 +25,7 @@
  */
 package org.ilastik.ilastik4ij;
 
+import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -52,7 +53,7 @@ public class IlastikOptions extends OptionsPlugin {
 
     // own parameters:
     @Parameter(label = "Path to ilastik executable")
-    private String executableFilePath = "/Users/chaubold/Desktop/ilastik-1.2.0-OSX.app";
+    private File executableFilePath = new File("/Users/chaubold/Desktop/ilastik-1.2.0-OSX.app");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
     private int numThreads = -1;
@@ -72,7 +73,7 @@ public class IlastikOptions extends OptionsPlugin {
         {
             macExtension = "/Contents/MacOS/ilastik";
         }
-        return executableFilePath.concat(macExtension);
+        return executableFilePath.getAbsolutePath().concat(macExtension);
     }
 
     public int getMaxRamMb() {
@@ -84,7 +85,7 @@ public class IlastikOptions extends OptionsPlugin {
     }
 
     public void setExecutableFilePath(String executableFilePath) {
-        this.executableFilePath = executableFilePath;
+        this.executableFilePath = new File(executableFilePath);
     }
 
     public void setNumThreads(int numThreads) {

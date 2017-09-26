@@ -39,6 +39,7 @@ import org.scijava.plugin.Plugin;
 import ij.ImagePlus;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
+import java.io.File;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
@@ -46,6 +47,7 @@ import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -70,7 +72,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
         private Boolean saveOnly = false;
 
         @Parameter(label = "Trained ilastik project file")
-        private String projectFileName = "/Users/chaubold/hci/data/divisionTestDataset/pc_test.ilp";
+        private File projectFileName = new File("/Users/chaubold/hci/data/divisionTestDataset/pc_test.ilp");
 
         @Parameter(label = "Raw input image")
         private ImgPlus<T> inputImage;
@@ -141,7 +143,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 List<String> commandLine = new ArrayList<>();
                 commandLine.add(ilastikOptions.getExecutableFilePath());
                 commandLine.add("--headless");
-                commandLine.add("--project=" + projectFileName);
+                commandLine.add("--project=" + projectFileName.getAbsolutePath());
                 commandLine.add("--output_filename_format=" + tempOutFileName);
                 commandLine.add("--output_format=hdf5");
                 commandLine.add("--output_axis_order=tzyxc");

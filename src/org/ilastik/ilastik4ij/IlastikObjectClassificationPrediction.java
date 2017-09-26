@@ -40,6 +40,7 @@ import org.scijava.options.OptionsService;
 import ij.ImagePlus;
 import io.scif.img.ImgIOException;
 import io.scif.img.ImgOpener;
+import java.io.File;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imagej.ops.OpService;
@@ -71,7 +72,7 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
     private Boolean saveOnly = false;
     
     @Parameter(label = "Trained ilastik project file")
-    private String projectFileName = "/Users/chaubold/hci/data/divisionTestDataset/oc_test.ilp";
+    private File projectFileName = new File("/Users/chaubold/hci/data/divisionTestDataset/oc_test.ilp");
 
     @Parameter(label = "Raw image")
     ImgPlus<T> inputRawImage;
@@ -163,7 +164,7 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         List<String> commandLine = new ArrayList<>();
         commandLine.add(ilastikOptions.getExecutableFilePath()); 
         commandLine.add("--headless");
-        commandLine.add("--project=" + projectFileName); 
+        commandLine.add("--project=" + projectFileName.getAbsolutePath()); 
         commandLine.add("--output_filename_format=" + tempOutFileName);
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
