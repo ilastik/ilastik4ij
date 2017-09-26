@@ -99,7 +99,8 @@ public class Hdf5DataSetReader {
                                         + y * dsConfig.dimZ * dsConfig.numChannels
                                         + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
                                         + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
-                                int destIndex = y * dsConfig.dimX + x;
+
+                                int destIndex = x * dsConfig.dimY + y;
                                 float value = flat_data_float[scrIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
@@ -117,7 +118,7 @@ public class Hdf5DataSetReader {
                                         + y * dsConfig.dimZ * dsConfig.numChannels
                                         + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
                                         + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
-                                int destIndex = y * dsConfig.dimX + x;
+                                int destIndex = x * dsConfig.dimY + y;
                                 byte value = flat_data_byte[scrIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
@@ -135,7 +136,7 @@ public class Hdf5DataSetReader {
                                         + y * dsConfig.dimZ * dsConfig.numChannels
                                         + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
                                         + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
-                                int destIndex = y * dsConfig.dimX + x;
+                                int destIndex = x * dsConfig.dimY + y;
                                 short value = flat_data_short[scrIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
@@ -154,7 +155,7 @@ public class Hdf5DataSetReader {
                                         + y * dsConfig.dimZ * dsConfig.numChannels
                                         + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
                                         + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
-                                int destIndex = y * dsConfig.dimX + x;
+                                int destIndex = x * dsConfig.dimY + y;
                                 int value = flat_data_int[scrIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
