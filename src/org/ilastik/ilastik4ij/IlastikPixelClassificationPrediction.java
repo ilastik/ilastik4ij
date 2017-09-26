@@ -47,7 +47,6 @@ import net.imglib2.img.ImagePlusAdapter;
 import net.imglib2.img.Img;
 import net.imglib2.img.array.ArrayImgFactory;
 import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 
@@ -102,44 +101,55 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                         return;
                 }
 
-                String tempInFileName;
-                try {
-                        tempInFileName = IlastikUtilities.getTemporaryFileName("_raw.h5");
-                } catch (IOException e) {
-                        log.error("Could not create a temporary file for sending raw data to ilastik");
-                        e.printStackTrace();
-                        return;
-                }
-
-                log.info("Dumping input image to temporary file " + tempInFileName);
-                ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputImage, "inputimage");
-                new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
-
-                if (saveOnly) {
-                        log.info("Saved file for training to " + tempInFileName + ". Use it to train an ilastik pixelClassificationProject now,"
-                                        + " and make sure to select to copy the raw data into the project file in the data selection");
-                        return;
-                }
-
-                String tempOutFileName;
-                try {
-                        tempOutFileName = IlastikUtilities.getTemporaryFileName("_out" + chosenOutputType + ".h5");
-                } catch (IOException e) {
-                        log.error("Could not create a temporary file for obtaining the results from ilastik");
-                        e.printStackTrace();
-                        return;
-                }
-
-                runIlastik(tempInFileName, tempOutFileName);
-                log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
-
-                ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-                predictionsImage.setTitle(chosenOutputType);
-                predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
+                String tempInFileName = null;
+                String tempOutFileName = null;
                 
-                // get rid of temporary files
-                new File(tempInFileName).delete();
-                new File(tempOutFileName).delete();
+                try{
+                    try {
+                            tempInFileName = IlastikUtilities.getTemporaryFileName("_raw.h5");
+                    } catch (IOException e) {
+                            log.error("Could not create a temporary file for sending raw data to ilastik");
+                            e.printStackTrace();
+                            return;
+                    }
+
+                    log.info("Dumping input image to temporary file " + tempInFileName);
+                    ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputImage, "inputimage");
+                    new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
+
+                    if (saveOnly) {
+                            log.info("Saved file for training to " + tempInFileName + ". Use it to train an ilastik pixelClassificationProject now,"
+                                            + " and make sure to select to copy the raw data into the project file in the data selection");
+                            return;
+                    }
+
+                    try {
+                            tempOutFileName = IlastikUtilities.getTemporaryFileName("_out" + chosenOutputType + ".h5");
+                    } catch (IOException e) {
+                            log.error("Could not create a temporary file for obtaining the results from ilastik");
+                            e.printStackTrace();
+                            return;
+                    }
+
+                    runIlastik(tempInFileName, tempOutFileName);
+                    log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
+
+                    ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
+                    predictionsImage.setTitle(chosenOutputType);
+                    predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
+                }
+                catch(final Exception e)
+                {
+                    log.warn("something went wrong during processing ilastik pixel classification");
+                }
+                finally{
+                    log.info("Cleaning up");
+                    // get rid of temporary files
+                    if(tempInFileName != null)
+                        new File(tempInFileName).delete();
+                    if(tempOutFileName != null)
+                        new File(tempOutFileName).delete();
+                }
         }
 
         private void runIlastik(String tempInFileName, String tempOutFileName) {
