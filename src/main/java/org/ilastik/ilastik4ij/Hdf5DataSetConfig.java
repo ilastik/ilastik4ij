@@ -6,7 +6,7 @@ import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
+/*
  * @brief Dimensionality and datatype information of a dataset in a HDF5 File
  * 
  */
@@ -22,7 +22,7 @@ public class Hdf5DataSetConfig {
     public Map<Character, Integer> axisExtents;
     public String axesorder;
 
-	/**
+	/*
 	 * @brief [brief description]
 	 * @details [long description]
 	 * 

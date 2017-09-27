@@ -50,36 +50,6 @@ public class Hdf5DataSetReader {
         
         MDIntArray rawdata_int = null;
         int[] flat_data_int = null;
-        
-        if(dsConfig.typeInfo.equals("float32"))
-        {
-            rawdata_float = reader.float32().readMDArray(dataset);
-            flat_data_float = rawdata_float.getAsFlatArray();
-        }
-        else if(dsConfig.typeInfo.equals("uint8"))
-        {
-            rawdata_byte = reader.uint8().readMDArray(dataset);
-            flat_data_byte = rawdata_byte.getAsFlatArray();
-        }
-        else if(dsConfig.typeInfo.equals("uint8"))
-        {
-            rawdata_byte = reader.uint8().readMDArray(dataset);
-            flat_data_byte = rawdata_byte.getAsFlatArray();
-        }
-        else if(dsConfig.typeInfo.equals("uint16"))
-        {
-            rawdata_short = reader.uint16().readMDArray(dataset);
-            flat_data_short = rawdata_short.getAsFlatArray();
-        }
-        else if(dsConfig.typeInfo.equals("uint32"))
-        {
-            rawdata_int = reader.uint32().readMDArray(dataset);
-            flat_data_int = rawdata_int.getAsFlatArray();
-        }
-        else
-        {
-            throw new IllegalArgumentException("Dataset uses not yet supported datatype " + dsConfig.typeInfo + "!");
-        }
 
         ImagePlus image = IJ.createHyperStack(dataset, dsConfig.dimX, dsConfig.dimY, dsConfig.numChannels, dsConfig.dimZ, dsConfig.numFrames, dsConfig.bitdepth);
 
@@ -88,6 +58,39 @@ public class Hdf5DataSetReader {
             for (int lev = 0; lev < dsConfig.dimZ; ++lev) {
                 for (int c = 0; c < dsConfig.numChannels; ++c) {
                     ImageProcessor ip = image.getStack().getProcessor(image.getStackIndex(c + 1, lev + 1, frame + 1));
+                    
+                    int[] extents = { 1, 1, dsConfig.dimY, dsConfig.dimZ, 1 };
+                    long[] offset = { frame, lev, 0, 0, c };
+                    
+                    if(dsConfig.typeInfo.equals("float32"))
+                    {
+                        rawdata_float = reader.float32().readMDArrayBlockWithOffset(dataset, extents, offset);
+                        flat_data_float = rawdata_float.getAsFlatArray();
+                    }
+                    else if(dsConfig.typeInfo.equals("uint8"))
+                    {
+                        rawdata_byte = reader.uint8().readMDArrayBlockWithOffset(dataset, extents, offset);
+                        flat_data_byte = rawdata_byte.getAsFlatArray();
+                    }
+                    else if(dsConfig.typeInfo.equals("uint8"))
+                    {
+                        rawdata_byte = reader.uint8().readMDArrayBlockWithOffset(dataset, extents, offset);
+                        flat_data_byte = rawdata_byte.getAsFlatArray();
+                    }
+                    else if(dsConfig.typeInfo.equals("uint16"))
+                    {
+                        rawdata_short = reader.uint16().readMDArrayBlockWithOffset(dataset, extents, offset);
+                        flat_data_short = rawdata_short.getAsFlatArray();
+                    }
+                    else if(dsConfig.typeInfo.equals("uint32"))
+                    {
+                        rawdata_int = reader.uint32().readMDArrayBlockWithOffset(dataset, extents, offset);
+                        flat_data_int = rawdata_int.getAsFlatArray();
+                    }
+                    else
+                    {
+                        throw new IllegalArgumentException("Dataset uses not yet supported datatype " + dsConfig.typeInfo + "!");
+                    }
                     
                     if(dsConfig.typeInfo.equals("float32"))
                     {

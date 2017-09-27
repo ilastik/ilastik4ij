@@ -43,7 +43,7 @@ import ij.ImagePlus;
 import ij.process.ImageProcessor;
 
 public class IlastikUtilities {
-	/**
+	/*
 	 * Utility method to obtain a unique filename
 	 * @param extension
 	 * @return
@@ -57,11 +57,11 @@ public class IlastikUtilities {
 		return filename;
 	}
 	
-    /**
+    /*
      * Redirect an input stream to the log service (used for command line output)
      *
      * @param in input stream
-     * @param logService
+     * @param logger
      * @throws IOException
      */
     public static void redirectOutputToLogService(final InputStream in, final LogService logger, final Boolean isErrorStream) {
