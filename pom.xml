@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-		http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<parent>
@@ -16,8 +13,8 @@
 	<artifactId>ilastik-imagej-modules</artifactId>
 	<version>1.0.0-SNAPSHOT</version>
 
-	<name>ilastik pixel classification prediction</name>
-	<description>This command wraps the pixel classification</description>
+	<name>ilastik imageJ modules</name>
+	<description>These ImageJ plugins wrap ilastik workflows</description>
 	<url>https://github.com/ilastik/</url>
 	<inceptionYear>2017</inceptionYear>
 	<organization>
@@ -71,6 +68,7 @@
 		<license.licenseName>BSD</license.licenseName>
 		<license.copyrightOwners>N/A</license.copyrightOwners>
 		<license.projectName>ilastik</license.projectName>
+		<releaseProfiles>deploy-to-imagej</releaseProfiles>
 	</properties>
 
 	<repositories>
