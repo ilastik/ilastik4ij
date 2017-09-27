@@ -38,13 +38,10 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.ImagePlus;
-import io.scif.services.DatasetIOService;
 import net.imagej.Dataset;
-import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 
 import net.imglib2.img.ImagePlusAdapter;
-import org.scijava.Context;
 
 /**
  *
@@ -231,35 +228,4 @@ public class IlastikTrackingPrediction implements Command {
         }
         log.info("ilastik finished successfully!");
     }
-
-    /**
-     * A {@code main()} method for testing: starts up ImageJ with some image,
-     * and then invokes this command.
-     */
-    public static void main(final String... args) {
-        // Launch ImageJ as usual.
-        final ImageJ ij = new ImageJ();
-        ij.ui().showUI();
-        Context context = ij.getContext();
-        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
-        
-        try{
-            Dataset input = datasetIOService.open("example/CTC-FluoSim-06-RAW.tif");
-            ij.ui().show(input);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        try{
-            Dataset input = datasetIOService.open("example/CTC-FluoSim-06-SEG.tif");
-            ij.ui().show(input);
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        
-        ij.command().run(IlastikTrackingPrediction.class, true);
-    }
-
 }
