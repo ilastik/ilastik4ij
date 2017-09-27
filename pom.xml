@@ -86,6 +86,10 @@
 			<artifactId>imagej</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej-legacy</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>cisd</groupId>
 			<artifactId>jhdf5</artifactId>
 		</dependency>
