@@ -38,46 +38,27 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.ImagePlus;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
 import io.scif.services.DatasetIOService;
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
-import net.imagej.legacy.LegacyService;
-import net.imagej.ops.OpService;
-//import net.imagej.
+
 import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.Context;
 
 /**
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Tracking")
-public class IlastikTrackingPrediction<T extends RealType<T>> implements Command {
+public class IlastikTrackingPrediction implements Command {
 
     // needed services:
-    @Parameter
-    OpService ops;
-
     @Parameter
     LogService log;
 
     @Parameter
     OptionsService optionsService;
     
-    @Parameter
-    LegacyService legacyService;
-    
-    @Parameter
-    DatasetService datasetService;
-
     // own parameters:
     @Parameter(label = "Save temporary file for training only, without prediction.")
     private Boolean saveOnly = false;
@@ -87,11 +68,9 @@ public class IlastikTrackingPrediction<T extends RealType<T>> implements Command
 
     @Parameter(label = "Raw image")
     Dataset inputRawImage;
-//    ImgPlus<T> inputRawImage;
 
     @Parameter(label = "Pixel Probability or Segmentation image")
     Dataset inputProbOrSegImage;
-//    ImgPlus<T> inputProbOrSegImage;
 
     @Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String secondInputType = "Probabilities";
@@ -100,8 +79,7 @@ public class IlastikTrackingPrediction<T extends RealType<T>> implements Command
 //    private String selectedOutputType = "Tracking Label Image";
 
     @Parameter(type = ItemIO.OUTPUT)
-    Dataset predictions;
-//    ImgPlus<FloatType> predictions;
+    ImgPlus predictions;
 
     private IlastikOptions ilastikOptions = null;
 
@@ -142,26 +120,25 @@ public class IlastikTrackingPrediction<T extends RealType<T>> implements Command
                 e.printStackTrace();
                 return;
             }
-
-            ImagePlus img = legacyService.getImageMap().registerDataset(inputRawImage);
-            ImagePlus imgProbOrSeg = legacyService.getImageMap().registerDataset(inputProbOrSegImage);
             
-            log.info("Dumping raw input image to temporary file " + tempInFileName);
-//            @SuppressWarnings("unchecked")
-//            ImgPlus<T> imgPlus = (ImgPlus<T>)inputRawImage.getImgPlus();
-//            ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(imgPlus, "inputimage");
-            new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
-
-            log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
-//            @SuppressWarnings("unchecked")
-//            ImgPlus<T> imgPlus2 = (ImgPlus<T>)inputProbOrSegImage.getImgPlus();
-//            ImagePlus imgProbOrSeg = net.imglib2.img.display.imagej.ImageJFunctions.wrap(imgPlus2, "ProbOrSegImage");
             // we do not want to compress probabilities (doesn't help), but segmentations really benefit from it
             int compressionLevel = 0;
             if (secondInputType.equals("Segmentation")) {
                 compressionLevel = 9;
             }
-            new Hdf5DataSetWriter(imgProbOrSeg, tempProbOrSegFileName, "data", compressionLevel, log).write();
+
+//            ImagePlus img = legacyService.getImageMap().registerDataset(inputRawImage);
+//            ImagePlus imgProbOrSeg = legacyService.getImageMap().registerDataset(inputProbOrSegImage);
+            
+            log.info("Dumping raw input image to temporary file " + tempInFileName);
+            
+            ImgPlus imgPlus = inputRawImage.getImgPlus();
+            new Hdf5DataSetWriterFromImgPlus(imgPlus, tempInFileName, "data", 0, log).write();
+            
+            log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
+            @SuppressWarnings("unchecked")
+            ImgPlus imgPlus2 = inputProbOrSegImage.getImgPlus();
+            new Hdf5DataSetWriterFromImgPlus(imgPlus2, tempProbOrSegFileName, "data", compressionLevel, log).write();
 
             if (saveOnly) {
                 log.info("Saved files for training to " + tempInFileName + " and " + tempProbOrSegFileName
@@ -182,8 +159,7 @@ public class IlastikTrackingPrediction<T extends RealType<T>> implements Command
             log.info("Reading resulting tracking from " + tempOutFileName);
 
             ImagePlus objectPredictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-//            predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
-            predictions = datasetService.getDatasets(legacyService.getImageMap().registerLegacyImage(objectPredictionsImage)).get(0);
+            predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
         } catch (final Exception e) {
             log.warn("Ilastik Tracking Prediction failed");
         } finally {
@@ -197,7 +173,7 @@ public class IlastikTrackingPrediction<T extends RealType<T>> implements Command
                     new File(tempProbOrSegFileName).delete();
                 }
                 if (tempOutFileName != null) {
-//                    new File(tempOutFileName).delete();
+                    new File(tempOutFileName).delete();
                 }
             }
         }
