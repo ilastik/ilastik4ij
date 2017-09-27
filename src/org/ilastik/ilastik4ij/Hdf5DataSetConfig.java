@@ -3,6 +3,8 @@ package org.ilastik.ilastik4ij;
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @brief Dimensionality and datatype information of a dataset in a HDF5 File
@@ -15,7 +17,10 @@ public class Hdf5DataSetConfig {
 	public int dimZ;
 	public int numChannels;
 	public String typeInfo;
-        public int bitdepth;
+    public int bitdepth;
+    public Map<Character, Integer> axisIndices;
+    public Map<Character, Integer> axisExtents;
+    public String axesorder;
 
 	/**
 	 * @brief [brief description]
@@ -29,39 +34,36 @@ public class Hdf5DataSetConfig {
 	 */
 	public Hdf5DataSetConfig(IHDF5Reader reader, String dataset, String axesorder)
 	{
-		// get shape info
+		// init
 		dimX = 1;
 		dimY = 1;
 		dimZ = 1;
 		numChannels = 1;
 		numFrames = 1;
-		HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
 		
+		// get shape info
+		HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
+		axisIndices = new HashMap<Character, Integer>();
+        axisExtents = new HashMap<Character, Integer>();
+        this.axesorder = axesorder;
+        
 		for(int index = 0; index < axesorder.length(); index++)
 		{
 			char axis = axesorder.charAt(index);
-			
-			if (axis == 't'){
-				numFrames = (int)dsInfo.getDimensions()[index];
-			}
-			if (axis == 'x'){
-				dimX = (int)dsInfo.getDimensions()[index];
-			}
-			if (axis == 'y'){
-				dimY = (int)dsInfo.getDimensions()[index];
-			}
-			if (axis == 'z'){
-				dimZ = (int)dsInfo.getDimensions()[index];
-			}
-			if (axis == 'c'){
-				numChannels = (int)dsInfo.getDimensions()[index];
-			}
+            axisIndices.put(axis, index);
+            axisExtents.put(axis, (int)dsInfo.getDimensions()[index]);
 		}
+
+        numFrames = axisExtents.get('t');
+        dimX = axisExtents.get('x');
+        dimY = axisExtents.get('y');
+        dimZ = axisExtents.get('z');
+        numChannels = axisExtents.get('c');
 
 		// datatype
 		typeInfo = getTypeInfo(dsInfo);
 	}
-
+    
 	public Hdf5DataSetConfig(IHDF5Reader reader, String dataset)
 	{
 		this(reader, dataset, "txyzc");
