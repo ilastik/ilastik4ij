@@ -81,6 +81,9 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
 
     @Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String secondInputType = "Probabilities";
+    
+//    @Parameter(label = "Selected Output Type", choices = {"Class Label Image", "Feature Table"}, style = "radioButtonHorizontal")
+//    private String selectedOutputType = "Class Label Image";
 
     @Parameter(type = ItemIO.OUTPUT)
     ImgPlus<FloatType> predictions;
@@ -192,6 +195,12 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         } else {
             commandLine.add("--prediction_maps=" + tempProbOrSegFilename);
         }
+        
+//        if (selectedOutputType.equals("Feature Table"))
+//        {
+//            commandLine.add("--table_filename="+tempOutFileName);
+//            commandLine.add("--table_only");
+//        }
 
         log.info("Running ilastik headless command:");
         log.info(commandLine);
