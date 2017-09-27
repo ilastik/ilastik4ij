@@ -9,8 +9,8 @@
 		<relativePath />
 	</parent>
 
-	<groupId>ilastik4ij</groupId>
-	<artifactId>ilastik-imagej-modules</artifactId>
+	<groupId>org.ilastik</groupId>
+	<artifactId>ilastik4ij</artifactId>
 	<version>1.0.2-SNAPSHOT</version>
 
 	<name>ilastik imageJ modules</name>
@@ -80,29 +80,20 @@
 
 	<dependencies>
 		<dependency>
-			<groupId>io.scif</groupId>
-			<artifactId>scifio</artifactId>
-		</dependency>
-		<dependency>
 			<groupId>net.imagej</groupId>
 			<artifactId>ij</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
+			<artifactId>imagej-common</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.scijava</groupId>
-			<artifactId>scijava</artifactId>
+			<artifactId>scijava-common</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2</artifactId>
-		</dependency>
-		<!-- TODO: move net.imagej:imagej to test scope -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>cisd</groupId>
@@ -111,6 +102,17 @@
 		<dependency>
 			<groupId>net.imglib2</groupId>
 			<artifactId>imglib2-ij</artifactId>
+		</dependency>
+		<!-- test dependencies -->
+		<dependency>
+			<groupId>net.imagej</groupId>
+			<artifactId>imagej</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.scif</groupId>
+			<artifactId>scifio</artifactId>
+			<scope>test</scope>
 		</dependency>
 	</dependencies>
 </project>
