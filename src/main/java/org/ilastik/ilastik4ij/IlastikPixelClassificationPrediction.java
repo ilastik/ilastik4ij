@@ -37,29 +37,21 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.ImagePlus;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
+import io.scif.services.DatasetIOService;
 import java.io.File;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
-import net.imagej.ops.OpService;
 import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
+import org.scijava.Context;
 
 /**
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public class IlastikPixelClassificationPrediction<T extends RealType<T>> implements Command {
+public class IlastikPixelClassificationPrediction implements Command {
 
         // needed services:
-        @Parameter
-        OpService ops;
-
         @Parameter
         LogService log;
 
@@ -71,16 +63,16 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
         private Boolean saveOnly = false;
 
         @Parameter(label = "Trained ilastik project file")
-        private File projectFileName = new File("/Users/chaubold/hci/data/divisionTestDataset/pc_test.ilp");
+        private File projectFileName;
 
         @Parameter(label = "Raw input image")
-        private ImgPlus<T> inputImage;
+        private Dataset inputImage;
 
         @Parameter(label = "Output type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
         private String chosenOutputType = "Probabilities";
 
         @Parameter(type = ItemIO.OUTPUT)
-        private ImgPlus<FloatType> predictions;
+        private ImgPlus predictions;
 
         private IlastikOptions ilastikOptions = null;
 
@@ -114,8 +106,7 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                     }
 
                     log.info("Dumping input image to temporary file " + tempInFileName);
-                    ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputImage, "inputimage");
-                    new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
+                    new Hdf5DataSetWriterFromImgPlus(inputImage.getImgPlus(), tempInFileName, "data", 0, log).write();
 
                     if (saveOnly) {
                             log.info("Saved file for training to " + tempInFileName + ". Use it to train an ilastik pixelClassificationProject now,"
@@ -207,16 +198,17 @@ public class IlastikPixelClassificationPrediction<T extends RealType<T>> impleme
                 final ImageJ ij = new ImageJ();
                 ij.ui().showUI();
                 
-                final String filename = "/Users/chaubold/hci/projects/fijiHackathon/org.ilastik.ilastik4ij/example/2d_cells_apoptotic_1channel.tiff";
-                Img<UnsignedShortType> img;
-                try {
-                        img = new ImgOpener().openImg(filename, new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());
-                        ij.ui().show(img);
-                        ij.command().run(IlastikPixelClassificationPrediction.class, true);
+                Context context = ij.getContext();
+                DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
 
-                } catch (ImgIOException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
+                try{
+                    Dataset input = datasetIOService.open("example/2d_cells_apoptotic_1channel.tiff");
+                    ij.ui().show(input);
+                } catch (IOException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
                 }
+                
+                ij.command().run(IlastikPixelClassificationPrediction.class, true);
         }
 }

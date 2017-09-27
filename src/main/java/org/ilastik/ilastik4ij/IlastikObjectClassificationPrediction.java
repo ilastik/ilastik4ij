@@ -38,28 +38,20 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import ij.ImagePlus;
-import io.scif.img.ImgIOException;
-import io.scif.img.ImgOpener;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
-import net.imagej.ops.OpService;
 import net.imglib2.img.ImagePlusAdapter;
-import net.imglib2.img.Img;
-import net.imglib2.img.array.ArrayImgFactory;
-import net.imglib2.type.numeric.RealType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
+import org.scijava.Context;
 
 /**
  *
  */
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
-public class IlastikObjectClassificationPrediction<T extends RealType<T>> implements Command {
+public class IlastikObjectClassificationPrediction implements Command {
 
     // needed services:
-    @Parameter
-    OpService ops;
-
     @Parameter
     LogService log;
 
@@ -71,13 +63,13 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
     private Boolean saveOnly = false;
 
     @Parameter(label = "Trained ilastik project file")
-    private File projectFileName = new File("/Users/chaubold/hci/data/divisionTestDataset/oc_test.ilp");
+    private File projectFileName;
 
     @Parameter(label = "Raw image")
-    ImgPlus<T> inputRawImage;
+    Dataset inputRawImage;
 
     @Parameter(label = "Pixel Probability or Segmentation image")
-    ImgPlus<T> inputProbOrSegImage;
+    Dataset inputProbOrSegImage;
 
     @Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String secondInputType = "Probabilities";
@@ -86,7 +78,7 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
 //    private String selectedOutputType = "Class Label Image";
 
     @Parameter(type = ItemIO.OUTPUT)
-    ImgPlus<FloatType> predictions;
+    ImgPlus predictions;
 
     private IlastikOptions ilastikOptions = null;
 
@@ -128,18 +120,17 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
                 return;
             }
 
-            log.info("Dumping raw input image to temporary file " + tempInFileName);
-            ImagePlus img = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputRawImage, "inputimage");
-            new Hdf5DataSetWriter(img, tempInFileName, "data", 0, log).write();
-
-            log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
-            ImagePlus imgProbOrSeg = net.imglib2.img.display.imagej.ImageJFunctions.wrap(inputProbOrSegImage, "ProbOrSegImage");
             // we do not want to compress probabilities (doesn't help), but segmentations really benefit from it
             int compressionLevel = 0;
             if (secondInputType.equals("Segmentation")) {
                 compressionLevel = 9;
             }
-            new Hdf5DataSetWriter(imgProbOrSeg, tempProbOrSegFileName, "data", compressionLevel, log).write();
+            
+            log.info("Dumping raw input image to temporary file " + tempInFileName);
+            new Hdf5DataSetWriterFromImgPlus(inputRawImage.getImgPlus(), tempInFileName, "data", 0, log).write();
+            
+            log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
+            new Hdf5DataSetWriterFromImgPlus(inputProbOrSegImage.getImgPlus(), tempProbOrSegFileName, "data", compressionLevel, log).write();
 
             if (saveOnly) {
                 log.info("Saved files for training to " + tempInFileName + " and " + tempProbOrSegFileName
@@ -244,17 +235,18 @@ public class IlastikObjectClassificationPrediction<T extends RealType<T>> implem
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
 
-        final String filename = "/Users/chaubold/hci/data/divisionTestDataset/dataset_001.tif";
-        Img<UnsignedShortType> img;
-        try {
-            img = new ImgOpener().openImg(filename, new ArrayImgFactory<UnsignedShortType>(), new UnsignedShortType());
-            ij.ui().show(img);
-            ij.command().run(IlastikObjectClassificationPrediction.class, true);
+        Context context = ij.getContext();
+        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
 
-        } catch (ImgIOException e) {
+        try{
+            Dataset input = datasetIOService.open("example/2d_cells_apoptotic_1channel.tiff");
+            ij.ui().show(input);
+        } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+
+        ij.command().run(IlastikObjectClassificationPrediction.class, true);
     }
 
 }

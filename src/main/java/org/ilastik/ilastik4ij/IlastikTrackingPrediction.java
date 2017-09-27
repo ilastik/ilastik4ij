@@ -131,14 +131,10 @@ public class IlastikTrackingPrediction implements Command {
 //            ImagePlus imgProbOrSeg = legacyService.getImageMap().registerDataset(inputProbOrSegImage);
             
             log.info("Dumping raw input image to temporary file " + tempInFileName);
-            
-            ImgPlus imgPlus = inputRawImage.getImgPlus();
-            new Hdf5DataSetWriterFromImgPlus(imgPlus, tempInFileName, "data", 0, log).write();
+            new Hdf5DataSetWriterFromImgPlus(inputRawImage.getImgPlus(), tempInFileName, "data", 0, log).write();
             
             log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
-            @SuppressWarnings("unchecked")
-            ImgPlus imgPlus2 = inputProbOrSegImage.getImgPlus();
-            new Hdf5DataSetWriterFromImgPlus(imgPlus2, tempProbOrSegFileName, "data", compressionLevel, log).write();
+            new Hdf5DataSetWriterFromImgPlus(inputProbOrSegImage.getImgPlus(), tempProbOrSegFileName, "data", compressionLevel, log).write();
 
             if (saveOnly) {
                 log.info("Saved files for training to " + tempInFileName + " and " + tempProbOrSegFileName
@@ -158,8 +154,9 @@ public class IlastikTrackingPrediction implements Command {
             runIlastik(tempInFileName, tempProbOrSegFileName, tempOutFileName);
             log.info("Reading resulting tracking from " + tempOutFileName);
 
-            ImagePlus objectPredictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-            predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
+            ImagePlus trackingResultImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
+            trackingResultImage.setTitle("Tracking result");
+            predictions = ImagePlusAdapter.wrapImgPlus(trackingResultImage);
         } catch (final Exception e) {
             log.warn("Ilastik Tracking Prediction failed");
         } finally {
