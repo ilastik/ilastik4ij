@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;

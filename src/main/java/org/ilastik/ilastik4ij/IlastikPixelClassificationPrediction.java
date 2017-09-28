@@ -25,6 +25,8 @@
  */
 package org.ilastik.ilastik4ij;
 
+import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
+import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;

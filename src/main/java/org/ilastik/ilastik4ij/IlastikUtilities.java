@@ -35,13 +35,6 @@ import java.nio.charset.Charset;
 
 import org.scijava.log.LogService;
 
-import ch.systemsx.cisd.base.mdarray.MDFloatArray;
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import ij.IJ;
-import ij.ImagePlus;
-import ij.process.ImageProcessor;
-
 public class IlastikUtilities {
 	/*
 	 * Utility method to obtain a unique filename

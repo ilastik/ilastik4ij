@@ -1,6 +1,5 @@
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.hdf5;
 
-import static ch.systemsx.cisd.hdf5.hdf5lib.H5A.H5Aclose;
 import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dclose;
 import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dcreate;
 import static ch.systemsx.cisd.hdf5.hdf5lib.H5D.H5Dget_space;
