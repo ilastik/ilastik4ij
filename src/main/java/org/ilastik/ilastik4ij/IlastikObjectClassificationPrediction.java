@@ -150,6 +150,7 @@ public class IlastikObjectClassificationPrediction implements Command {
             log.info("Reading resulting probabilities from " + tempOutFileName);
 
             ImagePlus objectPredictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
+            objectPredictionsImage.setTitle("Object Predictions");
             predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
         } catch (final Exception e) {
             log.warn("Ilastik Object Classification Prediction failed");
