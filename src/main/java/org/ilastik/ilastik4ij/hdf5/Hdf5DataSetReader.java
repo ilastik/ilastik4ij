@@ -59,7 +59,7 @@ public class Hdf5DataSetReader {
                 for (int c = 0; c < dsConfig.numChannels; ++c) {
                     ImageProcessor ip = image.getStack().getProcessor(image.getStackIndex(c + 1, lev + 1, frame + 1));
                     
-                    int[] extents = { 1, 1, dsConfig.dimY, dsConfig.dimZ, 1 };
+                    int[] extents = { 1, 1, dsConfig.dimY, dsConfig.dimX, 1 };
                     long[] offset = { frame, lev, 0, 0, c };
                     
                     if(dsConfig.typeInfo.equals("float32"))
@@ -98,13 +98,8 @@ public class Hdf5DataSetReader {
 
                         for (int x = 0; x < dsConfig.dimX; x++) {
                             for (int y = 0; y < dsConfig.dimY; y++) {
-                                int scrIndex = c + lev * dsConfig.numChannels
-                                        + y * dsConfig.dimZ * dsConfig.numChannels
-                                        + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
-                                        + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
-
                                 int destIndex = x * dsConfig.dimY + y;
-                                float value = flat_data_float[scrIndex];
+                                float value = flat_data_float[destIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
                                 destData_float[destIndex] = value;
@@ -117,12 +112,8 @@ public class Hdf5DataSetReader {
 
                         for (int x = 0; x < dsConfig.dimX; x++) {
                             for (int y = 0; y < dsConfig.dimY; y++) {
-                                int scrIndex = c + lev * dsConfig.numChannels
-                                        + y * dsConfig.dimZ * dsConfig.numChannels
-                                        + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
-                                        + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
                                 int destIndex = x * dsConfig.dimY + y;
-                                byte value = flat_data_byte[scrIndex];
+                                byte value = flat_data_byte[destIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
                                 destData_byte[destIndex] = value;
@@ -135,12 +126,8 @@ public class Hdf5DataSetReader {
 
                         for (int x = 0; x < dsConfig.dimX; x++) {
                             for (int y = 0; y < dsConfig.dimY; y++) {
-                                int scrIndex = c + lev * dsConfig.numChannels
-                                        + y * dsConfig.dimZ * dsConfig.numChannels
-                                        + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
-                                        + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
                                 int destIndex = x * dsConfig.dimY + y;
-                                short value = flat_data_short[scrIndex];
+                                short value = flat_data_short[destIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
                                 destData_short[destIndex] = value;
@@ -154,12 +141,8 @@ public class Hdf5DataSetReader {
 
                         for (int x = 0; x < dsConfig.dimX; x++) {
                             for (int y = 0; y < dsConfig.dimY; y++) {
-                                int scrIndex = c + lev * dsConfig.numChannels
-                                        + y * dsConfig.dimZ * dsConfig.numChannels
-                                        + x * dsConfig.dimZ * dsConfig.dimY * dsConfig.numChannels
-                                        + frame * dsConfig.dimZ * dsConfig.dimX * dsConfig.dimY * dsConfig.numChannels;
                                 int destIndex = x * dsConfig.dimY + y;
-                                int value = flat_data_int[scrIndex];
+                                int value = flat_data_int[destIndex];
                                 if((float)value > maxGray)
                                     maxGray = (float)value;
                                 destData_float[destIndex] = value;
