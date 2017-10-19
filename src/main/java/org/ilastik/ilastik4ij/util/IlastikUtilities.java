@@ -24,7 +24,7 @@
  * Author: Carsten Haubold
  */
 
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.util;
 
 import java.io.BufferedReader;
 import java.io.File;

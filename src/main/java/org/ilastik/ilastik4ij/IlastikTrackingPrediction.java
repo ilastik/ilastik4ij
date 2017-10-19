@@ -25,6 +25,7 @@
  */
 package org.ilastik.ilastik4ij;
 
+import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
 import java.io.File;
@@ -39,11 +40,10 @@ import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import ij.ImagePlus;
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 
-import net.imglib2.img.ImagePlusAdapter;
 
 /**
  *
@@ -57,6 +57,9 @@ public class IlastikTrackingPrediction implements Command {
 
     @Parameter
     OptionsService optionsService;
+    
+    @Parameter
+    DatasetService datasetService;
     
     // own parameters:
     @Parameter(label = "Save temporary file for training only, without prediction.")
@@ -125,9 +128,6 @@ public class IlastikTrackingPrediction implements Command {
             if (secondInputType.equals("Segmentation")) {
                 compressionLevel = 9;
             }
-
-//            ImagePlus img = legacyService.getImageMap().registerDataset(inputRawImage);
-//            ImagePlus imgProbOrSeg = legacyService.getImageMap().registerDataset(inputProbOrSegImage);
             
             log.info("Dumping raw input image to temporary file " + tempInFileName);
             new Hdf5DataSetWriterFromImgPlus(inputRawImage.getImgPlus(), tempInFileName, "data", 0, log).write();
@@ -153,9 +153,8 @@ public class IlastikTrackingPrediction implements Command {
             runIlastik(tempInFileName, tempProbOrSegFileName, tempOutFileName);
             log.info("Reading resulting tracking from " + tempOutFileName);
 
-            ImagePlus trackingResultImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-            trackingResultImage.setTitle("Tracking result");
-            predictions = ImagePlusAdapter.wrapImgPlus(trackingResultImage);
+            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
+            predictions.setName("Tracking result");
         } catch (final Exception e) {
             log.warn("Ilastik Tracking Prediction failed");
         } finally {

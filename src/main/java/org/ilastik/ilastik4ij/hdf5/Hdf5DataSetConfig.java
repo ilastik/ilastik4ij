@@ -54,11 +54,17 @@ public class Hdf5DataSetConfig {
             axisExtents.put(axis, (int)dsInfo.getDimensions()[index]);
 		}
 
-        numFrames = axisExtents.get('t');
-        dimX = axisExtents.get('x');
-        dimY = axisExtents.get('y');
-        dimZ = axisExtents.get('z');
-        numChannels = axisExtents.get('c');
+        if(dsInfo.getRank() != axesorder.length())
+            throw new IllegalArgumentException("Provided axesorder and dataset have different numbers of axes!");
+        
+        if(!(axisIndices.containsKey('x') && axisIndices.containsKey('y')))
+            throw new IllegalArgumentException("Provided file and dataset must contain x and y axes!");
+        
+        numFrames = tryToExtract('t');
+        dimX = tryToExtract('x');
+        dimY = tryToExtract('y');
+        dimZ = tryToExtract('z');
+        numChannels = tryToExtract('c');
 
 		// datatype
 		typeInfo = getTypeInfo(dsInfo);
@@ -68,6 +74,67 @@ public class Hdf5DataSetConfig {
 	{
 		this(reader, dataset, "txyzc");
 	}
+    
+    public long[] getSliceOffset(int t, int z, int c)
+    {
+        int numAxes = axisIndices.size();
+        long[] result = new long[numAxes];
+        for(Character axis : axisIndices.keySet())
+        {
+            int index = axisIndices.get(axis);
+            
+            switch(axis){
+                case 't': 
+                    result[index] = t;
+                    break;
+                case 'z':
+                    result[index] = z;
+                    break;
+                case 'c': 
+                    result[index] = c;
+                    break;
+                default:
+                    result[index] = 0;
+                    break;
+            }
+        }
+        
+        return result;
+    }
+    
+    public int[] getXYSliceExtent()
+    {
+        int numAxes = axisIndices.size();
+        int[] result = new int[numAxes];
+        for(Character axis : axisIndices.keySet())
+        {
+            int index = axisIndices.get(axis);
+            
+            switch(axis){
+                case 'x': 
+                    result[index] = dimX;
+                    break;
+                case 'y':
+                    result[index] = dimY;
+                    break;
+                default:
+                    result[index] = 1;
+                    break;
+            }
+        }
+        
+        return result;
+    }
+    
+    private int tryToExtract(char axis)
+    {
+        try{
+            return axisExtents.get(axis);
+        }
+        catch(NullPointerException e){
+            return 1;
+        }
+    }
 	
 	private String getTypeInfo(HDF5DataSetInformation dsInfo)
 	{

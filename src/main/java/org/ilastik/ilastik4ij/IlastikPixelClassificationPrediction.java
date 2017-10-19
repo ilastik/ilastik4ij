@@ -25,6 +25,7 @@
  */
 package org.ilastik.ilastik4ij;
 
+import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
 import java.io.IOException;
@@ -38,11 +39,10 @@ import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import ij.ImagePlus;
 import java.io.File;
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
-import net.imglib2.img.ImagePlusAdapter;
 
 /**
  *
@@ -54,6 +54,9 @@ public class IlastikPixelClassificationPrediction implements Command {
         @Parameter
         LogService log;
 
+        @Parameter
+        DatasetService datasetService;
+        
         @Parameter
         OptionsService optionsService;
 
@@ -124,9 +127,9 @@ public class IlastikPixelClassificationPrediction implements Command {
                     runIlastik(tempInFileName, tempOutFileName);
                     log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
 
-                    ImagePlus predictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-                    predictionsImage.setTitle(chosenOutputType);
-                    predictions = ImagePlusAdapter.wrapImgPlus(predictionsImage);
+                    predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
+                    predictions.setName(chosenOutputType);
+                    predictions.setSource("ComputedByIlastik");
                 }
                 catch(final Exception e)
                 {

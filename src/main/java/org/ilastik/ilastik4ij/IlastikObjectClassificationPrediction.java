@@ -25,6 +25,7 @@
  */
 package org.ilastik.ilastik4ij;
 
+import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
 import java.io.File;
@@ -39,10 +40,9 @@ import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import ij.ImagePlus;
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
-import net.imglib2.img.ImagePlusAdapter;
 
 /**
  *
@@ -56,6 +56,9 @@ public class IlastikObjectClassificationPrediction implements Command {
 
     @Parameter
     OptionsService optionsService;
+    
+    @Parameter
+    DatasetService datasetService;
 
     // own parameters:
     @Parameter(label = "Save temporary file for training only, without prediction.")
@@ -149,9 +152,8 @@ public class IlastikObjectClassificationPrediction implements Command {
             runIlastik(tempInFileName, tempProbOrSegFileName, tempOutFileName);
             log.info("Reading resulting probabilities from " + tempOutFileName);
 
-            ImagePlus objectPredictionsImage = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log).read();
-            objectPredictionsImage.setTitle("Object Predictions");
-            predictions = ImagePlusAdapter.wrapImgPlus(objectPredictionsImage);
+            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
+            predictions.setName("Object Predictions");
         } catch (final Exception e) {
             log.warn("Ilastik Object Classification Prediction failed");
         } finally {
