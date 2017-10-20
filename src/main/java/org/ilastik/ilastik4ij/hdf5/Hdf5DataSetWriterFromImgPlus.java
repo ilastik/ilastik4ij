@@ -436,7 +436,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         try {
                             if (dataset_id >= 0) {
                                 dataspace_id = H5Dget_space(dataset_id);
-//                                log.info("writing to slice t="+t+", z="+z+", c="+c);
                                 long[] start = {t, z, 0, 0, c}; // tzyxc
                                 H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
 
