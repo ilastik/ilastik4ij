@@ -185,6 +185,7 @@ public class IlastikImport implements Command, ActionListener {
 
         switch (rank) {
             case 5:
+                dimExamples[0] = "tzyxc";
                 dimExamples[0] = "txyzc";
                 break;
             case 4:
@@ -195,9 +196,11 @@ public class IlastikImport implements Command, ActionListener {
             case 3:
                 dimExamples[0] = "xyc";
                 dimExamples[1] = "xyz";
+                dimExamples[2] = "txy";
                 break;
             default:
                 dimExamples[0] = "xy";
+                dimExamples[1] = "yx";
                 break;
         }
 
