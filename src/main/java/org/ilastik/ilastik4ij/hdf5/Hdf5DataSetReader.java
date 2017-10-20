@@ -46,7 +46,6 @@ public class Hdf5DataSetReader {
         IHDF5Reader reader = HDF5Factory.openForReading(filename);
         Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(reader, dataset, axesorder);
         log.info("Found dataset '" + dataset + "' of type " + dsConfig.typeInfo);
-        float maxGray = 1;
 
         MDFloatArray rawdata_float = null;
         float[] flat_data_float = null;
@@ -107,82 +106,86 @@ public class Hdf5DataSetReader {
                     int[] extents = dsConfig.getXYSliceExtent();
                     long[] offset = dsConfig.getSliceOffset(frame, lev, c);
 
-                    switch (dsConfig.typeInfo) {
-                        case "float32":
-                            rawdata_float = reader.float32().readMDArrayBlockWithOffset(dataset, extents, offset);
-                            flat_data_float = rawdata_float.getAsFlatArray();
-                            break;
-                        case "uint8":
-                            rawdata_byte = reader.uint8().readMDArrayBlockWithOffset(dataset, extents, offset);
-                            flat_data_byte = rawdata_byte.getAsFlatArray();
-                            break;
-                        case "uint16":
-                            rawdata_short = reader.uint16().readMDArrayBlockWithOffset(dataset, extents, offset);
-                            flat_data_short = rawdata_short.getAsFlatArray();
-                            break;
-                        case "uint32":
-                            rawdata_int = reader.uint32().readMDArrayBlockWithOffset(dataset, extents, offset);
-                            flat_data_int = rawdata_int.getAsFlatArray();
-                            break;
-                        default:
-                            throw new IllegalArgumentException("Dataset uses not yet supported datatype " + dsConfig.typeInfo + "!");
-                    }
+                    try{
+                        switch (dsConfig.typeInfo) {
+                            case "float32":
+                                rawdata_float = reader.float32().readMDArrayBlockWithOffset(dataset, extents, offset);
+                                flat_data_float = rawdata_float.getAsFlatArray();
+                                break;
+                            case "uint8":
+                                rawdata_byte = reader.uint8().readMDArrayBlockWithOffset(dataset, extents, offset);
+                                flat_data_byte = rawdata_byte.getAsFlatArray();
+                                break;
+                            case "uint16":
+                                rawdata_short = reader.uint16().readMDArrayBlockWithOffset(dataset, extents, offset);
+                                flat_data_short = rawdata_short.getAsFlatArray();
+                                break;
+                            case "uint32":
+                                rawdata_int = reader.uint32().readMDArrayBlockWithOffset(dataset, extents, offset);
+                                flat_data_int = rawdata_int.getAsFlatArray();
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Dataset uses not yet supported datatype " + dsConfig.typeInfo + "!");
+                        }
+                        
+                        for (int x = 0; x < dsConfig.dimX; x++) {
+                            rai.setPosition(x, image.dimensionIndex(Axes.X));
+                            for (int y = 0; y < dsConfig.dimY; y++) {
+                                rai.setPosition(y, image.dimensionIndex(Axes.Y));
+                                int destIndex = y * dsConfig.dimX + x;
+                                if(dsConfig.axisIndices.get('x') < dsConfig.axisIndices.get('y'))
+                                {
+                                    destIndex = x * dsConfig.dimY + y;
+                                }
 
-                    for (int x = 0; x < dsConfig.dimX; x++) {
-                        rai.setPosition(x, image.dimensionIndex(Axes.X));
-                        for (int y = 0; y < dsConfig.dimY; y++) {
-                            rai.setPosition(y, image.dimensionIndex(Axes.Y));
-                            int destIndex = y * dsConfig.dimX + x;
-                            if(dsConfig.axisIndices.get('x') < dsConfig.axisIndices.get('y'))
-                            {
-                                destIndex = x * dsConfig.dimY + y;
-                            }
-                            
-                            switch (dsConfig.typeInfo) {
-                                case "float32":
-                                    {
-                                        float value = flat_data_float[destIndex];
-                                        if ((float) value > maxGray) {
-                                            maxGray = (float) value;
-                                        }       
-                                        FloatType f = (FloatType)rai.get();
-                                        f.set(value);
+                                switch (dsConfig.typeInfo) {
+                                    case "float32":
+                                        {
+                                            float value = flat_data_float[destIndex];
+                                            FloatType f = (FloatType)rai.get();
+                                            f.set(value);
+                                            break;
+                                        }
+                                    case "uint8":
+                                        {
+                                            byte value = flat_data_byte[destIndex];
+                                            UnsignedByteType f = (UnsignedByteType)rai.get();
+                                            f.set(value);
+                                            break;
+                                        }
+                                    case "uint16":
+                                        {
+                                            short value = flat_data_short[destIndex];
+                                            UnsignedShortType f = (UnsignedShortType)rai.get();
+                                            f.set(value);
+                                            break;
+                                        }
+                                    case "uint32":
+                                        {
+                                            int value = flat_data_int[destIndex];
+                                            UnsignedIntType f = (UnsignedIntType)rai.get();
+                                            f.set(value);
+                                            break;
+                                        }
+                                    default:
                                         break;
-                                    }
-                                case "uint8":
-                                    {
-                                        byte value = flat_data_byte[destIndex];
-                                        if ((float) value > maxGray) {
-                                            maxGray = (float) value;
-                                        }       
-                                        UnsignedByteType f = (UnsignedByteType)rai.get();
-                                        f.set(value);
-                                        break;
-                                    }
-                                case "uint16":
-                                    {
-                                        short value = flat_data_short[destIndex];
-                                        if ((float) value > maxGray) {
-                                            maxGray = (float) value;
-                                        }       
-                                        UnsignedShortType f = (UnsignedShortType)rai.get();
-                                        f.set(value);
-                                        break;
-                                    }
-                                case "uint32":
-                                    {
-                                        int value = flat_data_int[destIndex];
-                                        if ((float) value > maxGray) {
-                                            maxGray = (float) value;
-                                        }       
-                                        UnsignedIntType f = (UnsignedIntType)rai.get();
-                                        f.set(value);
-                                        break;
-                                    }
-                                default:
-                                    break;
+                                }
                             }
                         }
+                    }
+                    catch(Exception e) {
+                        String extentsStr = "";
+                        for(int x : extents)
+                        {
+                            extentsStr += String.valueOf(x) + ", ";
+                        }
+                        
+                        String offsetStr = "";
+                        for(long x : offset)
+                        {
+                            offsetStr += String.valueOf(x) + ", ";
+                        }
+                        log.warn("Could not read data starting at " + offsetStr + " with size " + extentsStr);
                     }
                 }
             }
@@ -191,13 +194,7 @@ public class Hdf5DataSetReader {
         
         // configure options of image
         image.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);
-        for (int c = 0; c < dsConfig.numChannels; ++c) {
-            image.setChannelMinimum(c, 0);
-            image.setChannelMaximum(c, maxGray);
-        }
         image.setValidBits(dsConfig.bitdepth);
-        
-        log.info("setting display range to 0," + maxGray);
 
         reader.close();
         image.setName(filename + "/" + dataset);
