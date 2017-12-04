@@ -13,6 +13,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
 
 ## Contents
 
+* [Installation](#installation)
 * [User documentation](#user-documentation)
     - [General](#general)
     - [Import](#import)
@@ -24,6 +25,12 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [Usage in KNIME](#usage-in-knime)
 * [Developer documentation](#developer-documentation)
     - [Deployment](#deployment)
+
+## Installation <a href="installation"></a>
+
+Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik Import Export` site.
+
+**Note**: The plugins need Java 1.8, if you see error messages popping up that might be caused by an older Java version.
 
 ## User documentation <a href="user-documentation"></a>
 
