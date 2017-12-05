@@ -27,27 +27,27 @@ There is one additional setting showing up in the ImageJ menu, which configures 
 * [Developer documentation](#developer-documentation)
     - [Deployment](#deployment)
 
-## Installation <a href="installation"></a>
+## Installation
 
 Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik Import Export` site.
 
 **Note**: The plugins need Java 1.8, if you see error messages popping up that might be caused by an older Java version.
 
-## User documentation <a href="user-documentation"></a>
+## User documentation
 
 The ilastik workflow wrappers, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`, 
 or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2 -> Plugins -> ilastik`.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Menu.png)
 
-### General <a href="general"></a>
+### General
 
 All Plugins output status information to log files, so we suggest to keep an eye at the ImageJ `Windows -> Console`.
 
 All workflow wrappers have the option to produce only the input files, so that you can use those to train an ilastik project. 
 See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers) section for more details.
 
-### Import <a href="import"></a>
+### Import
 
 Found at `Plugins -> ilastik -> Import HDF5`.
 
@@ -63,7 +63,7 @@ must be equal to the number of dimensions listed in the description above.
 If you choose `Load and apply LUT`, after loading the `3-3-2-RGB` lookup table will be applied for you, which is
 a sensible option for connected component labellings (e.g. a tracking result) or per-object predictions.
 
-### Export <a href="export"></a>
+### Export
 
 Found at `Plugins -> ilastik -> Export HDF5`.
 
@@ -72,7 +72,6 @@ use this export option. Additionally to the location where the file should be sa
 the dataset should be compressed. Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, 
 where many pixel values are equal. See also the tooltip when you hover over `Compression Level`.
 
-### ilastik configuration of the workflow wrappers <a href="configuration"></a>
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
 
 ### How to train an ilastik project to be used with those wrappers
@@ -90,6 +89,7 @@ preprocessed and exported the same way as all further datasets will be. There ar
    Use this file as input in your ilastik project. Then processing any further files from ImageJ through the ilastik workflow wrappers
    should give the desired results.
 
+### ilastik configuration of the workflow wrappers
 Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ![configuration dialog](./doc/screenshots/IJ-Config.png)
@@ -98,7 +98,7 @@ Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 * Number of threads to use (-1 for no limit)
 * Specify an upper bound of RAM that ilastik is allowed to use
 
-### Pixel Classification <a href="pixel-classification"></a>
+### Pixel Classification
 Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
 
 ![Pixel Classification Dialog](./doc/screenshots/IJ-PC-dialog.png)
@@ -117,7 +117,7 @@ Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
 * or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_. 
   ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png)
 
-### Object Classification <a href="object-classification"></a>
+### Object Classification
 Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 ![Object Classification Dialog](./doc/screenshots/IJ-OC-dialog.png)
@@ -134,7 +134,7 @@ Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
 * a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object. 
   ![Object Classification Output](./doc/screenshots/IJ-OC-output.png)
 
-### Tracking <a href="tracking"></a>
+### Tracking
 Found at `Plugins -> ilastik -> Run Tracking`.
 
 ![Tracking Dialog](./doc/screenshots/IJ-Track-dialog.png)
@@ -154,11 +154,11 @@ Found at `Plugins -> ilastik -> Run Tracking`.
   it will be assigned a new _lineage ID_. All descendants of this object will be assigned the same
   _lineage ID_. ![Tracking Output](./doc/screenshots/IJ-Track-output.png)
 
-### Usage in KNIME <a href="usage-in-knime"></a>
+### Usage in KNIME
 
 ![KNIME Workflow](./doc/screenshots/KNIME.png)
 
-## Developer documentation <a href="developer-documentation"></a>
+## Developer documentation
 
 The workflow wrappers are ImageJ2 plugins (see https://imagej.net/Writing_plugins), annotated with
 `@Plugin` for automated discovery by the _scijava_ plugin architecture, and derived from `Command`
@@ -177,7 +177,7 @@ RandomAccessibleInterval`.
 **Testing:** no real tests are included right now, but you can run the `main` method in
 `WorkflowTests.java` which fires up an ImageJ instance for each of the three plugins.
 
-### Deployment <a href="deployment"></a>
+### Deployment
 
 We follow the setup of other `scijava` modules and use their Travis setup that allows us to
 automatically deploy Maven artifacts (built modules) as explained [here](https://imagej.net/Travis).
