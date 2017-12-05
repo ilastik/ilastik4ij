@@ -18,6 +18,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [General](#general)
     - [Import](#import)
     - [Export](#export)
+    - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
     - [ilastik configuration for the workflow wrappers](#configuration)
     - [Pixel Classification](#pixel-classification)
     - [Object Classification](#object-classification)
@@ -43,7 +44,8 @@ or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2
 
 All Plugins output status information to log files, so we suggest to keep an eye at the ImageJ `Windows -> Console`.
 
-All workflow wrappers have the option to produce only the input files, so that you can use those to train an ilastik project. **TODO** write more!
+All workflow wrappers have the option to produce only the input files, so that you can use those to train an ilastik project. 
+See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers) section for more details.
 
 ### Import <a href="import"></a>
 
@@ -70,9 +72,24 @@ use this export option. Additionally to the location where the file should be sa
 the dataset should be compressed. Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, 
 where many pixel values are equal. See also the tooltip when you hover over `Compression Level`.
 
+### ilastik configuration of the workflow wrappers <a href="configuration"></a>
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
 
-### ilastik configuration of the workflow wrappers <a href="configuration"></a>
+### How to train an ilastik project to be used with those wrappers
+
+For the workflow wrappers below, it is important that ilastik projects are trained from data that was 
+preprocessed and exported the same way as all further datasets will be. There are two ways how this can be achieved with this plugin:
+
+1. You can manually use the export option as described [above](#export) to export your images from ImageJ to an ilastik-compatible 
+   HDF5 dataset with 5 dimensions. Then when you create an ilastik project, read the raw data / probabilities / segmentation from the exported HDF5 files.
+2. Each workflow wrapper has a `Save temporary file for training only, no prediction` option. If you select this option and run the plugin, 
+   the input files -- that would otherwise be passed to ilastik -- are exported to temporary files. 
+   ![Save temporary file checkbox](./doc/screenshots/IJ-Train-Checkbox.png)
+   The locations and names of those files are written to ImageJ's console, which you should open using `Window->Console`.
+   ![Temporary file location in console](./doc/screenshots/IJ-Train-Console.png)
+   Use this file as input in your ilastik project. Then processing any further files from ImageJ through the ilastik workflow wrappers
+   should give the desired results.
+
 Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ![configuration dialog](./doc/screenshots/IJ-Config.png)
