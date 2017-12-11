@@ -135,14 +135,16 @@ public class IlastikPixelClassificationPrediction implements Command {
                 {
                     log.warn("something went wrong during processing ilastik pixel classification");
                 }
-                finally{
-                    log.info("Cleaning up");
-                    // get rid of temporary files
-                    if(tempInFileName != null)
-                        new File(tempInFileName).delete();
-                    if(tempOutFileName != null)
-                        new File(tempOutFileName).delete();
-                }
+				finally {
+					if (!saveOnly) {
+						log.info("Cleaning up");
+						// get rid of temporary files
+						if (tempInFileName != null)
+							new File(tempInFileName).delete();
+						if (tempOutFileName != null)
+							new File(tempOutFileName).delete();
+					}
+				}
         }
 
         private void runIlastik(String tempInFileName, String tempOutFileName) {
