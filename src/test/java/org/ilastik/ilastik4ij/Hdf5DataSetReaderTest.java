@@ -42,7 +42,6 @@ public class Hdf5DataSetReaderTest {
     public Context context = ij.getContext();
     public DatasetService ds = context.getService(DatasetService.class);
     public LogService log = context.getService(LogService.class);
-    //public String filename = "C:/Users/user/Documents/UNI_HEIDELBERG/Uni_job/java_work/test.h5";
     public String filename = "src/test/java/org/ilastik/ilastik4ij//hdf5/test.h5";
     public Hdf5DataSetReaderTest() {
     }
@@ -136,7 +135,6 @@ public class Hdf5DataSetReaderTest {
     
     @Test
     public void testWriteHDF5Postive() throws Exception{
-       //String filename_HDF5 ="C:/Users/user/Documents/UNI_HEIDELBERG/Uni_job/java_work/chocolate.h5";
        String filename_HDF5 ="src\\test\\java\\org\\ilastik\\ilastik4ij\\hdf5\\chocolateARGB.h5";
        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
        Dataset input = datasetIOService.open("src\\test\\java\\org\\ilastik\\ilastik4ij\\hdf5\\chocolate21.jpg");
