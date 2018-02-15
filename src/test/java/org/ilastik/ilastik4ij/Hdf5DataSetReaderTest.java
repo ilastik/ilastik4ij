@@ -31,7 +31,6 @@ import net.imglib2.img.Img;
 import net.imglib2.img.ImgView; 
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
-
 /**
  *
  * @author Ashis Ravindran
@@ -58,6 +57,7 @@ public class Hdf5DataSetReaderTest {
          new File("src/test/java/org/ilastik/ilastik4ij/chocolate.h5").delete();
          new File("src/test/java/org/ilastik/ilastik4ij/chocolateARGB.h5").delete();
          System.out.println("File(s) deleted"); 
+
     }
     
     @Before
