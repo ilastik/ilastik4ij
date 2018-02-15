@@ -1,50 +1,39 @@
-
+/*
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
 package org.ilastik.ilastik4ij;
 
-import net.imagej.ImgPlus;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import ch.systemsx.cisd.base.mdarray.MDByteArray;
-import ch.systemsx.cisd.base.mdarray.MDFloatArray;
-import ch.systemsx.cisd.base.mdarray.MDIntArray;
-import ch.systemsx.cisd.base.mdarray.MDShortArray;
-import ch.systemsx.cisd.hdf5.HDF5Factory;
-import ch.systemsx.cisd.hdf5.IHDF5Reader;
-import io.scif.config.SCIFIOConfig;
+import java.io.File;
 import io.scif.services.DatasetIOService;
 import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
-import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.log.LogService;
 import net.imagej.Dataset;
 import net.imglib2.RandomAccess;
 import net.imagej.ImageJ;
 import org.scijava.Context;
-import java.io.File;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.converter.Converters;
 import net.imglib2.converter.RealARGBConverter;
-import net.imglib2.type.numeric.IntegerType;
-import net.imglib2.type.numeric.RealType;
-import ij.ImagePlus;
-import ij.process.ImageConverter;  
-
+import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.img.Img;
+import net.imglib2.img.ImgView; 
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
-
-//import net.imglib2.img.display.imagej.ImageJFunctions;
 /**
  *
- * @author Ashis
+ * @author Ashis Ravindran
  */
 public class Hdf5DataSetReaderTest {
     
@@ -59,16 +48,16 @@ public class Hdf5DataSetReaderTest {
     }
     
     @BeforeClass
-    public static void setUpClass() throws Exception {
+    public static void setUpClass()  {
     }
     
     @AfterClass
     public static void tearDownClass() {
-        
          System.out.println("In tear down class");
          new File("src/test/java/org/ilastik/ilastik4ij/chocolate.h5").delete();
-         System.out.println("File deleted");
-        
+         new File("src/test/java/org/ilastik/ilastik4ij/chocolateARGB.h5").delete();
+         System.out.println("File(s) deleted"); 
+
     }
     
     @Before
@@ -79,6 +68,7 @@ public class Hdf5DataSetReaderTest {
     
     @After
     public void tearDown() {
+
         System.out.println("In tear down");
     }
 
@@ -147,8 +137,8 @@ public class Hdf5DataSetReaderTest {
     }
     
     @Test
-    public void testWriteHDF5Postive() throws Exception{
-       String filename_HDF5 ="src/test/java/org/ilastik/ilastik4ij/chocolate.h5";
+    public void testWriteHDF5Positive() throws Exception{
+       String filename_HDF5 ="src/test/java/org/ilastik/ilastik4ij/chocolateARGB.h5";
        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
        Dataset input = datasetIOService.open("src/test/java/org/ilastik/ilastik4ij/chocolate21.jpg");
        new Hdf5DataSetWriterFromImgPlus(input.getImgPlus(),filename_HDF5 , "exported_data", 0, log).write();
@@ -163,41 +153,22 @@ public class Hdf5DataSetReaderTest {
        assertEquals("DimT should be 1",1,image.getImg().dimension(4));
     }
     
-    /*
-    @Test
+    
+    @Test(expected = ncsa.hdf.hdf5lib.exceptions.HDF5SymbolTableException.class)
     public void testWriteHDF5Negative() throws Exception{
-       String filename_HDF5 ="C:/Users/user/Documents/UNI_HEIDELBERG/Uni_job/java_work/chocolate.h5";
-       String filename_JPG="C:/Users/user/Documents/UNI_HEIDELBERG/Uni_job/java_work/chocolate21.jpg"
+       String filename_HDF5 ="src/test/java/org/ilastik/ilastik4ij/chocolate.h5";
+       String filename_JPG="src/test/java/org/ilastik/ilastik4ij/chocolate21.jpg";
        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
        Dataset input = datasetIOService.open(filename_JPG);
-       //ImgPlus<UnsignedShortType> img = (ImgPlus<UnsignedShortType>) input.getImgPlus();  
-       ImageConverter ic = new ImageConverter(input.getImgPlus());
-       ImageConverter ic = new ImageConverter(imp);
-       ImagePlus imp = ImageJFunctions.
-       IJ.run(imp, "8-bit", "");
-       //input.firstElement()
-       ARGBType argbRAI = new ARGBType(0) ;
-       ImgPlus imgrgb= new ImgPlus (input);
-       System.out.println(input.getType());
-       System.out.println(input.getTypeLabelLong());
-       RealARGBConverter con= new RealARGBConverter<>();
-       //con.convert(input., imgrgb);
-        RandomAccess ubyteRAI = input.getImgPlus().randomAccess(imgrgb);
-       IntegerType f = (IntegerType)ubyteRAI.get();
-       ImagePlus im = ImageJFunctions.wrapR 
-       //Converters.convert( input, new RealARGBConverter<Integer>());
-       //Hdf5DataSetWriterFromImgPlus hdf5=new Hdf5DataSetWriterFromImgPlus(input.getImgPlus(),filename_HDF5 , "data", 0, log);
+       ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>)input.getImgPlus();
+       final RandomAccessibleInterval<ARGBType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>)inputImage ,new RealARGBConverter<UnsignedByteType>(), new ARGBType()) ;
+       Img<ARGBType> imview=ImgView.wrap(output,inputImage.getImg().factory().imgFactory(new ARGBType()));
+       ImgPlus<ARGBType> imgrgb= new ImgPlus<ARGBType> (imview);
        Hdf5DataSetWriterFromImgPlus hdf5=new Hdf5DataSetWriterFromImgPlus(imgrgb,filename_HDF5 , "data", 0, log);
        hdf5.write();
        System.out.println("Loading file in tzyxc order");
        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds); //
-       ImgPlus image= hdf5Reader.read();
-       assertEquals("Bits should be 8",image.getValidBits(),8);
-       assertEquals("DimX should be 400",400,image.getImg().dimension(0));
-       assertEquals("DimY should be 289",289,image.getImg().dimension(1));
-       assertEquals("DimC should be 3",3,image.getImg().dimension(2));
-       assertEquals("DimZ should be 1",1,image.getImg().dimension(3));
-       assertEquals("DimT should be 1",1,image.getImg().dimension(4));
+       hdf5Reader.read(); //This should throw exception.
     }
-    */
+    
 }
