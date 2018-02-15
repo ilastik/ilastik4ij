@@ -44,7 +44,7 @@ public class Hdf5DataSetReaderTest {
     public Context context = ij.getContext();
     public DatasetService ds = context.getService(DatasetService.class);
     public LogService log = context.getService(LogService.class);
-    public String filename = "src\\test\\java\\org\\ilastik\\ilastik4ij\\test.h5";
+    public String filename = "src/test/java/org/ilastik/ilastik4ij/test.h5";
     public Hdf5DataSetReaderTest() {
     }
     
@@ -55,8 +55,8 @@ public class Hdf5DataSetReaderTest {
     @AfterClass
     public static void tearDownClass() {
          System.out.println("In tear down class");
-         new File("src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolate.h5").delete();
-         new File("src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolateARGB.h5").delete();
+         new File("src/test/java/org/ilastik/ilastik4ij/chocolate.h5").delete();
+         new File("src/test/java/org/ilastik/ilastik4ij/chocolateARGB.h5").delete();
          System.out.println("File(s) deleted"); 
     }
     
@@ -138,9 +138,9 @@ public class Hdf5DataSetReaderTest {
     
     @Test
     public void testWriteHDF5Positive() throws Exception{
-       String filename_HDF5 ="src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolateARGB.h5";
+       String filename_HDF5 ="src/test/java/org/ilastik/ilastik4ij/chocolateARGB.h5";
        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
-       Dataset input = datasetIOService.open("src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolate21.jpg");
+       Dataset input = datasetIOService.open("src/test/java/org/ilastik/ilastik4ij/chocolate21.jpg");
        new Hdf5DataSetWriterFromImgPlus(input.getImgPlus(),filename_HDF5 , "exported_data", 0, log).write();
        System.out.println("Loading file in tzyxc order");
        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds); //
@@ -156,8 +156,8 @@ public class Hdf5DataSetReaderTest {
     
     @Test(expected = ncsa.hdf.hdf5lib.exceptions.HDF5SymbolTableException.class)
     public void testWriteHDF5Negative() throws Exception{
-       String filename_HDF5 ="src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolate.h5";
-       String filename_JPG="src\\test\\java\\org\\ilastik\\ilastik4ij\\chocolate21.jpg";
+       String filename_HDF5 ="src/test/java/org/ilastik/ilastik4ij/chocolate.h5";
+       String filename_JPG="src/test/java/org/ilastik/ilastik4ij/chocolate21.jpg";
        DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
        Dataset input = datasetIOService.open(filename_JPG);
        ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>)input.getImgPlus();
