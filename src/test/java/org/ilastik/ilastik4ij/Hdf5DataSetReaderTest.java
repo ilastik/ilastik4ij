@@ -132,7 +132,7 @@ public class Hdf5DataSetReaderTest {
         Dataset input = datasetIOService.open("src/test/resources/chocolate21.jpg");
         new Hdf5DataSetWriterFromImgPlus(input.getImgPlus(), filename_HDF5, "exported_data", 0, log).write();
         log.info("Loading file in tzyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds); //
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
         ImgPlus image = hdf5Reader.read();
         assertEquals("Bits should be 8", image.getValidBits(), 8);
         assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
@@ -157,7 +157,7 @@ public class Hdf5DataSetReaderTest {
         Hdf5DataSetWriterFromImgPlus hdf5 = new Hdf5DataSetWriterFromImgPlus(imgrgb, filename_HDF5, "data", 0, log);
         hdf5.write();
         log.info("Loading file in tzyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds); //
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
         hdf5Reader.read(); //This should throw exception.
     }
 
