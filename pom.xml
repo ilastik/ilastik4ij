@@ -1,114 +1,120 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
 
-	<parent>
-		<groupId>org.scijava</groupId>
-		<artifactId>pom-scijava</artifactId>
-		<version>17.1.1</version>
-		<relativePath />
-	</parent>
+    <parent>
+        <groupId>org.scijava</groupId>
+        <artifactId>pom-scijava</artifactId>
+        <version>17.1.1</version>
+        <relativePath/>
+    </parent>
 
-	<groupId>org.ilastik</groupId>
-	<artifactId>ilastik4ij</artifactId>
-	<version>1.0.6-SNAPSHOT</version>
+    <groupId>org.ilastik</groupId>
+    <artifactId>ilastik4ij</artifactId>
+    <version>1.0.6-SNAPSHOT</version>
 
-	<name>ilastik imageJ modules</name>
-	<description>These ImageJ plugins wrap ilastik workflows</description>
-	<url>https://github.com/ilastik/</url>
-	<inceptionYear>2017</inceptionYear>
-	<organization>
-		<name>ilastik</name>
-		<url>ilastik.org</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>BSD</name>
-			<url />
-			<distribution>repo</distribution>
-		</license>
-	</licenses>
+    <name>ilastik imageJ modules</name>
+    <description>These ImageJ plugins wrap ilastik workflows</description>
+    <url>https://github.com/ilastik/</url>
+    <inceptionYear>2017</inceptionYear>
+    <organization>
+        <name>ilastik</name>
+        <url>ilastik.org</url>
+    </organization>
+    <licenses>
+        <license>
+            <name>BSD</name>
+            <url/>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
 
-	<developers>
-		<developer>
-			<id>chaubold</id>
-			<name>Carsten Haubold</name>
-			<url />
-		</developer>
-	</developers>
-	<contributors>
-		<contributor>
-			<name>Carsten Haubold</name>
-		</contributor>
-	</contributors>
+    <developers>
+        <developer>
+            <id>chaubold</id>
+            <name>Carsten Haubold</name>
+            <url/>
+        </developer>
+    </developers>
+    <contributors>
+        <contributor>
+            <name>Carsten Haubold</name>
+        </contributor>
+    </contributors>
 
-	<mailingLists>
-		<mailingList>
-			<name>ImageJ Forum</name>
-			<archive>http://forum.imagej.net/</archive>
-		</mailingList>
-	</mailingLists>
+    <mailingLists>
+        <mailingList>
+            <name>ImageJ Forum</name>
+            <archive>http://forum.imagej.net/</archive>
+        </mailingList>
+    </mailingLists>
 
-	<scm>
-		<connection>scm:git:git://github.com/ilastik/ilastik4ij</connection>
-		<developerConnection>scm:git:git@github.com:ilastik/ilastik4ij</developerConnection>
-		<tag>HEAD</tag>
-		<url>https://github.com/ilastik/ilastik4ij</url>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>http://github.com/ilastik/ilastik4ij/issues</url>
-	</issueManagement>
-	<ciManagement>
-		<system>None</system>
-	</ciManagement>
+    <scm>
+        <connection>scm:git:git://github.com/ilastik/ilastik4ij</connection>
+        <developerConnection>scm:git:git@github.com:ilastik/ilastik4ij</developerConnection>
+        <tag>HEAD</tag>
+        <url>https://github.com/ilastik/ilastik4ij</url>
+    </scm>
+    <issueManagement>
+        <system>GitHub Issues</system>
+        <url>http://github.com/ilastik/ilastik4ij/issues</url>
+    </issueManagement>
+    <ciManagement>
+        <system>None</system>
+    </ciManagement>
 
-	<properties>
-		<main-class>IlastikPixelClassificationPrediction</main-class>
-		<license.licenseName>BSD</license.licenseName>
-		<license.copyrightOwners>N/A</license.copyrightOwners>
-		<license.projectName>ilastik</license.projectName>
-		<releaseProfiles>deploy-to-imagej</releaseProfiles>
-	</properties>
+    <properties>
+        <main-class>IlastikPixelClassificationPrediction</main-class>
+        <license.licenseName>BSD</license.licenseName>
+        <license.copyrightOwners>N/A</license.copyrightOwners>
+        <license.projectName>ilastik</license.projectName>
+        <releaseProfiles>deploy-to-imagej</releaseProfiles>
+    </properties>
 
-	<repositories>
-		<repository>
-			<id>imagej.public</id>
-			<url>http://maven.imagej.net/content/groups/public</url>
-		</repository>
-	</repositories>
+    <repositories>
+        <repository>
+            <id>imagej.public</id>
+            <url>http://maven.imagej.net/content/groups/public</url>
+        </repository>
+    </repositories>
 
-	<dependencies>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>ij</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej-common</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>org.scijava</groupId>
-			<artifactId>scijava-common</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>net.imglib2</groupId>
-			<artifactId>imglib2</artifactId>
-		</dependency>
-		<dependency>
-			<groupId>cisd</groupId>
-			<artifactId>jhdf5</artifactId>
-		</dependency>
-		<!-- test dependencies -->
-		<dependency>
-			<groupId>net.imagej</groupId>
-			<artifactId>imagej</artifactId>
-			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>io.scif</groupId>
-			<artifactId>scifio</artifactId>
-			<scope>test</scope>
-		</dependency>
-	</dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>ij</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.scijava</groupId>
+            <artifactId>scijava-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.imglib2</groupId>
+            <artifactId>imglib2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>cisd</groupId>
+            <artifactId>jhdf5</artifactId>
+        </dependency>
+        <!-- test dependencies -->
+        <dependency>
+            <groupId>net.imagej</groupId>
+            <artifactId>imagej</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.scif</groupId>
+            <artifactId>scifio</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 </project>
