@@ -23,6 +23,7 @@ import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT32;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
 
+import net.imglib2.display.ColorTable;
 import org.scijava.log.LogService;
 
 import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
@@ -221,14 +222,15 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		channelDimsRGB[1] = nLevs ; //z
 		channelDimsRGB[2] = nRows; //y
 		channelDimsRGB[3] = nCols; //x
-		channelDimsRGB[4] = 3;
+		channelDimsRGB[4] = 4;
+		System.out.print(nChannels);
 		
 		long[] color_iniDims = new long[5];
 		color_iniDims[0] = 1;
 		color_iniDims[1] = 1;
 		color_iniDims[2] = nRows;
 		color_iniDims[3] = nCols;
-		color_iniDims[4] = 3;
+		color_iniDims[4] = 1;
 
 		try {
 			dataspace_id = H5Screate_simple(5, color_iniDims, maxdims);
@@ -244,6 +246,94 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
+		// Channel axis =2 but can't retrieve because axis shown unknown
+
+        RandomAccess<T> rai = image.randomAccess();
+        boolean isFirstSlice = true;
+        int[] pixels_byte = null;
+
+        for(long t = 0; t < nFrames; t++)
+        {
+            if(image.dimensionIndex(Axes.TIME) >= 0)
+                rai.setPosition(t, image.dimensionIndex(Axes.TIME));
+
+            for(long z = 0; z < nLevs; z++)
+            {
+                if(image.dimensionIndex(Axes.Z) >= 0)
+                    rai.setPosition(z, image.dimensionIndex(Axes.Z));
+
+                for(long c = 0; c < 4; c++) { // 4 channels hardcoded
+                    //if (image.dimensionIndex(Axes.CHANNEL) >= 0)
+                        rai.setPosition(c, 2);//image.dimensionIndex(Axes.CHANNEL));
+
+                    // Construct 2D array of appropriate data
+
+                    pixels_byte = new int[(int) (nCols * nRows)];
+                    fillByteSlice(rai, pixels_byte);
+
+                    // write it out
+
+                    if (isFirstSlice)
+                    {
+                        try {
+                            if (dataset_id >= 0) {
+
+                                    H5Dwrite(dataset_id, H5T_NATIVE_UINT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixels_byte);
+                            }
+                            else
+                                throw new HDF5Exception("No active dataset for writing first chunk");
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+                        try {
+                            if (dataspace_id >= 0)
+                            {
+                                H5Sclose(dataspace_id);
+                                dataspace_id = -1;
+                            }
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+
+                        try {
+                            if (dataset_id >= 0)
+                                H5Dset_extent(dataset_id, channelDimsRGB);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        isFirstSlice = false;
+
+
+
+                    }
+                    else{
+                        try {
+                            if (dataset_id >= 0) {
+                                dataspace_id = H5Dget_space(dataset_id);
+                                long[] start = {t, z, 0, 0, c}; // tzyxc
+                                H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, color_iniDims, null);
+                                int memspace = H5Screate_simple(5, color_iniDims, null);
+                                if (dataspace_id >= 0) {
+                                        H5Dwrite(dataset_id, H5T_NATIVE_UINT8, memspace, dataspace_id, H5P_DEFAULT, pixels_byte);
+                                }
+                                else
+                                    throw new HDF5Exception("No active dataset for writing remaining");
+                            }
+                        }
+                        catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+
+
+                }
+            }
+        }
 
 //		for (int t=0; t<=nFrames; t++){
 //			for (int z=0; z<nLevs; z++) {
@@ -521,4 +611,18 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
             }
         }
     }
+
+    private void fillByteSlice(RandomAccess<T> rai, int[] pixels_byte) {
+        for(long x = 0; x < nCols; x++)
+        {
+            rai.setPosition(x, image.dimensionIndex(Axes.X));
+            for(long y = 0; y < nRows; y++)
+            {
+                rai.setPosition(y, image.dimensionIndex(Axes.Y));
+                T value = rai.get();
+                pixels_byte[(int)(y * nCols + x)] = ((ARGBType)value).get();
+            }
+        }
+    }
+
 }

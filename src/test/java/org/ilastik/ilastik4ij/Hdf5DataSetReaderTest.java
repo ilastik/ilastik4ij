@@ -145,20 +145,27 @@ public class Hdf5DataSetReaderTest {
     /**
      * Test of write method, specifically for ARGB type image, of class Hdf5DataSetReader.
      */
-    @Test(expected = ncsa.hdf.hdf5lib.exceptions.HDF5SymbolTableException.class)
+    @Test//(expected = ncsa.hdf.hdf5lib.exceptions.HDF5SymbolTableException.class)
     public void testWriteHDF5Negative() throws Exception {
-        String filename_HDF5 = testchocolateARGB.getPath();
+        String filename_HDF5 = "src/test/resources/cARGB.h5";// testchocolateARGB.getPath();
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
         final RandomAccessibleInterval<ARGBType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealARGBConverter<>(), new ARGBType());
         Img<ARGBType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new ARGBType()));
         ImgPlus<ARGBType> imgrgb = new ImgPlus<>(imview);
-        Hdf5DataSetWriterFromImgPlus hdf5 = new Hdf5DataSetWriterFromImgPlus(imgrgb, filename_HDF5, "data", 0, log);
+        Hdf5DataSetWriterFromImgPlus hdf5 = new Hdf5DataSetWriterFromImgPlus(imgrgb, filename_HDF5, "exported_data", 0, log);
         hdf5.write();
-        log.info("Loading file in tzyxc order");
+        log.info("Loading file in tzyxc order ");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        hdf5Reader.read(); //This should throw exception.
+        ImgPlus image =hdf5Reader.read(); //This should throw exception.
+        assertEquals("Bits should be 8", image.getValidBits(), 8);
+        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
+        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
+        assertEquals("DimC should be 3", 4, image.getImg().dimension(2));
+        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
+        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+
     }
 
 }
