@@ -23,7 +23,6 @@ import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT32;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
 
-import net.imglib2.display.ColorTable;
 import org.scijava.log.LogService;
 
 import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
@@ -40,7 +39,8 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
-	private ImgPlus<T> image;
+    private static final int NUM_OF_ARGB_CHANNELS = 4;
+    private ImgPlus<T> image;
 	
     private long nFrames;
 	private long nChannels;
@@ -222,8 +222,8 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		channelDimsRGB[1] = nLevs ; //z
 		channelDimsRGB[2] = nRows; //y
 		channelDimsRGB[3] = nCols; //x
-		channelDimsRGB[4] = 4;
-		System.out.print(nChannels);
+		channelDimsRGB[4] = NUM_OF_ARGB_CHANNELS;//4
+		//System.out.print(nChannels);
 		
 		long[] color_iniDims = new long[5];
 		color_iniDims[0] = 1;
@@ -246,11 +246,11 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		catch (Exception e) {
 			e.printStackTrace();
 		}
-		// Channel axis =2 but can't retrieve because axis shown unknown
+
 
         RandomAccess<T> rai = image.randomAccess();
         boolean isFirstSlice = true;
-        int[] pixels_byte = null;
+        byte[] pixels_byte;
 
         for(long t = 0; t < nFrames; t++)
         {
@@ -262,14 +262,15 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                 if(image.dimensionIndex(Axes.Z) >= 0)
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
-                for(long c = 0; c < 4; c++) { // 4 channels hardcoded
+                for(long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) { // 4 channels hardcoded
                     //if (image.dimensionIndex(Axes.CHANNEL) >= 0)
                         rai.setPosition(c, 2);//image.dimensionIndex(Axes.CHANNEL));
+                        // Channel axis =2 but can't retrieve because axis shown 'Unknown'
 
                     // Construct 2D array of appropriate data
 
-                    pixels_byte = new int[(int) (nCols * nRows)];
-                    fillByteSlice(rai, pixels_byte);
+                    pixels_byte = new byte[(int) (nCols * nRows)];
+                    fillByteSliceARGB(rai, pixels_byte);
 
                     // write it out
 
@@ -335,61 +336,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
             }
         }
 
-//		for (int t=0; t<=nFrames; t++){
-//			for (int z=0; z<nLevs; z++) {
-//				int stackIndex = image.getStackIndex(1, z + 1, t + 1);
-//				ColorProcessor cp = (ColorProcessor)(stack.getProcessor(stackIndex));
-//				byte[] red   = cp.getChannel(1);
-//				byte[] green = cp.getChannel(2);
-//				byte[] blue  = cp.getChannel(3);
-//
-//				byte[][] color_target = new byte[3][red.length];
-//                color_target[0] = red;
-//                color_target[1] = green;
-//                color_target[2] = blue;
-//
-//				try {
-//					if (dataspace_id >= 0)    
-//					{
-//						H5Sclose(dataspace_id);
-//						dataspace_id = -1;
-//					}
-//				}
-//				catch (Exception e) {
-//					e.printStackTrace();
-//				}
-//
-//				if (z==0 ){
-//					try {
-//						if (dataset_id >= 0)
-//							H5Dset_extent(dataset_id, channelDimsRGB);
-//					}
-//					catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				}
-//
-//				for (int c=0; c<3; c++){
-//					try {
-//						if (dataset_id >= 0) {
-//							dataspace_id = H5Dget_space(dataset_id);
-//
-//							long[] start = {t,z,0,0,c};
-//							long[] iniDims = {0,0,nCols,nRows,1};
-//
-//							H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, iniDims, null);
-//							int memspace = H5Screate_simple(5, iniDims, null);
-//
-//							if (dataspace_id >= 0)
-//								H5Dwrite(dataset_id, H5T_NATIVE_UINT8, memspace, dataspace_id, H5P_DEFAULT, color_target[c]);
-//						}
-//					}
-//					catch (Exception e) {
-//						e.printStackTrace();
-//					}
-//				}
-//			}
-//		}
 
 		log.info("write uint8 RGB HDF5");
 		log.info("compressionLevel: " + String.valueOf(compressionLevel));
@@ -612,7 +558,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         }
     }
 
-    private void fillByteSlice(RandomAccess<T> rai, int[] pixels_byte) {
+    private void fillByteSliceARGB(RandomAccess<T> rai, byte[] pixels_byte) {
         for(long x = 0; x < nCols; x++)
         {
             rai.setPosition(x, image.dimensionIndex(Axes.X));
@@ -620,7 +566,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
             {
                 rai.setPosition(y, image.dimensionIndex(Axes.Y));
                 T value = rai.get();
-                pixels_byte[(int)(y * nCols + x)] = ((ARGBType)value).get();
+                pixels_byte[(int)(y * nCols + x)] = (byte)((ARGBType)value).get();
             }
         }
     }
