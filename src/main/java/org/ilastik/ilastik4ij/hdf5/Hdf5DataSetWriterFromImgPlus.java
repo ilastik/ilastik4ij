@@ -222,8 +222,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		channelDimsRGB[1] = nLevs ; //z
 		channelDimsRGB[2] = nRows; //y
 		channelDimsRGB[3] = nCols; //x
-		channelDimsRGB[4] = NUM_OF_ARGB_CHANNELS;//4
-		//System.out.print(nChannels);
+		channelDimsRGB[4] = NUM_OF_ARGB_CHANNELS;//c
 		
 		long[] color_iniDims = new long[5];
 		color_iniDims[0] = 1;
@@ -247,7 +246,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 			e.printStackTrace();
 		}
 
-
         RandomAccess<T> rai = image.randomAccess();
         boolean isFirstSlice = true;
         byte[] pixels_byte;
@@ -262,10 +260,9 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                 if(image.dimensionIndex(Axes.Z) >= 0)
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
-                for(long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) { // 4 channels hardcoded
-                    //if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                        rai.setPosition(c, 2);//image.dimensionIndex(Axes.CHANNEL));
-                        // Channel axis =2 but can't retrieve because axis shown 'Unknown'
+                for(long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) {
+                    if (image.dimensionIndex(Axes.CHANNEL) >= 0)
+                        rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
 
                     // Construct 2D array of appropriate data
 
@@ -308,8 +305,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         }
                         isFirstSlice = false;
 
-
-
                     }
                     else{
                         try {
@@ -329,8 +324,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                             e.printStackTrace();
                         }
                     }
-
-
 
                 }
             }
