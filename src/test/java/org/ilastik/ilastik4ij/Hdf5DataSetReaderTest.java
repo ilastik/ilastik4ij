@@ -152,7 +152,7 @@ public class Hdf5DataSetReaderTest {
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
-        final RandomAccessibleInterval<ARGBType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealARGBConverter<>(), new ARGBType());
+        final RandomAccessibleInterval<ARGBType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealARGBConverter<>(0,255), new ARGBType());
         Img<ARGBType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new ARGBType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<ARGBType> imgrgb = new ImgPlus<>(imview,"",axes);
