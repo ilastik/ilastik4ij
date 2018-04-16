@@ -22,9 +22,8 @@ import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_FLOAT;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT32;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT16;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.H5T_NATIVE_UINT8;
-
+import  java.util.Arrays;
 import org.scijava.log.LogService;
-
 import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
 import static java.lang.Long.min;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -39,7 +38,7 @@ import net.imglib2.type.numeric.real.FloatType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 
 public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
-    private static final int NUM_OF_ARGB_CHANNELS = 4;
+    private static int NUM_OF_ARGB_CHANNELS = 4;
     private ImgPlus<T> image;
 	
     private long nFrames;
@@ -161,7 +160,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 			else if (val instanceof ARGBType)
             {
                 log.info("Writing RGB to 3 uint8 channels");
-				writeRGB();
+                writeARGB();
 			}
 			else {
 				log.error("Type Not handled yet!");
@@ -215,7 +214,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 		}
 	}
 
-	private void writeRGB()
+	private void writeARGB()
 	{
 		long[] channelDimsRGB = new long[5];
 		channelDimsRGB[0] = nFrames; //t
@@ -249,7 +248,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         RandomAccess<T> rai = image.randomAccess();
         boolean isFirstSlice = true;
         byte[] pixels_byte;
-
         for(long t = 0; t < nFrames; t++)
         {
             if(image.dimensionIndex(Axes.TIME) >= 0)
@@ -260,14 +258,23 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                 if(image.dimensionIndex(Axes.Z) >= 0)
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
+                int position =0; //Initializing stack position.
                 for(long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) {
-                    if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                        rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
 
                     // Construct 2D array of appropriate data
 
                     pixels_byte = new byte[(int) (nCols * nRows)];
-                    fillByteSliceARGB(rai, pixels_byte);
+                    if (nChannels==NUM_OF_ARGB_CHANNELS-1 && isFirstSlice ) {
+                        log.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
+                        Arrays.fill(pixels_byte, (byte) -1);
+                        c=-1; // Resetting channel iterator.
+                        NUM_OF_ARGB_CHANNELS = 3; //Resetting channel iterator limit.
+                    }else {
+                        if (image.dimensionIndex(Axes.CHANNEL) >= 0) {
+                            rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
+                        }
+                        fillByteSliceARGB(rai, pixels_byte);
+                    }
 
                     // write it out
 
@@ -278,8 +285,9 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 
                                     H5Dwrite(dataset_id, H5T_NATIVE_UINT8, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixels_byte);
                             }
-                            else
+                            else {
                                 throw new HDF5Exception("No active dataset for writing first chunk");
+                            }
                         }
                         catch (Exception e) {
                             e.printStackTrace();
@@ -310,7 +318,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         try {
                             if (dataset_id >= 0) {
                                 dataspace_id = H5Dget_space(dataset_id);
-                                long[] start = {t, z, 0, 0, c}; // tzyxc
+                                long[] start = {t, z, 0, 0, position}; // tzyxc
                                 H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, color_iniDims, null);
                                 int memspace = H5Screate_simple(5, color_iniDims, null);
                                 if (dataspace_id >= 0) {
@@ -324,7 +332,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                             e.printStackTrace();
                         }
                     }
-
+                    position++; // updating stack position.
                 }
             }
         }
@@ -552,14 +560,13 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     }
 
     private void fillByteSliceARGB(RandomAccess<T> rai, byte[] pixels_byte) {
-        for(long x = 0; x < nCols; x++)
-        {
+
+        for (long x = 0; x < nCols; x++) {
             rai.setPosition(x, image.dimensionIndex(Axes.X));
-            for(long y = 0; y < nRows; y++)
-            {
+            for (long y = 0; y < nRows; y++) {
                 rai.setPosition(y, image.dimensionIndex(Axes.Y));
                 T value = rai.get();
-                pixels_byte[(int)(y * nCols + x)] = (byte)((ARGBType)value).get();
+                pixels_byte[(int) (y * nCols + x)] = (byte) ((ARGBType) value).get();
             }
         }
     }
