@@ -159,7 +159,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 			} 
 			else if (val instanceof ARGBType)
             {
-                log.info("Writing RGB to 3 uint8 channels");
+                log.info("Writing ARGB to 4 uint8 channels");
                 writeARGB();
 			}
 			else {
