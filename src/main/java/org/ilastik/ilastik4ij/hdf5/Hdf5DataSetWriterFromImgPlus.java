@@ -493,7 +493,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         }
     }
 
-    private void fillByteSliceARGB(RandomAccess<ARGBType> rai, byte[][] pixels_byte) {
+    private void fillByteSliceARGB(RandomAccess<ARGBType> rai, byte[][] pixelsByte) {
         final int cols = Math.toIntExact(nCols);
         final int rows = Math.toIntExact(nRows);
 
@@ -502,7 +502,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
             for (int y = 0; y < rows; y++) {
                 rai.setPosition(y, image.dimensionIndex(Axes.Y));
                 ARGBType value = rai.get();
-                pixels_byte[y][x] = (byte) value.get();
+                pixelsByte[y][x] = (byte) value.get();
             }
         }
     }
