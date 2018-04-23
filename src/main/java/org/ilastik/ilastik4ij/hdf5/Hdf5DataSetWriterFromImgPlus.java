@@ -236,18 +236,23 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                     log.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
                     isAlphaChannelPresent = false;
                 }
-                int position = 0; //Initializing stack position.
                 for (long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) {
                     // Construct 2D array of appropriate data
                     pixelsByte = new byte[rows][cols];
-                    if (!isAlphaChannelPresent && c == 0) {
-                        for (byte[] row : pixelsByte) {
-                            Arrays.fill(row, (byte) -1);
+                    if(!isAlphaChannelPresent) {
+                        if (c == 0) {
+                            for (byte[] row :  pixelsByte) {
+                                Arrays.fill(row, (byte) -1);  // hard code alpha channel.
+                            }
+                        } else {
+                            if(image.dimensionIndex(Axes.CHANNEL) >= 0) {
+                                rai.setPosition(c-1, image.dimensionIndex(Axes.CHANNEL));
+                            }
+                            fillByteSliceARGB(rai, pixelsByte);
                         }
-                        position--;
-                    } else {
+                    }else {
                         if (image.dimensionIndex(Axes.CHANNEL) >= 0) {
-                            rai.setPosition(position, image.dimensionIndex(Axes.CHANNEL));
+                            rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
                         }
                         fillByteSliceARGB(rai, pixelsByte);
                     }
@@ -302,7 +307,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                             throw e;
                         }
                     }
-                    position++; // updating stack position.
                 }
             }
         }
