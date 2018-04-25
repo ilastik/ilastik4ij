@@ -22,7 +22,7 @@ import static java.lang.Long.min;
 public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     private static final int NUM_OF_ARGB_CHANNELS = 4;
     private final ImgPlus<T> image;
-
+    private static final int RANK = 5;
     private final long nFrames;
     private final long nChannels;
     private final long nLevs;
@@ -95,7 +95,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 
             file_id = H5.H5Fcreate(filename, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
             dcpl_id = H5.H5Pcreate(H5P_DATASET_CREATE);
-            H5.H5Pset_chunk(dcpl_id, 5, chunk_dims);
+            H5.H5Pset_chunk(dcpl_id, RANK, chunk_dims);
             H5.H5Pset_deflate(dcpl_id, compressionLevel);
 
             T val = image.firstElement();
@@ -136,14 +136,14 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     }
 
     private void writeARGB() {
-        long[] channelDimsRGB = new long[5];
+        long[] channelDimsRGB = new long[RANK];
         channelDimsRGB[0] = nFrames; //t
         channelDimsRGB[1] = nLevs; //z
         channelDimsRGB[2] = nRows; //y
         channelDimsRGB[3] = nCols; //x
         channelDimsRGB[4] = NUM_OF_ARGB_CHANNELS;//c
 
-        long[] colorIniDims = new long[5];
+        long[] colorIniDims = new long[RANK];
         colorIniDims[0] = 1;
         colorIniDims[1] = 1;
         colorIniDims[2] = nRows;
@@ -165,6 +165,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         RandomAccess<ARGBType> rai = (RandomAccess<ARGBType>) image.randomAccess();
         boolean isAlphaChannelPresent = true;
         Object[][] pixelsByte;
+        H5.H5Dset_extent(dataset_id, channelDimsRGB);// change to writeHyperslab method
 
         for (long t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
@@ -201,7 +202,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         fillStackSliceARGB(rai, pixelsByte);
                     }
                     // write it out
-                    writeHDF5(H5T_NATIVE_UINT8, channelDimsRGB, colorIniDims, pixelsByte, t, z, c);
+                    writeHDF5(H5T_NATIVE_UINT8, colorIniDims, pixelsByte, t, z, c);
                 }
             }
         }
@@ -216,12 +217,12 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
             log.error("got less than 1 z?");
             return;
         }
-        long[] channel_Dims = new long[5];
-        channel_Dims[0] = nFrames; // t
-        channel_Dims[1] = nLevs; // z
-        channel_Dims[2] = nRows; //y
-        channel_Dims[3] = nCols; //x
-        channel_Dims[4] = nChannels; // c
+        long[] channelDims = new long[5]; // rename the variable.
+        channelDims[0] = nFrames; // t
+        channelDims[1] = nLevs; // z
+        channelDims[2] = nRows; //y
+        channelDims[3] = nCols; //x
+        channelDims[4] = nChannels; // c
 
         long[] iniDims = new long[5];
         iniDims[0] = 1;
@@ -231,7 +232,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         iniDims[4] = 1;
 
         try {
-            dataspace_id = H5.H5Screate_simple(5, iniDims, maxdims);
+            dataspace_id = H5.H5Screate_simple(RANK, iniDims, maxdims);
             dataset_id = H5.H5Dcreate(file_id, dataset, hdf5DataType, dataspace_id, H5P_DEFAULT, dcpl_id, H5P_DEFAULT);
         } catch (HDF5Exception ex) {
             log.error("H5D dataspace creation failed." + ex.getMessage(), ex);
@@ -243,6 +244,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 
         RandomAccess<T> rai = image.randomAccess();
         Object[][] pixelSlice;
+        H5.H5Dset_extent(dataset_id, channelDims);// change to writeHyperslab method
 
         for (long t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
@@ -270,7 +272,7 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                     }
                     fillStackSliceARGB(rai, pixelSlice);
                     // write HDF5
-                    writeHDF5(hdf5DataType, channel_Dims, iniDims, pixelSlice, t, z, c);
+                    writeHDF5(hdf5DataType, iniDims, pixelSlice, t, z, c);
                 }
             }
         }
@@ -278,36 +280,18 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         log.info("Done writing the hdf5");
     }
 
-    private void writeHDF5(int hdf5DataType, long[] channelDimsRGB, long[] colorIniDims, Object[][] pixelsByte, long t, long z, long c) {
-        if (isFirstSlice) {
-            writeFirstSlice(hdf5DataType, pixelsByte, channelDimsRGB);
-            isFirstSlice = false;
-        } else {
-            long[] start = {t, z, 0, 0, c};
-            writeHyperslabs(hdf5DataType, pixelsByte, start, colorIniDims);
-        }
-    }
+    private void writeHDF5(int hdf5DataType, long[] colorIniDims, Object[][] pixelsByte, long t, long z, long c) {
 
-    private <E> void writeFirstSlice(int hdf5DataType, E[][] pixelsSlice, long[] channelDimsRGB) {
-        try {
-            H5.H5Dwrite(dataset_id, hdf5DataType, H5S_ALL, H5S_ALL, H5P_DEFAULT, pixelsSlice);
-            H5.H5Dset_extent(dataset_id, channelDimsRGB);
-        } catch (HDF5Exception e) {
-            log.error("Error while writing first chunk." + e.getMessage(), e);
-            throw new RuntimeException(e);
-        } catch (Exception e) {
-            log.error("Error writing HDF5 at writeFirstSlice method." + e.getMessage(), e);
-            throw new RuntimeException(e);
-        } finally {
-            H5.H5Sclose(dataspace_id);//check if close is necessary
-        }
+        long[] start = {t, z, 0, 0, c};
+        writeHyperslabs(hdf5DataType, pixelsByte, start, colorIniDims);
+
     }
 
     private <E> void writeHyperslabs(int hdf5DataType, E[][] pixelsByte, long[] start, long[] colorIniDims) {
         try {
             dataspace_id = H5.H5Dget_space(dataset_id);
             H5.H5Sselect_hyperslab(dataspace_id, HDF5Constants.H5S_SELECT_SET, start, null, colorIniDims, null);
-            int memSpace = H5.H5Screate_simple(5, colorIniDims, null);
+            int memSpace = H5.H5Screate_simple(RANK, colorIniDims, null); // make rank 5 a constanz.
             H5.H5Dwrite(dataset_id, hdf5DataType, memSpace, dataspace_id, H5P_DEFAULT, pixelsByte);
         } catch (HDF5Exception e) {
             log.error("Error while writing extended hyperslabs." + e.getMessage(), e);
