@@ -50,20 +50,17 @@ public class Hdf5DataSetReaderTest {
     private final DatasetService ds = context.getService(DatasetService.class);
     private final LogService log = context.getService(LogService.class);
     private static File testchocolate;
-    private static File testchocolateARGB;
     private final String filename = "src/test/resources/test.h5";
     private final String filename_JPG = "src/test/resources/chocolate21.jpg";
 
     @BeforeClass
     public static void setUpClass() throws IOException {
         testchocolate = File.createTempFile("chocolate", "h5");
-        testchocolateARGB = File.createTempFile("chocolateARGB", "h5");
     }
 
     @AfterClass
-    public static void deleteClass() {
+    public static void tearDownClass() {
         testchocolate.deleteOnExit();
-        testchocolateARGB.deleteOnExit();
     }
 
 
@@ -174,7 +171,7 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public void testWriteHDF5ARGB() throws Exception {
-        String filename_HDF5 = testchocolateARGB.getPath();
+        String filename_HDF5 = testchocolate.getPath();
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
@@ -220,7 +217,7 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public void testWriteHDF5Float() throws Exception {
-        String filename_HDF5 = testchocolateARGB.getPath();
+        String filename_HDF5 = testchocolate.getPath();
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
@@ -260,7 +257,7 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public void testWriteHDF5Short() throws Exception {
-        String filename_HDF5 = testchocolateARGB.getPath();
+        String filename_HDF5 = testchocolate.getPath();
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
@@ -300,11 +297,11 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public void testWriteHDF5Int32() throws Exception {
-        String filename_HDF5 = "src/test/resources/int.h5";//testchocolateARGB.getPath();
+        String filename_HDF5 = testchocolate.getPath();
         DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
         Dataset input = datasetIOService.open(filename_JPG);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
-        final RandomAccessibleInterval<UnsignedIntType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealUnsignedIntConverter<>(0, 2147483647), new UnsignedIntType());
+        final RandomAccessibleInterval<UnsignedIntType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealUnsignedIntConverter<>(0, 255), new UnsignedIntType());
         Img<UnsignedIntType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedIntType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedIntType> imgrgb = new ImgPlus<>(imview, "", axes);
