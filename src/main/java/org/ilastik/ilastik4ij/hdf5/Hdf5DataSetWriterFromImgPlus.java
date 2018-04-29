@@ -23,18 +23,15 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     private static final int NUM_OF_ARGB_CHANNELS = 4;
     private final ImgPlus<T> image;
     private static final int RANK = 5;
-    private final long nFrames;
-    private final long nChannels;
-    private final long nLevs;
-    private long nRows;
-    private long nCols;
-
+    private final int nFrames;
+    private final int nChannels;
+    private final int nZ;
+    private int nRows;
+    private int nCols;
     private LogService log;
     private String filename;
     private String dataset;
     private int compressionLevel;
-    private final int cols;
-    private final int rows;
     private int fileId = -1;
     private int dataspaceId = -1;
     private int datasetId = -1;
@@ -51,28 +48,26 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         this.image = image;
 
         if (image.dimensionIndex(Axes.TIME) >= 0) {
-            this.nFrames = image.dimension(image.dimensionIndex(Axes.TIME));
+            this.nFrames = Math.toIntExact(image.dimension(image.dimensionIndex(Axes.TIME)));
         } else {
             this.nFrames = 1;
         }
         if (image.dimensionIndex(Axes.CHANNEL) >= 0) {
-            this.nChannels = image.dimension(image.dimensionIndex(Axes.CHANNEL));
+            this.nChannels = Math.toIntExact(image.dimension(image.dimensionIndex(Axes.CHANNEL)));
         } else {
             this.nChannels = 1;
         }
         if (image.dimensionIndex(Axes.Z) >= 0) {
-            this.nLevs = image.dimension(image.dimensionIndex(Axes.Z));
+            this.nZ = Math.toIntExact(image.dimension(image.dimensionIndex(Axes.Z)));
         } else {
-            this.nLevs = 1;
+            this.nZ = 1;
         }
         if (image.dimensionIndex(Axes.X) < 0 || image.dimensionIndex(Axes.Y) < 0) {
             throw new IllegalArgumentException("image must have X and Y dimensions!");
         }
 
-        this.nRows = image.dimension(image.dimensionIndex(Axes.Y));
-        this.nCols = image.dimension(image.dimensionIndex(Axes.X));
-        this.cols = Math.toIntExact(nCols); //One time cast from long to int data type.
-        this.rows = Math.toIntExact(nRows); //One time cast from long to int data type.
+        this.nRows = Math.toIntExact(image.dimension(image.dimensionIndex(Axes.Y)));
+        this.nCols = Math.toIntExact(image.dimension(image.dimensionIndex(Axes.X)));
         this.filename = filename;
         this.dataset = dataset;
         this.compressionLevel = compressionLevel;
@@ -81,12 +76,12 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 
     public void write() {
         long[] chunk_dims = {1,
-                min(nLevs, 256),
+                min(nZ, 256),
                 min(nRows, 256),
                 min(nCols, 256),
                 1
         };
-        log.info("Export Dimensions in tzyxc: " + String.valueOf(nFrames) + "x" + String.valueOf(nLevs) + "x"
+        log.info("Export Dimensions in tzyxc: " + String.valueOf(nFrames) + "x" + String.valueOf(nZ) + "x"
                 + String.valueOf(nRows) + "x" + String.valueOf(nCols) + "x" + String.valueOf(nChannels));
 
         try {
@@ -134,9 +129,10 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     }
 
     private void writeARGB() {
+
         long[] channelDimsRGB = new long[RANK];
         channelDimsRGB[0] = nFrames; //t
-        channelDimsRGB[1] = nLevs; //z
+        channelDimsRGB[1] = nZ; //z
         channelDimsRGB[2] = nRows; //y
         channelDimsRGB[3] = nCols; //x
         channelDimsRGB[4] = NUM_OF_ARGB_CHANNELS;//c
@@ -165,11 +161,11 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         Object[][] pixelsByte;
         H5.H5Dset_extent(datasetId, channelDimsRGB);
 
-        for (long t = 0; t < nFrames; t++) {
+        for (int t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
                 rai.setPosition(t, image.dimensionIndex(Axes.TIME));
 
-            for (long z = 0; z < nLevs; z++) {
+            for (int z = 0; z < nZ; z++) {
                 if (image.dimensionIndex(Axes.Z) >= 0)
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
@@ -178,9 +174,9 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                     isAlphaChannelPresent = false;
                 }
 
-                for (long c = 0; c < NUM_OF_ARGB_CHANNELS; c++) {
+                for (int c = 0; c < NUM_OF_ARGB_CHANNELS; c++) {
                     // Construct 2D array of appropriate data
-                    pixelsByte = new Byte[rows][cols];
+                    pixelsByte = new Byte[nRows][nCols];
 
                     if (!isAlphaChannelPresent) {
                         if (c == 0) {
@@ -211,13 +207,10 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
 
 
     private void writeIndividualChannels(int hdf5DataType) {
-        if (nLevs < 1) {
-            log.error("got less than 1 z?");
-            return;
-        }
+
         long[] channelDims = new long[RANK];
         channelDims[0] = nFrames; // t
-        channelDims[1] = nLevs; // z
+        channelDims[1] = nZ; // z
         channelDims[2] = nRows; //y
         channelDims[3] = nCols; //x
         channelDims[4] = nChannels; // c
@@ -244,27 +237,27 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         Object[][] pixelSlice;
         H5.H5Dset_extent(datasetId, channelDims);
 
-        for (long t = 0; t < nFrames; t++) {
+        for (int t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
                 rai.setPosition(t, image.dimensionIndex(Axes.TIME));
 
-            for (long z = 0; z < nLevs; z++) {
+            for (int z = 0; z < nZ; z++) {
                 if (image.dimensionIndex(Axes.Z) >= 0)
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
-                for (long c = 0; c < nChannels; c++) {
+                for (int c = 0; c < nChannels; c++) {
                     if (image.dimensionIndex(Axes.CHANNEL) >= 0)
                         rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
 
                     // Construct 2D array of appropriate data type.
                     if (hdf5DataType == H5T_NATIVE_UINT8) {
-                        pixelSlice = new Byte[rows][cols];
+                        pixelSlice = new Byte[nRows][nCols];
                     } else if (hdf5DataType == H5T_NATIVE_UINT16) {
-                        pixelSlice = new Short[rows][cols];
+                        pixelSlice = new Short[nRows][nCols];
                     } else if (hdf5DataType == H5T_NATIVE_UINT32) {
-                        pixelSlice = new Integer[rows][cols];
+                        pixelSlice = new Integer[nRows][nCols];
                     } else if (hdf5DataType == H5T_NATIVE_FLOAT) {
-                        pixelSlice = new Float[rows][cols];
+                        pixelSlice = new Float[nRows][nCols];
                     } else {
                         throw new IllegalArgumentException("Trying to save dataset of unknown datatype.");
                     }
@@ -274,7 +267,6 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                 }
             }
         }
-
         log.info("compressionLevel: " + String.valueOf(compressionLevel));
         log.info("Finished writing the HDF5.");
     }
@@ -298,21 +290,21 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
     @SuppressWarnings({"unchecked", "TypeParameterHidesVisibleType"})
     private <E, T> void fillStackSlice(RandomAccess<T> rai, E[][] pixelArray) {
 
-        for (int x = 0; x < cols; x++) {
+        for (int x = 0; x < nCols; x++) {
             rai.setPosition(x, image.dimensionIndex(Axes.X));
-            for (int y = 0; y < rows; y++) {
+            for (int y = 0; y < nRows; y++) {
                 rai.setPosition(y, image.dimensionIndex(Axes.Y));
                 T value = rai.get();
                 if (value instanceof UnsignedByteType) {
-                    pixelArray[y][x] = (E) (Byte) (new Integer(((UnsignedByteType) value).get()).byteValue());
+                    pixelArray[y][x] = (E) (Byte) (Integer.valueOf(((UnsignedByteType) value).get()).byteValue());
                 } else if (value instanceof UnsignedShortType) {
-                    pixelArray[y][x] = (E) (Short) (new Integer((((UnsignedShortType) value).get())).shortValue());
+                    pixelArray[y][x] = (E) (Short) (Integer.valueOf((((UnsignedShortType) value).get())).shortValue());
                 } else if (value instanceof UnsignedIntType) {
-                    pixelArray[y][x] = (E) (Integer) (new Long((((UnsignedIntType) value).get())).intValue());
+                    pixelArray[y][x] = (E) (Integer) (Long.valueOf((((UnsignedIntType) value).get())).intValue());
                 } else if (value instanceof FloatType) {
-                    pixelArray[y][x] = (E) (new Float((((FloatType) value).get())));
+                    pixelArray[y][x] = (E) (Float.valueOf((((FloatType) value).get())));
                 } else if (value instanceof ARGBType) {
-                    pixelArray[y][x] = (E) (Byte) (new Integer(((ARGBType) value).get()).byteValue());
+                    pixelArray[y][x] = (E) (Byte) (Integer.valueOf(((ARGBType) value).get()).byteValue());
                 } else {
                     log.error("Type Not handled yet!");
                 }
