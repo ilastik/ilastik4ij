@@ -1,5 +1,6 @@
 package org.ilastik.ilastik4ij.hdf5;
 
+import ij.IJ;
 import ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -13,9 +14,7 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.log.LogService;
-
 import java.util.Arrays;
-
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.*;
 import static java.lang.Long.min;
 
@@ -161,6 +160,13 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         Object[][] pixelsByte;
         H5.H5Dset_extent(datasetId, channelDimsRGB);
 
+        /* Display progress bar on FIJI--START*/
+        int totalCheckpoints = nFrames * nZ * nChannels * 2;
+        int checkpoint = 0;
+        IJ.showStatus("Exporting HDF5...");
+        IJ.showProgress(checkpoint, totalCheckpoints);
+        /* Display progress bar on FIJI--END*/
+
         for (int t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
                 rai.setPosition(t, image.dimensionIndex(Axes.TIME));
@@ -195,12 +201,15 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         }
                         fillStackSlice(rai, pixelsByte);
                     }
+                    IJ.showProgress(++checkpoint, totalCheckpoints);// Display progress bar on FIJI
                     // write it out
                     long[] start = {t, z, 0, 0, c};
                     writeHyperslabs(H5T_NATIVE_UINT8, pixelsByte, start, colorIniDims);
+                    IJ.showProgress(++checkpoint, totalCheckpoints);// Display progress bar on FIJI
                 }
             }
         }
+        IJ.showStatus("Finished Exporting HDF5."); // Display progress bar on FIJI
         log.info("CompressionLevel: " + String.valueOf(compressionLevel));
         log.info("Finished writing the HDF5.");
     }
@@ -237,6 +246,13 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
         Object[][] pixelSlice;
         H5.H5Dset_extent(datasetId, channelDims);
 
+        /* Display progress bar on FIJI--START*/
+        int totalCheckpoints = nFrames * nZ * nChannels * 2;
+        int checkpoint = 0;
+        IJ.showStatus("Exporting HDF5...");
+        IJ.showProgress(checkpoint, totalCheckpoints);
+        /* Display progress bar on FIJI--END*/
+
         for (int t = 0; t < nFrames; t++) {
             if (image.dimensionIndex(Axes.TIME) >= 0)
                 rai.setPosition(t, image.dimensionIndex(Axes.TIME));
@@ -262,11 +278,14 @@ public class Hdf5DataSetWriterFromImgPlus<T extends Type<T>> {
                         throw new IllegalArgumentException("Trying to save dataset of unknown datatype.");
                     }
                     fillStackSlice(rai, pixelSlice);
+                    IJ.showProgress(++checkpoint, totalCheckpoints); // Display progress bar on FIJI
                     long[] start = {t, z, 0, 0, c};
                     writeHyperslabs(hdf5DataType, pixelSlice, start, iniDims);
+                    IJ.showProgress(++checkpoint, totalCheckpoints); //Display progress bar on FIJI
                 }
             }
         }
+        IJ.showStatus("Finished Exporting HDF5.");// Display progress bar on FIJI
         log.info("compressionLevel: " + String.valueOf(compressionLevel));
         log.info("Finished writing the HDF5.");
     }
