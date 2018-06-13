@@ -1,18 +1,18 @@
 /**
  * MIT License
- *
+ * <p>
  * Copyright (c) 2017 ilastik
- *
+ * <p>
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
  * copies of the Software, and to permit persons to whom the Software is
  * furnished to do so, subject to the following conditions:
- *
+ * <p>
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- *
+ * <p>
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -20,29 +20,29 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
- *
+ * <p>
  * Author: Carsten Haubold
  */
 package org.ilastik.ilastik4ij;
 
-import org.ilastik.ilastik4ij.util.IlastikUtilities;
+import net.imagej.Dataset;
+import net.imagej.DatasetService;
+import net.imagej.ImgPlus;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-
+import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.scijava.ItemIO;
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import net.imagej.Dataset;
-import net.imagej.DatasetService;
-import net.imagej.ImgPlus;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 
 /**
@@ -56,11 +56,14 @@ public class IlastikTrackingPrediction implements Command {
     LogService log;
 
     @Parameter
+    StatusService statusService;
+
+    @Parameter
     OptionsService optionsService;
-    
+
     @Parameter
     DatasetService datasetService;
-    
+
     // own parameters:
     @Parameter(label = "Save temporary file for training only, without prediction.")
     private Boolean saveOnly = false;
@@ -76,7 +79,7 @@ public class IlastikTrackingPrediction implements Command {
 
     @Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String secondInputType = "Probabilities";
-    
+
 //    @Parameter(label = "Selected Output Type", choices = {"Tracking Label Image", "Feature Table"}, style = "radioButtonHorizontal")
 //    private String selectedOutputType = "Tracking Label Image";
 
@@ -122,18 +125,18 @@ public class IlastikTrackingPrediction implements Command {
                 e.printStackTrace();
                 return;
             }
-            
+
             // we do not want to compress probabilities (doesn't help), but segmentations really benefit from it
             int compressionLevel = 0;
             if (secondInputType.equals("Segmentation")) {
                 compressionLevel = 9;
             }
-            
+
             log.info("Dumping raw input image to temporary file " + tempInFileName);
-            new Hdf5DataSetWriterFromImgPlus(inputRawImage.getImgPlus(), tempInFileName, "data", 0, log).write();
-            
+            new Hdf5DataSetWriter(inputRawImage.getImgPlus(), tempInFileName, "data", 0, log, statusService).write();
+
             log.info("Dumping secondary input image to temporary file " + tempProbOrSegFileName);
-            new Hdf5DataSetWriterFromImgPlus(inputProbOrSegImage.getImgPlus(), tempProbOrSegFileName, "data", compressionLevel, log).write();
+            new Hdf5DataSetWriter(inputProbOrSegImage.getImgPlus(), tempProbOrSegFileName, "data", compressionLevel, log, statusService).write();
 
             if (saveOnly) {
                 log.info("Saved files for training to " + tempInFileName + " and " + tempProbOrSegFileName
@@ -190,12 +193,6 @@ public class IlastikTrackingPrediction implements Command {
         } else {
             commandLine.add("--prediction_maps=" + tempProbOrSegFilename);
         }
-        
-//        if (selectedOutputType.equals("Feature Table"))
-//        {
-//            commandLine.add("--export_source=Plugin");
-//            commandLine.add("--export_plugin=CSV-Table");
-//        }
 
         log.info("Running ilastik headless command:");
         log.info(commandLine);

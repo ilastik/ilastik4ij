@@ -5,18 +5,16 @@
  */
 package org.ilastik.ilastik4ij;
 
-import java.awt.event.ActionListener;
 import java.io.File;
 import net.imagej.DatasetService;
-import net.imagej.ImgPlus;
-import org.scijava.ItemIO;
+import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import net.imagej.Dataset;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriterFromImgPlus;
+import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.scijava.ItemVisibility;
 
 /**
@@ -29,6 +27,9 @@ public class IlastikExport implements Command {
     // needed services:
     @Parameter
     LogService log;
+
+    @Parameter
+    StatusService statusService;
 
     @Parameter
     DatasetService datasetService;
@@ -57,7 +58,7 @@ public class IlastikExport implements Command {
     
     @Override
     public void run() {
-        new Hdf5DataSetWriterFromImgPlus(input.getImgPlus(), hdf5FileName.getAbsolutePath(), "data", compressionLevel, log).write();
+        new Hdf5DataSetWriter(input.getImgPlus(), hdf5FileName.getAbsolutePath(), "data", compressionLevel, log, statusService).write();
     }
     
 }
