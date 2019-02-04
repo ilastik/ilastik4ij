@@ -26,8 +26,8 @@
 package org.ilastik.ilastik4ij;
 
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
-import net.imagej.ImgPlus;
+import net.imglib2.img.Img;
+import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
@@ -58,9 +58,6 @@ public class IlastikPixelClassificationPrediction implements Command {
     StatusService statusService;
 
     @Parameter
-    DatasetService datasetService;
-
-    @Parameter
     OptionsService optionsService;
 
     // own parameters:
@@ -77,7 +74,7 @@ public class IlastikPixelClassificationPrediction implements Command {
     private String chosenOutputType = "Probabilities";
 
     @Parameter(type = ItemIO.OUTPUT)
-    private ImgPlus predictions;
+    private Img<? extends NativeType<?>> predictions;
 
     private IlastikOptions ilastikOptions = null;
 
@@ -130,9 +127,7 @@ public class IlastikPixelClassificationPrediction implements Command {
             runIlastik(tempInFileName, tempOutFileName);
             log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
 
-            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
-            predictions.setName(chosenOutputType);
-            predictions.setSource("ComputedByIlastik");
+            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
         } catch (final Exception e) {
             log.warn("something went wrong during processing ilastik pixel classification");
         } finally {

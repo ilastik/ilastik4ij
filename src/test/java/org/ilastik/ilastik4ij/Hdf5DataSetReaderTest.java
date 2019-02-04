@@ -7,7 +7,6 @@ package org.ilastik.ilastik4ij;
 
 import io.scif.services.DatasetIOService;
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
@@ -20,6 +19,7 @@ import net.imglib2.converter.RealFloatConverter;
 import net.imglib2.converter.RealUnsignedShortConverter;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgView;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
@@ -36,6 +36,8 @@ import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -43,12 +45,10 @@ import static org.junit.Assert.assertEquals;
  * @author Ashis Ravindran
  */
 public class Hdf5DataSetReaderTest {
-
-
+    private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
     private Hdf5DataSetReader hdf5Reader;
     private final ImageJ ij = new ImageJ();
     private final Context context = ij.getContext();
-    private final DatasetService ds = context.getService(DatasetService.class);
     private final LogService log = context.getService(LogService.class);
     private final StatusService statusService = context.getService(StatusService.class);
     private static File testchocolate;
@@ -72,34 +72,35 @@ public class Hdf5DataSetReaderTest {
     @Test
     public void testReadAxes() {
         log.info("Loading file in tzyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 16", image.getValidBits(), 16);
-        assertEquals("DimX should be 4", 4, image.getImg().dimension(0));
-        assertEquals("DimY should be 5", 5, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 6", 6, image.getImg().dimension(3));
-        assertEquals("DimT should be 7", 7, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 4", 4, dims[0]);
+        assertEquals("DimY should be 5", 5, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 6", 6, dims[3]);
+        assertEquals("DimT should be 7", 7, dims[4]);
 
         log.info("Loading file in ztyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztyxc", log, ds);
+        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztyxc", log, statusService);
         image = hdf5Reader.read();
-        assertEquals("Bits should be 16", image.getValidBits(), 16);
-        assertEquals("DimX should be 4", 4, image.getImg().dimension(0));
-        assertEquals("DimY should be 5", 5, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 7", 7, image.getImg().dimension(3));
-        assertEquals("DimT should be 6", 6, image.getImg().dimension(4));
+        image.dimensions(dims);
+        assertEquals("DimX should be 4", 4, dims[0]);
+        assertEquals("DimY should be 5", 5, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 7", 7, dims[3]);
+        assertEquals("DimT should be 6", 6, dims[4]);
 
         log.info("Loading file in ztycx order");
-        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztycx", log, ds);
+        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztycx", log, statusService);
         image = hdf5Reader.read();
-        assertEquals("Bits should be 16", image.getValidBits(), 16);
-        assertEquals("DimX should be 3", 3, image.getImg().dimension(0));
-        assertEquals("DimY should be 5", 5, image.getImg().dimension(1));
-        assertEquals("DimC should be 4", 4, image.getImg().dimension(2));
-        assertEquals("DimZ should be 7", 7, image.getImg().dimension(3));
-        assertEquals("DimT should be 6", 6, image.getImg().dimension(4));
+        image.dimensions(dims);
+        assertEquals("DimX should be 3", 3, dims[0]);
+        assertEquals("DimY should be 5", 5, dims[1]);
+        assertEquals("DimC should be 4", 4, dims[2]);
+        assertEquals("DimZ should be 7", 7, dims[3]);
+        assertEquals("DimT should be 6", 6, dims[4]);
     }
 
     /**
@@ -108,27 +109,27 @@ public class Hdf5DataSetReaderTest {
     @Test
     public void testImageContents() {
         log.info("Loading file in tzyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("DimX", 0, image.dimensionIndex(Axes.X));
-        assertEquals("DimY", 1, image.dimensionIndex(Axes.Y));
-        assertEquals("DimC", 2, image.dimensionIndex(Axes.CHANNEL));
-        assertEquals("DimZ", 3, image.dimensionIndex(Axes.Z));
-        assertEquals("DimT", 4, image.dimensionIndex(Axes.TIME));
+        hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        assertEquals("DimX", 0, AXES.indexOf(Axes.X));
+        assertEquals("DimY", 1, AXES.indexOf(Axes.Y));
+        assertEquals("DimC", 2, AXES.indexOf(Axes.CHANNEL));
+        assertEquals("DimZ", 3, AXES.indexOf(Axes.Z));
+        assertEquals("DimT", 4, AXES.indexOf(Axes.TIME));
 
         RandomAccess rai = image.randomAccess();
-        rai.setPosition(1, image.dimensionIndex(Axes.CHANNEL));
-        rai.setPosition(0, image.dimensionIndex(Axes.Y));
-        rai.setPosition(0, image.dimensionIndex(Axes.X));
-        rai.setPosition(5, image.dimensionIndex(Axes.Z));
-        rai.setPosition(6, image.dimensionIndex(Axes.TIME));
+        rai.setPosition(1, AXES.indexOf(Axes.CHANNEL));
+        rai.setPosition(0, AXES.indexOf(Axes.Y));
+        rai.setPosition(0, AXES.indexOf(Axes.X));
+        rai.setPosition(5, AXES.indexOf(Axes.Z));
+        rai.setPosition(6, AXES.indexOf(Axes.TIME));
         UnsignedShortType f = (UnsignedShortType) rai.get();
         assertEquals("CHANNEL value should be 200", 200, f.get());
-        rai.setPosition(5, image.dimensionIndex(Axes.TIME));
+        rai.setPosition(5, AXES.indexOf(Axes.TIME));
         f = (UnsignedShortType) rai.get();
         assertEquals("CHANNEL value should be 0", 0, f.get());
-        rai.setPosition(6, image.dimensionIndex(Axes.TIME));
-        rai.setPosition(4, image.dimensionIndex(Axes.Z));
+        rai.setPosition(6, AXES.indexOf(Axes.TIME));
+        rai.setPosition(4, AXES.indexOf(Axes.Z));
         f = (UnsignedShortType) rai.get();
         assertEquals("CHANNEL value should be 200", 200, f.get());
     }
@@ -143,19 +144,20 @@ public class Hdf5DataSetReaderTest {
         Dataset input = datasetIOService.open(filename_JPG);
         new Hdf5DataSetWriter(input.getImgPlus(), filename_HDF5, "exported_data", 0, log, statusService).write();
         log.info("Loading file in tzyxc order");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 8", image.getValidBits(), 8);
-        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
-        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
-        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 400", 400, dims[0]);
+        assertEquals("DimY should be 289", 289, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 1", 1, dims[3]);
+        assertEquals("DimT should be 1", 1, dims[4]);
 
         RandomAccess raiOut = image.randomAccess();
-        raiOut.setPosition(0, image.dimensionIndex(Axes.CHANNEL));
-        raiOut.setPosition(80, image.dimensionIndex(Axes.X));
-        raiOut.setPosition(115, image.dimensionIndex(Axes.Y));
+        raiOut.setPosition(0, AXES.indexOf(Axes.CHANNEL));
+        raiOut.setPosition(80, AXES.indexOf(Axes.X));
+        raiOut.setPosition(115, AXES.indexOf(Axes.Y));
         UnsignedByteType valOut = (UnsignedByteType) raiOut.get();
 
         RandomAccess raiIn = input.getImgPlus().randomAccess();
@@ -184,19 +186,20 @@ public class Hdf5DataSetReaderTest {
         Hdf5DataSetWriter<ARGBType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, filename_HDF5, "exported_data", 0, log, statusService);
         hdf5.write();
         log.info("Loading file in tzyxc order ");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 8", image.getValidBits(), 8);
-        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
-        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
-        assertEquals("DimC should be 4", 4, image.getImg().dimension(2));
-        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
-        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 400", 400, dims[0]);
+        assertEquals("DimY should be 289", 289, dims[1]);
+        assertEquals("DimC should be 4", 4, dims[2]);
+        assertEquals("DimZ should be 1", 1, dims[3]);
+        assertEquals("DimT should be 1", 1, dims[4]);
 
         RandomAccess raiOut = image.randomAccess();
-        raiOut.setPosition(1, image.dimensionIndex(Axes.CHANNEL));
-        raiOut.setPosition(80, image.dimensionIndex(Axes.X));
-        raiOut.setPosition(115, image.dimensionIndex(Axes.Y));
+        raiOut.setPosition(1, AXES.indexOf(Axes.CHANNEL));
+        raiOut.setPosition(80, AXES.indexOf(Axes.X));
+        raiOut.setPosition(115, AXES.indexOf(Axes.Y));
         UnsignedByteType valout = (UnsignedByteType) raiOut.get();
 
         RandomAccess raiIn = imgrgb.randomAccess();
@@ -207,9 +210,9 @@ public class Hdf5DataSetReaderTest {
 
         assertEquals("Image content should be same.", valout.get(), ARGBType.red(valIn.get()));
 
-        raiOut.setPosition(0, image.dimensionIndex(Axes.CHANNEL));
-        raiOut.setPosition(80, image.dimensionIndex(Axes.X));
-        raiOut.setPosition(115, image.dimensionIndex(Axes.Y));
+        raiOut.setPosition(0, AXES.indexOf(Axes.CHANNEL));
+        raiOut.setPosition(80, AXES.indexOf(Axes.X));
+        raiOut.setPosition(115, AXES.indexOf(Axes.Y));
         valout = (UnsignedByteType) raiOut.get();
         assertEquals("Alpha channel should be set to 255.", valout.get(), 255);
     }
@@ -230,19 +233,20 @@ public class Hdf5DataSetReaderTest {
         Hdf5DataSetWriter<FloatType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, filename_HDF5, "exported_data", 0, log, statusService);
         hdf5.write();
         log.info("Loading file in tzyxc order ");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 32", image.getValidBits(), 32);
-        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
-        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
-        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 400", 400, dims[0]);
+        assertEquals("DimY should be 289", 289, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 1", 1, dims[3]);
+        assertEquals("DimT should be 1", 1, dims[4]);
 
         RandomAccess rai = image.randomAccess();
-        rai.setPosition(1, image.dimensionIndex(Axes.CHANNEL));
-        rai.setPosition(80, image.dimensionIndex(Axes.X));
-        rai.setPosition(115, image.dimensionIndex(Axes.Y));
+        rai.setPosition(1, AXES.indexOf(Axes.CHANNEL));
+        rai.setPosition(80, AXES.indexOf(Axes.X));
+        rai.setPosition(115, AXES.indexOf(Axes.Y));
         FloatType valOut = (FloatType) rai.get();
 
         RandomAccess rai2 = imgrgb.randomAccess();
@@ -270,19 +274,20 @@ public class Hdf5DataSetReaderTest {
         Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, filename_HDF5, "exported_data", 0, log, statusService);
         hdf5.write();
         log.info("Loading file in tzyxc order ");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 16", image.getValidBits(), 16);
-        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
-        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
-        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 400", 400, dims[0]);
+        assertEquals("DimY should be 289", 289, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 1", 1, dims[3]);
+        assertEquals("DimT should be 1", 1, dims[4]);
 
         RandomAccess rai = image.randomAccess();
-        rai.setPosition(1, image.dimensionIndex(Axes.CHANNEL));
-        rai.setPosition(80, image.dimensionIndex(Axes.X));
-        rai.setPosition(115, image.dimensionIndex(Axes.Y));
+        rai.setPosition(1, AXES.indexOf(Axes.CHANNEL));
+        rai.setPosition(80, AXES.indexOf(Axes.X));
+        rai.setPosition(115, AXES.indexOf(Axes.Y));
         UnsignedShortType valOut = (UnsignedShortType) rai.get();
 
         RandomAccess rai2 = imgrgb.randomAccess();
@@ -310,19 +315,20 @@ public class Hdf5DataSetReaderTest {
         Hdf5DataSetWriter<UnsignedIntType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, filename_HDF5, "exported_data", 0, log, statusService);
         hdf5.write();
         log.info("Loading file in tzyxc order ");
-        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, ds);
-        ImgPlus image = hdf5Reader.read();
-        assertEquals("Bits should be 32", image.getValidBits(), 32);
-        assertEquals("DimX should be 400", 400, image.getImg().dimension(0));
-        assertEquals("DimY should be 289", 289, image.getImg().dimension(1));
-        assertEquals("DimC should be 3", 3, image.getImg().dimension(2));
-        assertEquals("DimZ should be 1", 1, image.getImg().dimension(3));
-        assertEquals("DimT should be 1", 1, image.getImg().dimension(4));
+        hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
+        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        long[] dims = new long[5];
+        image.dimensions(dims);
+        assertEquals("DimX should be 400", 400, dims[0]);
+        assertEquals("DimY should be 289", 289, dims[1]);
+        assertEquals("DimC should be 3", 3, dims[2]);
+        assertEquals("DimZ should be 1", 1, dims[3]);
+        assertEquals("DimT should be 1", 1, dims[4]);
 
         RandomAccess rai = image.randomAccess();
-        rai.setPosition(1, image.dimensionIndex(Axes.CHANNEL));
-        rai.setPosition(80, image.dimensionIndex(Axes.X));
-        rai.setPosition(115, image.dimensionIndex(Axes.Y));
+        rai.setPosition(1, AXES.indexOf(Axes.CHANNEL));
+        rai.setPosition(80, AXES.indexOf(Axes.X));
+        rai.setPosition(115, AXES.indexOf(Axes.Y));
         UnsignedIntType valOut = (UnsignedIntType) rai.get();
 
         RandomAccess rai2 = imgrgb.randomAccess();

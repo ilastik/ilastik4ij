@@ -26,8 +26,8 @@
 package org.ilastik.ilastik4ij;
 
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
-import net.imagej.ImgPlus;
+import net.imglib2.img.Img;
+import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
@@ -61,9 +61,6 @@ public class IlastikTrackingPrediction implements Command {
     @Parameter
     OptionsService optionsService;
 
-    @Parameter
-    DatasetService datasetService;
-
     // own parameters:
     @Parameter(label = "Save temporary file for training only, without prediction.")
     private Boolean saveOnly = false;
@@ -84,7 +81,7 @@ public class IlastikTrackingPrediction implements Command {
 //    private String selectedOutputType = "Tracking Label Image";
 
     @Parameter(type = ItemIO.OUTPUT)
-    ImgPlus predictions;
+    private Img<? extends NativeType<?>> predictions;
 
     private IlastikOptions ilastikOptions = null;
 
@@ -156,8 +153,7 @@ public class IlastikTrackingPrediction implements Command {
             runIlastik(tempInFileName, tempProbOrSegFileName, tempOutFileName);
             log.info("Reading resulting tracking from " + tempOutFileName);
 
-            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, datasetService).read();
-            predictions.setName("Tracking result");
+            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
         } catch (final Exception e) {
             log.warn("Ilastik Tracking Prediction failed");
         } finally {

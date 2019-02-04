@@ -166,7 +166,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         H5.H5Dset_extent(datasetId, channelDimsRGB);
 
         /* Display progress bar on FIJI--START*/
-        int totalCheckpoints = nFrames * nZ * nChannels * 2;
+        int totalCheckpoints = nFrames * nZ * nChannels;
         int checkpoint = 0;
         statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
         /* Display progress bar on FIJI--END*/
@@ -205,7 +205,6 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                         }
                         fillStackSlice(rai, pixelsByte);
                     }
-                    statusService.showProgress(++checkpoint, totalCheckpoints);// Display progress bar on FIJI
                     // write it out
                     long[] start = {t, z, 0, 0, c};
                     writeHyperslabs(H5T_NATIVE_UINT8, pixelsByte, start, colorIniDims);
@@ -251,7 +250,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         H5.H5Dset_extent(datasetId, channelDims);
 
         /* Display progress bar on FIJI--START*/
-        int totalCheckpoints = nFrames * nZ * nChannels * 2;
+        int totalCheckpoints = nFrames * nZ * nChannels;
         int checkpoint = 0;
         statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
         /* Display progress bar on FIJI--END*/
@@ -281,7 +280,6 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                         throw new IllegalArgumentException("Trying to save dataset of unknown datatype.");
                     }
                     fillStackSlice(rai, pixelSlice);
-                    statusService.showProgress(++checkpoint, totalCheckpoints); // Display progress bar on FIJI
                     long[] start = {t, z, 0, 0, c};
                     writeHyperslabs(hdf5DataType, pixelSlice, start, iniDims);
                     statusService.showProgress(++checkpoint, totalCheckpoints); //Display progress bar on FIJI
