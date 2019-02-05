@@ -19,6 +19,7 @@ import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.thread.ThreadService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -43,7 +44,7 @@ import java.util.stream.Collectors;
 public class IlastikImport implements Command, ActionListener {
     private static final String SELECT_DATASET = "selectDataset";
     private static final String CANCEL_DATASET_SELECTION = "cancelDatasetSelection";
-    private static final String LOAD_RAW = "loadRaw";
+    private static final String LOAD_RAW = "loadDataset";
     private static final String LOAD_LUT = "loadLUT";
     private static final String CANCEL_AXES_ORDER_CONFIGURATION = "cancelAxesOrderConfiguration";
 
@@ -51,6 +52,8 @@ public class IlastikImport implements Command, ActionListener {
     private LogService log;
     @Parameter
     private StatusService statusService;
+    @Parameter
+    private ThreadService threadService;
 
     // plugin parameters
     @Parameter(label = "HDF5 file exported from ilastik")
@@ -71,7 +74,7 @@ public class IlastikImport implements Command, ActionListener {
 
     private final Lock lock = new ReentrantLock();
     private final Condition finishedCondition = lock.newCondition();
-    private boolean isFinished = false;
+    private boolean notFinished = true;
 
     @Override
     public void run() {
@@ -94,18 +97,45 @@ public class IlastikImport implements Command, ActionListener {
             IJ.outOfMemory("OOM while loading HDF5");
         }
 
-        // wait for isFinished to become true
+        // we need wait inside the run() method until for the HDF5 import to finish (in a separate thread)
+        // otherwise we won't be able to display the resulting image
+        waitForCompletion();
+
+        log.info("Done loading HDF5 file!");
+    }
+
+    private void waitForCompletion() {
+        // wait for notFinished to become false
         lock.lock();
         try {
-            while (!isFinished)
+            while (notFinished)
                 finishedCondition.await();
         } catch (InterruptedException ex) {
             log.warn("Execution of HDF5 loading got interrupted");
         } finally {
             lock.unlock();
         }
+    }
 
-        log.info("Done loading HDF5 file!");
+    private void signalCompletion() {
+        lock.lock();
+        try {
+            notFinished = false;
+            finishedCondition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private void loadDataset() {
+        Instant start = Instant.now();
+
+        dimensionOrder = (String) dimBox.getSelectedItem();
+        output = new Hdf5DataSetReader(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
+
+        Instant finish = Instant.now();
+        long timeElapsed = Duration.between(start, finish).toMillis();
+        log.info("Loading HDF5 dataset took: " + timeElapsed);
     }
 
     @Override
@@ -118,20 +148,26 @@ public class IlastikImport implements Command, ActionListener {
                 break;
             case CANCEL_DATASET_SELECTION:
                 frameSelectDataset.dispose();
-                signalFinished();
+                signalCompletion();
                 break;
             case LOAD_RAW:
-                loadRaw();
-                signalFinished();
+                frameSelectAxisOrdering.dispose();
+                threadService.run(() -> {
+                    loadDataset();
+                    signalCompletion();
+                });
                 break;
             case LOAD_LUT:
-                loadRaw();
-                IJ.run("3-3-2 RGB"); // Applies the lookup table
-                signalFinished();
+                frameSelectAxisOrdering.dispose();
+                threadService.run(() -> {
+                    loadDataset();
+                    IJ.run("3-3-2 RGB"); // Applies the lookup table
+                    signalCompletion();
+                });
                 break;
             case CANCEL_AXES_ORDER_CONFIGURATION:
                 frameSelectAxisOrdering.dispose();
-                signalFinished();
+                signalCompletion();
                 break;
         }
     }
@@ -213,7 +249,7 @@ public class IlastikImport implements Command, ActionListener {
         dimBox.setEditable(true);
         dimBox.addActionListener(this);
 
-        JButton l1 = new JButton("Load Raw");
+        JButton l1 = new JButton("Load");
         l1.setActionCommand(LOAD_RAW);
         l1.addActionListener(this);
         JButton l2 = new JButton("Load and apply LUT");
@@ -295,30 +331,5 @@ public class IlastikImport implements Command, ActionListener {
         frameSelectDataset.setLocationRelativeTo(null);
         frameSelectDataset.pack();
         frameSelectDataset.setVisible(true);
-
     }
-
-    private void signalFinished() {
-        lock.lock();
-        try {
-            isFinished = true;
-            finishedCondition.signal();
-        } finally {
-            lock.unlock();
-        }
-    }
-
-
-    private void loadRaw() {
-        dimensionOrder = (String) dimBox.getSelectedItem();
-        frameSelectAxisOrdering.dispose();
-        Instant start = Instant.now();
-
-        output = new Hdf5DataSetReader(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
-
-        Instant finish = Instant.now();
-        long timeElapsed = Duration.between(start, finish).toMillis();
-        log.info("Loading HDF5 dataset took: " + timeElapsed);
-    }
-
 }

@@ -17,7 +17,9 @@ import net.imglib2.type.numeric.real.FloatType;
 import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
 
+import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -80,9 +82,9 @@ public class Hdf5DataSetReader {
             RandomAccess rai = result.randomAccess();
             int[] extents = dsConfig.getXYSliceExtent();
 
-            int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
-            int checkpoint = 0;
-            statusService.showStatus(checkpoint, totalCheckpoints, "Importing HDF5...");
+            final int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
+            AtomicInteger checkpoint = new AtomicInteger();
+            SwingUtilities.invokeLater(() -> statusService.showStatus(checkpoint.get(), totalCheckpoints, "Importing HDF5..."));
 
             for (int frame = 0; frame < dsConfig.numFrames; ++frame) {
                 rai.setPosition(frame, AXES.indexOf(Axes.TIME));
@@ -123,14 +125,13 @@ public class Hdf5DataSetReader {
                                     UnsignedLongType raiType = (UnsignedLongType) rai.get();
                                     raiType.set((long) flatArray[destIndex]);
                                 }
-
-                                //statusService.showProgress(++checkpoint, totalCheckpoints);
                             }
                         }
+                        SwingUtilities.invokeLater(() -> statusService.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
                     }
                 }
             }
-            statusService.showStatus("Finished Importing HDF5.");
+            SwingUtilities.invokeLater(() -> statusService.showStatus("Finished Importing HDF5."));
             return result;
         } finally {
             reader.close();
