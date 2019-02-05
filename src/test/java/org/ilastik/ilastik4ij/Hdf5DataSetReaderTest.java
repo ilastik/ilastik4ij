@@ -73,9 +73,10 @@ public class Hdf5DataSetReaderTest {
     public void testReadAxes() {
         log.info("Loading file in tzyxc order");
         hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 4", 4, dims[0]);
         assertEquals("DimY should be 5", 5, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);
@@ -86,6 +87,7 @@ public class Hdf5DataSetReaderTest {
         hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztyxc", log, statusService);
         image = hdf5Reader.read();
         image.dimensions(dims);
+        assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 4", 4, dims[0]);
         assertEquals("DimY should be 5", 5, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);
@@ -96,6 +98,7 @@ public class Hdf5DataSetReaderTest {
         hdf5Reader = new Hdf5DataSetReader(filename, "exported_data", "ztycx", log, statusService);
         image = hdf5Reader.read();
         image.dimensions(dims);
+        assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 3", 3, dims[0]);
         assertEquals("DimY should be 5", 5, dims[1]);
         assertEquals("DimC should be 4", 4, dims[2]);
@@ -145,9 +148,10 @@ public class Hdf5DataSetReaderTest {
         new Hdf5DataSetWriter(input.getImgPlus(), filename_HDF5, "exported_data", 0, log, statusService).write();
         log.info("Loading file in tzyxc order");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 8", 8, image.getValidBits());
         assertEquals("DimX should be 400", 400, dims[0]);
         assertEquals("DimY should be 289", 289, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);
@@ -187,9 +191,10 @@ public class Hdf5DataSetReaderTest {
         hdf5.write();
         log.info("Loading file in tzyxc order ");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 8", 8, image.getValidBits());
         assertEquals("DimX should be 400", 400, dims[0]);
         assertEquals("DimY should be 289", 289, dims[1]);
         assertEquals("DimC should be 4", 4, dims[2]);
@@ -234,9 +239,10 @@ public class Hdf5DataSetReaderTest {
         hdf5.write();
         log.info("Loading file in tzyxc order ");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 32", 32, image.getValidBits());
         assertEquals("DimX should be 400", 400, dims[0]);
         assertEquals("DimY should be 289", 289, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);
@@ -275,9 +281,10 @@ public class Hdf5DataSetReaderTest {
         hdf5.write();
         log.info("Loading file in tzyxc order ");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 400", 400, dims[0]);
         assertEquals("DimY should be 289", 289, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);
@@ -316,9 +323,10 @@ public class Hdf5DataSetReaderTest {
         hdf5.write();
         log.info("Loading file in tzyxc order ");
         hdf5Reader = new Hdf5DataSetReader(filename_HDF5, "exported_data", "tzyxc", log, statusService);
-        Img<? extends NativeType<?>> image = hdf5Reader.read();
+        ImgPlus<? extends NativeType<?>> image = hdf5Reader.read();
         long[] dims = new long[5];
         image.dimensions(dims);
+        assertEquals("Bits should be 32", 32, image.getValidBits());
         assertEquals("DimX should be 400", 400, dims[0]);
         assertEquals("DimY should be 289", 289, dims[1]);
         assertEquals("DimC should be 3", 3, dims[2]);

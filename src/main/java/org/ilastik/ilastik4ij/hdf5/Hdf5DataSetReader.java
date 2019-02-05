@@ -2,6 +2,7 @@ package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imglib2.RandomAccess;
@@ -18,6 +19,7 @@ import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
 
 import javax.swing.*;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -54,7 +56,7 @@ public class Hdf5DataSetReader {
         this.statusService = statusService;
     }
 
-    public <T extends NativeType<T>> Img<T> read() {
+    public <T extends NativeType<T>> ImgPlus<T> read() {
         IHDF5Reader reader = HDF5Factory.openForReading(filename);
         try {
             Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(reader, dataset, axesorder);
@@ -77,9 +79,9 @@ public class Hdf5DataSetReader {
             // used default cell dimensions
             final ImgFactory<T> imgFactory = new CellImgFactory<>();
 
-            final Img<T> result = imgFactory.create(dims, type);
+            final Img<T> img = imgFactory.create(dims, type);
 
-            RandomAccess rai = result.randomAccess();
+            RandomAccess rai = img.randomAccess();
             int[] extents = dsConfig.getXYSliceExtent();
 
             final int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
@@ -132,6 +134,10 @@ public class Hdf5DataSetReader {
                 }
             }
             SwingUtilities.invokeLater(() -> statusService.showStatus("Finished Importing HDF5."));
+
+            ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString());
+            result.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);
+            result.setValidBits(dsConfig.bitdepth);
             return result;
         } finally {
             reader.close();

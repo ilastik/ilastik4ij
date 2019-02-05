@@ -25,13 +25,15 @@
  */
 package org.ilastik.ilastik4ij;
 
+import ij.IJ;
 import net.imagej.Dataset;
-import net.imglib2.img.Img;
+import net.imagej.ImgPlus;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
-import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -75,12 +77,6 @@ public class IlastikObjectClassificationPrediction implements Command {
 
     @Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String secondInputType = "Probabilities";
-
-//    @Parameter(label = "Selected Output Type", choices = {"Class Label Image", "Feature Table"}, style = "radioButtonHorizontal")
-//    private String selectedOutputType = "Class Label Image";
-
-    @Parameter(type = ItemIO.OUTPUT)
-    private Img<? extends NativeType<?>> predictions;
 
     private IlastikOptions ilastikOptions = null;
 
@@ -150,9 +146,9 @@ public class IlastikObjectClassificationPrediction implements Command {
             }
 
             runIlastik(tempInFileName, tempProbOrSegFileName, tempOutFileName);
-            log.info("Reading resulting probabilities from " + tempOutFileName);
+            log.info("Reading resulting segmentation from " + tempOutFileName);
 
-            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
+            showResults(tempOutFileName);
         } catch (final Exception e) {
             log.warn("Ilastik Object Classification Prediction failed");
         } finally {
@@ -170,6 +166,13 @@ public class IlastikObjectClassificationPrediction implements Command {
                 }
             }
         }
+    }
+
+    private <T extends RealType<T> & NativeType<T>> void showResults(String tempOutFileName) {
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
+        ImageJFunctions.show(imgPlus);
+        // apply LUT to the resulting segmentation
+        IJ.run("glasbey_inverted");
     }
 
     private void runIlastik(String tempInRawFileName, String tempProbOrSegFilename, String tempOutFileName) {

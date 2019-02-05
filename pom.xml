@@ -96,6 +96,10 @@
             <artifactId>imglib2</artifactId>
         </dependency>
         <dependency>
+            <groupId>net.imglib2</groupId>
+            <artifactId>imglib2-ij</artifactId>
+        </dependency>
+        <dependency>
             <groupId>cisd</groupId>
             <artifactId>jhdf5</artifactId>
         </dependency>

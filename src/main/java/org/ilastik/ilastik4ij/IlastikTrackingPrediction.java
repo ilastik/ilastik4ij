@@ -26,7 +26,7 @@
 package org.ilastik.ilastik4ij;
 
 import net.imagej.Dataset;
-import net.imglib2.img.Img;
+import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
@@ -81,7 +81,7 @@ public class IlastikTrackingPrediction implements Command {
 //    private String selectedOutputType = "Tracking Label Image";
 
     @Parameter(type = ItemIO.OUTPUT)
-    private Img<? extends NativeType<?>> predictions;
+    private ImgPlus<? extends NativeType<?>> predictions;
 
     private IlastikOptions ilastikOptions = null;
 

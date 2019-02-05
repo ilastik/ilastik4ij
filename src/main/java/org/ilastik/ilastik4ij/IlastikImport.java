@@ -10,11 +10,12 @@ import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.HDF5LinkInformation;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import ij.IJ;
-import net.imglib2.img.Img;
+import net.imagej.ImgPlus;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.util.DatasetInfo;
-import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -57,9 +58,6 @@ public class IlastikImport implements Command, ActionListener {
     // plugin parameters
     @Parameter(label = "HDF5 file exported from ilastik")
     private File hdf5FileName;
-
-    @Parameter(type = ItemIO.OUTPUT)
-    private Img<? extends NativeType<?>> output;
 
     private String fullFileName;
     private Map<String, HDF5DataSetInformation> datasets;
@@ -125,10 +123,17 @@ public class IlastikImport implements Command, ActionListener {
         }
     }
 
-    private void loadDataset(String axisOrder) {
+    private <T extends RealType<T> & NativeType<T>> void loadDataset(boolean applyLUT) {
+        String dimensionOrder = (String) dimBox.getSelectedItem();
+        dimensionOrder = dimensionOrder.toLowerCase();
+
         Instant start = Instant.now();
 
-        output = new Hdf5DataSetReader(fullFileName, datasetPath, axisOrder, log, statusService).read();
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
+        ImageJFunctions.show(imgPlus);
+        if (applyLUT) {
+            IJ.run("glasbey_inverted");
+        }
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
@@ -149,21 +154,18 @@ public class IlastikImport implements Command, ActionListener {
                 break;
             case LOAD_RAW:
                 if (isValidAxisOrder()) {
-                    String dimensionOrder = (String) dimBox.getSelectedItem();
                     frameSelectAxisOrdering.dispose();
                     threadService.run(() -> {
-                        loadDataset(dimensionOrder);
+                        loadDataset(false);
                         signalCompletion();
                     });
                 }
                 break;
             case LOAD_LUT:
                 if (isValidAxisOrder()) {
-                    String dimensionOrder = (String) dimBox.getSelectedItem();
                     frameSelectAxisOrdering.dispose();
                     threadService.run(() -> {
-                        loadDataset(dimensionOrder);
-                        IJ.run("3-3-2 RGB"); // Applies the lookup table
+                        loadDataset(true);
                         signalCompletion();
                     });
                 }
@@ -314,7 +316,6 @@ public class IlastikImport implements Command, ActionListener {
         b2.addActionListener(this);
 
         this.dataSetBox = new JComboBox<>();
-
 
         for (Map.Entry<String, HDF5DataSetInformation> entry : this.datasets.entrySet()) {
             dataSetBox.addItem(DatasetInfo.name(entry.getKey(), entry.getValue()));
