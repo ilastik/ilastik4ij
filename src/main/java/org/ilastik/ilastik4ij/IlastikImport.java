@@ -13,6 +13,7 @@ import ij.IJ;
 import net.imglib2.img.Img;
 import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
+import org.ilastik.ilastik4ij.util.DatasetInfo;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
@@ -28,10 +29,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.*;
 import java.util.List;
-import java.util.Vector;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -63,13 +62,12 @@ public class IlastikImport implements Command, ActionListener {
     private Img<? extends NativeType<?>> output;
 
     private String fullFileName;
-    private List<String> datasetList;
+    private Map<String, HDF5DataSetInformation> datasets;
     private IHDF5Reader reader;
     private JComboBox<String> dataSetBox;
     private JComboBox<String> dimBox;
     private JFrame frameSelectAxisOrdering;
     private JFrame frameSelectDataset;
-    private String dimensionOrder;
     private String datasetPath;
 
     private final Lock lock = new ReentrantLock();
@@ -81,8 +79,8 @@ public class IlastikImport implements Command, ActionListener {
         try {
             this.fullFileName = hdf5FileName.getAbsolutePath();
             this.reader = HDF5Factory.openForReading(fullFileName);
-            this.datasetList = findAvailableDatasets(reader, "/");
-            if (this.datasetList.isEmpty()) {
+            this.datasets = findAvailableDatasets(reader, "/");
+            if (this.datasets.isEmpty()) {
                 IJ.error(String.format("Could not find any datasets inside '%s'", this.fullFileName));
             }
             if (isSingleDataset()) {
@@ -127,11 +125,10 @@ public class IlastikImport implements Command, ActionListener {
         }
     }
 
-    private void loadDataset() {
+    private void loadDataset(String axisOrder) {
         Instant start = Instant.now();
 
-        dimensionOrder = (String) dimBox.getSelectedItem();
-        output = new Hdf5DataSetReader(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
+        output = new Hdf5DataSetReader(fullFileName, datasetPath, axisOrder, log, statusService).read();
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
@@ -151,19 +148,25 @@ public class IlastikImport implements Command, ActionListener {
                 signalCompletion();
                 break;
             case LOAD_RAW:
-                frameSelectAxisOrdering.dispose();
-                threadService.run(() -> {
-                    loadDataset();
-                    signalCompletion();
-                });
+                if (isValidAxisOrder()) {
+                    String dimensionOrder = (String) dimBox.getSelectedItem();
+                    frameSelectAxisOrdering.dispose();
+                    threadService.run(() -> {
+                        loadDataset(dimensionOrder);
+                        signalCompletion();
+                    });
+                }
                 break;
             case LOAD_LUT:
-                frameSelectAxisOrdering.dispose();
-                threadService.run(() -> {
-                    loadDataset();
-                    IJ.run("3-3-2 RGB"); // Applies the lookup table
-                    signalCompletion();
-                });
+                if (isValidAxisOrder()) {
+                    String dimensionOrder = (String) dimBox.getSelectedItem();
+                    frameSelectAxisOrdering.dispose();
+                    threadService.run(() -> {
+                        loadDataset(dimensionOrder);
+                        IJ.run("3-3-2 RGB"); // Applies the lookup table
+                        signalCompletion();
+                    });
+                }
                 break;
             case CANCEL_AXES_ORDER_CONFIGURATION:
                 frameSelectAxisOrdering.dispose();
@@ -173,22 +176,22 @@ public class IlastikImport implements Command, ActionListener {
     }
 
     private boolean isSingleDataset() {
-        return datasetList.size() == 1;
+        return datasets.size() == 1;
     }
 
-    private List<String> findAvailableDatasets(IHDF5Reader reader, String path) {
+    private Map<String, HDF5DataSetInformation> findAvailableDatasets(IHDF5Reader reader, String path) {
         HDF5LinkInformation link = reader.object().getLinkInformation(path);
         List<HDF5LinkInformation> members = reader.object().getGroupMemberInformation(link.getPath(), true);
 
-        List<String> result = new ArrayList<>();
+        Map<String, HDF5DataSetInformation> result = new LinkedHashMap<>();
         for (HDF5LinkInformation info : members) {
             log.info(info.getPath() + ": " + info.getType());
             switch (info.getType()) {
                 case DATASET:
-                    result.add(info.getPath());
+                    result.put(info.getPath(), reader.object().getDataSetInformation(info.getPath()));
                     break;
                 case GROUP:
-                    result.addAll(findAvailableDatasets(reader, info.getPath()));
+                    result.putAll(findAvailableDatasets(reader, info.getPath()));
                     break;
             }
         }
@@ -209,10 +212,9 @@ public class IlastikImport implements Command, ActionListener {
 
         if (!isSingleDataset()) {
             boxInfo = (String) dataSetBox.getSelectedItem();
-            String[] parts = boxInfo.split(":");
-            datasetPath = parts[1].replaceAll("\\s+", "");
+            datasetPath = DatasetInfo.parsePath(boxInfo);
         } else {
-            datasetPath = datasetList.get(0);
+            datasetPath = datasets.keySet().iterator().next();
         }
         HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(datasetPath);
 
@@ -314,12 +316,8 @@ public class IlastikImport implements Command, ActionListener {
         this.dataSetBox = new JComboBox<>();
 
 
-        for (String dataset : this.datasetList) {
-            if (reader.object().getDataSetInformation(dataset).getRank() == 5) {
-                dataSetBox.addItem("+: " + dataset);
-            } else {
-                dataSetBox.addItem("-: " + dataset);
-            }
+        for (Map.Entry<String, HDF5DataSetInformation> entry : this.datasets.entrySet()) {
+            dataSetBox.addItem(DatasetInfo.name(entry.getKey(), entry.getValue()));
         }
 
         dataSetBox.addActionListener(this);
@@ -331,5 +329,15 @@ public class IlastikImport implements Command, ActionListener {
         frameSelectDataset.setLocationRelativeTo(null);
         frameSelectDataset.pack();
         frameSelectDataset.setVisible(true);
+    }
+
+    private boolean isValidAxisOrder() {
+        String dimensionOrder = (String) dimBox.getSelectedItem();
+        HDF5DataSetInformation dsInfo = this.datasets.get(datasetPath);
+        if (dimensionOrder.length() != dsInfo.getRank()) {
+            IJ.error(String.format("Incorrect axis order '%s' for dataset '%s' of rank %s", dimensionOrder, datasetPath, dsInfo.getRank()));
+            return false;
+        }
+        return true;
     }
 }
