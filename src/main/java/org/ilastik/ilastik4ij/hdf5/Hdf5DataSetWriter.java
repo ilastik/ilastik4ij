@@ -20,6 +20,8 @@ import java.util.Arrays;
 import static ch.systemsx.cisd.hdf5.hdf5lib.HDF5Constants.*;
 import static java.lang.Long.min;
 
+//TODO: change ImgPlus to Img cause now the write is incompatible with read and doesn't work when the h5 is imported
+// with the ilastik plugin (importing with hdf5 works, cause it uses ImgPlus)...
 public class Hdf5DataSetWriter<T extends Type<T>> {
     private static final int NUM_OF_ARGB_CHANNELS = 4;
     private final ImgPlus<T> image;
