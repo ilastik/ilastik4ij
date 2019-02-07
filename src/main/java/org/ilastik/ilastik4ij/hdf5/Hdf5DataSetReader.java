@@ -1,5 +1,6 @@
 package org.ilastik.ilastik4ij.hdf5;
 
+import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import net.imagej.ImgPlus;
@@ -59,7 +60,8 @@ public class Hdf5DataSetReader {
     public <T extends NativeType<T>> ImgPlus<T> read() {
         IHDF5Reader reader = HDF5Factory.openForReading(filename);
         try {
-            Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(reader, dataset, axesorder);
+            HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
+            Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(dsInfo, axesorder);
             log.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
 
             // construct output image
@@ -82,7 +84,7 @@ public class Hdf5DataSetReader {
             final Img<T> img = imgFactory.create(dims, type);
 
             RandomAccess rai = img.randomAccess();
-            int[] extents = dsConfig.getXYSliceExtent();
+            final int[] extents = dsConfig.getXYSliceExtent();
 
             final int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
             AtomicInteger checkpoint = new AtomicInteger();
@@ -104,7 +106,7 @@ public class Hdf5DataSetReader {
                             for (int y = 0; y < dsConfig.dimY; y++) {
                                 rai.setPosition(y, AXES.indexOf(Axes.Y));
                                 int destIndex = y * dsConfig.dimX + x;
-                                if (dsConfig.axisIndices.get('x') < dsConfig.axisIndices.get('y')) {
+                                if (dsConfig.getExtent('x') < dsConfig.getExtent('y')) {
                                     destIndex = x * dsConfig.dimY + y;
                                 }
 
