@@ -29,7 +29,7 @@ import java.util.stream.IntStream;
 /**
  * @author chaubold
  */
-public class Hdf5DataSetReader {
+public class Hdf5DataSetReader<T extends NativeType<T>> {
     private static final Map<String, NativeType<?>> H5_TO_IMGLIB2_TYPE;
 
     static {
@@ -57,9 +57,8 @@ public class Hdf5DataSetReader {
         this.statusService = statusService;
     }
 
-    public <T extends NativeType<T>> ImgPlus<T> read() {
-        IHDF5Reader reader = HDF5Factory.openForReading(filename);
-        try {
+    public ImgPlus<T> read() {
+        try (IHDF5Reader reader = HDF5Factory.openForReading(filename)) {
             HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
             Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(dsInfo, axesorder);
             log.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
@@ -141,8 +140,6 @@ public class Hdf5DataSetReader {
             result.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);
             result.setValidBits(dsConfig.bitdepth);
             return result;
-        } finally {
-            reader.close();
         }
     }
 

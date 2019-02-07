@@ -129,7 +129,7 @@ public class IlastikImport implements Command, ActionListener {
 
         Instant start = Instant.now();
 
-        ImgPlus<T> imgPlus = new Hdf5DataSetReader(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(fullFileName, datasetPath, dimensionOrder, log, statusService).read();
         ImageJFunctions.show(imgPlus);
         if (applyLUT) {
             IJ.run("glasbey_inverted");
