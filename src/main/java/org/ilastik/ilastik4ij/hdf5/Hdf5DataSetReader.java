@@ -26,9 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/**
- * @author chaubold
- */
+
 public class Hdf5DataSetReader<T extends NativeType<T>> {
     private static final Map<String, NativeType<?>> H5_TO_IMGLIB2_TYPE;
 

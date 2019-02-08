@@ -41,9 +41,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
-/**
- * @author Ashis Ravindran
- */
+
 public class Hdf5DataSetReaderTest {
     private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
     private static final String DATASET = "exported_data";
@@ -268,7 +266,7 @@ public class Hdf5DataSetReaderTest {
         Img<UnsignedShortType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedShortType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedShortType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, "exported_data", 0, logService, statusService);
+        Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
         hdf5.write();
         // Loading file in tzyxc order
         ImgPlus<UnsignedShortType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);

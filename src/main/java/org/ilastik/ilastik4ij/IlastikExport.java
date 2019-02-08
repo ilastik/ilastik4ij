@@ -36,10 +36,11 @@ public class IlastikExport implements Command {
 
     // plugin parameters
     @Parameter(visibility = ItemVisibility.MESSAGE)
-    private String message = "Be careful to properly configure axes.\nScrollabale axes"
+    private String message = "Axis order of the exported dataset: 'TZYXC'." +
+            " Carefully configure scrollabale axes:"
             + " time frames, channels and z-slices can be easily mistaken."
-            + "\nFor changing their order go to"
-            + " Image -> Properties";
+            + " For changing their order go to"
+            + " Image -> Properties.";
 
     @Parameter(label = "Image to save")
     private Dataset input;

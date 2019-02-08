@@ -15,7 +15,7 @@ import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
-import org.ilastik.ilastik4ij.util.DatasetInfo;
+import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -214,7 +214,7 @@ public class IlastikImport implements Command, ActionListener {
 
         if (!isSingleDataset()) {
             boxInfo = (String) dataSetBox.getSelectedItem();
-            datasetPath = DatasetInfo.parsePath(boxInfo);
+            datasetPath = Hdf5Utils.parseDataset(boxInfo);
         } else {
             datasetPath = datasets.keySet().iterator().next();
         }
@@ -318,7 +318,7 @@ public class IlastikImport implements Command, ActionListener {
         this.dataSetBox = new JComboBox<>();
 
         for (Map.Entry<String, HDF5DataSetInformation> entry : this.datasets.entrySet()) {
-            dataSetBox.addItem(DatasetInfo.name(entry.getKey(), entry.getValue()));
+            dataSetBox.addItem(Hdf5Utils.dropdownName(entry.getKey(), entry.getValue()));
         }
 
         dataSetBox.addActionListener(this);
