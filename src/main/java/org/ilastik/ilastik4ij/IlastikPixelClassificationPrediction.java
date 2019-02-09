@@ -25,13 +25,15 @@
  */
 package org.ilastik.ilastik4ij;
 
+import ij.IJ;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
-import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -73,10 +75,7 @@ public class IlastikPixelClassificationPrediction implements Command {
     @Parameter(label = "Output type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
     private String chosenOutputType = "Probabilities";
 
-    @Parameter(type = ItemIO.OUTPUT)
-    private ImgPlus<? extends NativeType<?>> predictions;
-
-    private IlastikOptions ilastikOptions = null;
+    private IlastikOptions ilastikOptions;
 
     /**
      * Run method that calls ilastik
@@ -127,7 +126,7 @@ public class IlastikPixelClassificationPrediction implements Command {
             runIlastik(tempInFileName, tempOutFileName);
             log.info("Reading resulting " + chosenOutputType + " from " + tempOutFileName);
 
-            predictions = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
+            showResults(tempOutFileName);
         } catch (final Exception e) {
             log.warn("something went wrong during processing ilastik pixel classification");
         } finally {
@@ -139,6 +138,15 @@ public class IlastikPixelClassificationPrediction implements Command {
                 if (tempOutFileName != null)
                     new File(tempOutFileName).delete();
             }
+        }
+    }
+
+    private <T extends RealType<T> & NativeType<T>> void showResults(String tempOutFileName) {
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader(tempOutFileName, "exported_data", "tzyxc", log, statusService).read();
+        ImageJFunctions.show(imgPlus);
+        if (chosenOutputType.equals("Segmentation")) {
+            // apply LUT to the resulting segmentation
+            IJ.run("glasbey_inverted");
         }
     }
 
