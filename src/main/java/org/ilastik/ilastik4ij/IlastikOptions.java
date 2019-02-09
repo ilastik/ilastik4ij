@@ -53,7 +53,7 @@ public class IlastikOptions extends OptionsPlugin {
 
     // own parameters:
     @Parameter(label = "Path to ilastik executable")
-    private File executableFilePath = new File("/Users/chaubold/Desktop/ilastik-1.2.0-OSX.app");
+    private File executableFilePath = new File("/opt/ilastik/run_ilastik.sh");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
     private int numThreads = -1;
