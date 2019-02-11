@@ -52,7 +52,7 @@ See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappe
 Found at `Plugins -> ilastik -> Import HDF5`.
 
 HDF5 files can contain multiple datasets. Thus, when you import an HDF5 file containing more than one dataset, 
-you will have to select which dataset you want to import. Then, you will be presented with the following dialog:
+you will have to select which dataset you want to import. After choosing a given HDF5 file, you will be presented with the following dialog:
 
 ![ImageJ Menu](./doc/screenshots/IJ-Import.png)
 
@@ -60,7 +60,7 @@ where you should select or enter the correct meaning of the different dimensions
 At least `x` and `y` must be present, and the number of characters (`x`,`y`,`z` spatial, `c` channels and `t` time)
 must be equal to the number of dimensions listed in the description above.
 
-If you choose `Load and apply LUT`, after loading the `3-3-2-RGB` lookup table will be applied for you, which is
+If you choose `ApplyLUT`, after loading the `glasbey_inverted` lookup table will be applied for you, which is
 a sensible option for connected component labellings (e.g. a tracking result) or per-object predictions.
 
 ### Export
@@ -68,9 +68,9 @@ a sensible option for connected component labellings (e.g. a tracking result) or
 Found at `Plugins -> ilastik -> Export HDF5`.
 
 If you want to save the currently opened image to a HDF5 file that can be immediately opened in ilastik,
-use this export option. Additionally to the location where the file should be saved, you will be asked how much
-the dataset should be compressed. Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, 
-where many pixel values are equal. See also the tooltip when you hover over `Compression Level`.
+use this export option. Additionally to the location where the file should be saved, you could specify the output
+data set name as well as how much the dataset should be compressed. 
+Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, where many pixel values are equal.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
 
@@ -116,6 +116,33 @@ Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
   segmentation ![Pixel Classification Output: Probabilities](./doc/screenshots/IJ-PC-predictions.png)
 * or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_. 
   ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png)
+  
+#### Batch processing in headless mode
+The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
+resulting probability maps in separate HDF5 files inside the input directory.
+```
+import ij.*;
+import ij.process.*;
+import ij.gui.*;
+import java.awt.*;
+import ij.plugin.*;
+import java.io.File;
+
+public class My_Plugin implements PlugIn {
+	public void run(String arg) {
+		File dir = new File("<DATASET_DIR>");
+		String inputDataset="data";
+		String outputDataset="exported_data";
+		String ilastikProject = "<ILASTIK_PROJECT_PATH>";
+		int i = 0;
+		for(File file : dir.listFiles((d, name) -> name.endsWith(".h5"))) {
+			IJ.run("Import HDF5", String.format("select=%s datasetname=%s axisorder=tzyxc", file.getAbsolutePath(), inputDataset));
+			IJ.run(IJ.getImage(), "Run Pixel Classification Prediction", String.format("saveonly=false projectfilename=%s chosenoutputtype=Probabilities", ilastikProject));
+			IJ.run(IJ.getImage(), "Export HDF5", String.format("select=%s/output%d.h5 datasetname=%s compressionlevel=0", file.getParent(), ++i, outputDataset));
+		}
+	}
+}
+```
 
 ### Object Classification
 Found at `Plugins -> ilastik -> Run Object Classification Prediction`.

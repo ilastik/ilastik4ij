@@ -37,13 +37,15 @@ public class IlastikExport implements Command {
         String hdf5FilePath = od.getPath();
 
         GenericDialog gd = new GenericDialog("Export to HDF5");
-        gd.addMessage(String.format("Exporting to: '%s'. Axis order: 'TZYXC'", hdf5FilePath));
+        gd.addMessage("Axis order of the exported data set: 'TZYXC'");
+        gd.addStringField("ExportPath", hdf5FilePath, 100);
         gd.addStringField("DatasetName", "data");
         gd.addStringField("CompressionLevel", "0");
 
         gd.showDialog();
         if (gd.wasCanceled()) return;
 
+        hdf5FilePath = gd.getNextString();
         String datasetName = gd.getNextString();
         int compressionLevel = Integer.parseInt(gd.getNextString());
 
