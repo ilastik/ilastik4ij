@@ -120,7 +120,7 @@ Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
 #### Batch processing in headless mode
 The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
 resulting probability maps in separate HDF5 files inside the input directory.
-```
+```java
 import ij.*;
 import ij.process.*;
 import ij.gui.*;
