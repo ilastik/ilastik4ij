@@ -6,74 +6,60 @@
 package org.ilastik.ilastik4ij;
 
 import ij.IJ;
+import ij.gui.GenericDialog;
+import ij.io.OpenDialog;
 import net.imagej.Dataset;
-import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
-import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
-import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 
-/**
- * @author chaubold
- */
-@Plugin(type = Command.class, headless = false, menuPath = "Plugins>ilastik>Export HDF5")
+@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
 public class IlastikExport implements Command {
     @Parameter
     private LogService log;
     @Parameter
     private StatusService statusService;
-    @Parameter
-    private DatasetService datasetService;
-
-    // plugin parameters
-    @Parameter(visibility = ItemVisibility.MESSAGE)
-    private String message = "Axis order of the exported dataset: 'TZYXC'." +
-            " Carefully configure scrollabale axes:"
-            + " time frames, channels and z-slices can be easily mistaken."
-            + " For changing their order go to"
-            + " Image -> Properties.";
 
     @Parameter(label = "Image to save")
     private Dataset input;
 
-    @Parameter(label = "HDF5 file where to export to", style = "save")
-    private File hdf5FileName;
-
-    @Parameter(label = "Dataset name", style = "text field")
-    private String dataset = "data";
-
-    @Parameter(label = "Compression level (0-9)", style = "spinner", min = "0", max = "9",
-            description = "The best setting depends on the kind of data you are saving."
-                    + " Segmentations can be compressed well (-> select 9), "
-                    + "but raw data is best saved without compression (->0) for faster access.")
-    private int compressionLevel = 0;
-
-
     @Override
     public void run() {
-        String filename = hdf5FileName.getAbsolutePath();
-        if (!filename.endsWith(".h5")) {
+        OpenDialog od = new OpenDialog("Select export path", "", "export.h5");
+        String hdf5FilePath = od.getPath();
+
+        GenericDialog gd = new GenericDialog("Export to HDF5");
+        gd.addMessage(String.format("Exporting to: '%s'. Axis order: 'TZYXC'", hdf5FilePath));
+        gd.addStringField("DatasetName", "data");
+        gd.addStringField("CompressionLevel", "0");
+
+        gd.showDialog();
+        if (gd.wasCanceled()) return;
+
+        String datasetName = gd.getNextString();
+        int compressionLevel = Integer.parseInt(gd.getNextString());
+
+        if (!hdf5FilePath.endsWith(".h5")) {
             IJ.error("Error: HDF5 export file must have '.h5' suffix");
         } else {
-            saveImage(filename);
+            saveImage(hdf5FilePath, datasetName, compressionLevel);
         }
     }
 
-    private <T extends RealType<T>> void saveImage(String filename) {
+    private <T extends RealType<T>> void saveImage(String hdf5FilePath, String datasetName, int compressionLevel) {
         Instant start = Instant.now();
 
         @SuppressWarnings("unchecked")
         ImgPlus<T> imgPlus = (ImgPlus<T>) input.getImgPlus();
-        new Hdf5DataSetWriter<>(imgPlus, filename, dataset, compressionLevel, log, statusService).write();
+        new Hdf5DataSetWriter<>(imgPlus, hdf5FilePath, datasetName, compressionLevel, log, statusService).write();
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
