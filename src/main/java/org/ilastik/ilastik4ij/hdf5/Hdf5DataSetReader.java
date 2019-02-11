@@ -28,6 +28,7 @@ import java.util.stream.IntStream;
 
 
 public class Hdf5DataSetReader<T extends NativeType<T>> {
+    private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
     private static final Map<String, NativeType<?>> H5_TO_IMGLIB2_TYPE;
 
     static {
@@ -45,7 +46,6 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
     private final String axesorder;
     private final LogService log;
     private final StatusService statusService;
-    private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
 
     public Hdf5DataSetReader(String filename, String dataset, String axesorder, LogService log, StatusService statusService) {
         this.filename = filename;
@@ -154,7 +154,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                 return IntStream.range(0, shortArray.length).map(i -> shortArray[i]).boxed().toArray();
             case "uint32":
                 int[] intArray = reader.uint32().readMDArrayBlockWithOffset(dataset, extents, offset).getAsFlatArray();
-                return IntStream.range(0, intArray.length).map(i -> intArray[i]).boxed().toArray();
+                return Arrays.stream(intArray).boxed().toArray();
             case "uint64":
                 long[] longArray = reader.uint64().readMDArrayBlockWithOffset(dataset, extents, offset).getAsFlatArray();
                 return Arrays.stream(longArray).boxed().toArray();

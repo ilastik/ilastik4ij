@@ -1,7 +1,7 @@
 package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
-import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
+import org.ilastik.ilastik4ij.util.Hdf5Utils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -14,12 +14,13 @@ public class Hdf5DataSetConfig {
     public final int dimZ;
     public final int numChannels;
     public final String typeInfo;
-    public int bitdepth;
+    public final int bitdepth;
     private final Map<Character, Integer> axisIndices = new HashMap<>();
     private final Map<Character, Integer> axisExtents = new HashMap<>();
 
 
     public Hdf5DataSetConfig(HDF5DataSetInformation dsInfo, String axesorder) {
+        bitdepth = 8 * dsInfo.getTypeInformation().getElementSize();
         for (int index = 0; index < axesorder.length(); index++) {
             char axis = axesorder.charAt(index);
             axisIndices.put(axis, index);
@@ -39,7 +40,7 @@ public class Hdf5DataSetConfig {
         numChannels = axisExtents.getOrDefault('c', 1);
 
         // datatype
-        typeInfo = getTypeInfo(dsInfo);
+        typeInfo = Hdf5Utils.getTypeInfo(dsInfo);
     }
 
     public int getExtent(char axis) {
@@ -93,28 +94,6 @@ public class Hdf5DataSetConfig {
         }
 
         return result;
-    }
-
-    private String getTypeInfo(HDF5DataSetInformation dsInfo) {
-        HDF5DataTypeInformation dsType = dsInfo.getTypeInformation();
-        bitdepth = 8 * dsType.getElementSize();
-        String type = "";
-
-        if (!dsType.isSigned()) {
-            type += "u";
-        }
-
-        switch (dsType.getDataClass()) {
-            case INTEGER:
-                type += "int" + bitdepth;
-                break;
-            case FLOAT:
-                type += "float" + bitdepth;
-                break;
-            default:
-                type += dsInfo.toString();
-        }
-        return type;
     }
 }
 
