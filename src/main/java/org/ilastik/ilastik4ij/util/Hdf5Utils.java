@@ -29,7 +29,8 @@ public class Hdf5Utils {
         H5_TO_IMGLIB2_TYPE = Collections.unmodifiableMap(map);
     }
 
-    private static final long DEFAULT_BLOCK_SIZE = 128;
+    private static final long BLOCK_SIZE_2D = 128;
+    private static final long BLOCK_SIZE_3D = 64;
 
     public static <T extends NativeType<T>> T getNativeType(String dtype) {
         @SuppressWarnings("unchecked")
@@ -46,21 +47,31 @@ public class Hdf5Utils {
     }
 
     public static int[] blockSize(long[] datasetDims) {
-        // expect tzyxc axis
+        // expect rank 5 dims with tzyxc axis order
+        long bSize;
+        if (datasetDims[1] > 1) {
+            // if z-axis is non-singleton use 64x64x64 chunk size
+            bSize = BLOCK_SIZE_3D;
+        } else {
+            // otherwise use 128x128 chunk size
+            bSize = BLOCK_SIZE_2D;
+        }
+
         int[] result = new int[datasetDims.length];
 
         for (int i = 0; i < datasetDims.length; i++) {
-            result[i] = (int) Math.min(DEFAULT_BLOCK_SIZE, datasetDims[i]);
+            result[i] = (int) Math.min(bSize, datasetDims[i]);
         }
+        // reset t axis
         result[0] = 1;
-        result[1] = 1;
+        // reset c axis
         result[4] = 1;
 
         return result;
     }
 
     public static long[] getXYSliceDims(long[] datasetDims) {
-        // expect tzyxc axis
+        // expect rank 5 dims with tzyxc axis order
         long[] result = datasetDims.clone();
         result[0] = 1;
         result[1] = 1;
