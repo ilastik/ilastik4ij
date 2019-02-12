@@ -16,6 +16,7 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
 
@@ -29,17 +30,6 @@ import java.util.stream.IntStream;
 
 public class Hdf5DataSetReader<T extends NativeType<T>> {
     private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
-    private static final Map<String, NativeType<?>> H5_TO_IMGLIB2_TYPE;
-
-    static {
-        Map<String, NativeType<?>> map = new HashMap<>();
-        map.put("float32", new FloatType());
-        map.put("uint8", new UnsignedByteType());
-        map.put("uint16", new UnsignedShortType());
-        map.put("uint32", new UnsignedIntType());
-        map.put("uint64", new UnsignedLongType());
-        H5_TO_IMGLIB2_TYPE = Collections.unmodifiableMap(map);
-    }
 
     private final String filename;
     private final String dataset;
@@ -70,7 +60,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
 
             log.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
 
-            @SuppressWarnings("unchecked") final T type = (T) H5_TO_IMGLIB2_TYPE.get(dsConfig.typeInfo);
+            final T type = Hdf5Utils.getNativeType(dsConfig.typeInfo);
 
             if (type == null) {
                 throw new IllegalArgumentException("Unsupported data type: " + dsConfig.typeInfo);
