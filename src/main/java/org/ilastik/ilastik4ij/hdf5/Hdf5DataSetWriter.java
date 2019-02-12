@@ -52,6 +52,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         this.statusService = statusService;
     }
 
+    @SuppressWarnings("unchecked")
     public void write() {
         final long[] dims = {numFrames, dimZ, dimY, dimX, numChannels};
         String shape = Arrays.stream(dims)
@@ -61,17 +62,16 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
 
         try (IHDF5Writer writer = HDF5Factory.open(filename)) {
             T val = image.firstElement();
-
             if (val instanceof UnsignedByteType) {
-                writeUint8(writer, dims);
+                write(writer, dims, (Class<T>) UnsignedByteType.class);
             } else if (val instanceof UnsignedShortType) {
-                writeUint16(writer, dims);
+                write(writer, dims, (Class<T>) UnsignedShortType.class);
             } else if (val instanceof UnsignedIntType) {
-                writeUint32(writer, dims);
+                write(writer, dims, (Class<T>) UnsignedIntType.class);
             } else if (val instanceof UnsignedLongType) {
-                writeUint64(writer, dims);
+                write(writer, dims, (Class<T>) UnsignedLongType.class);
             } else if (val instanceof FloatType) {
-                writeFloat32(writer, dims);
+                write(writer, dims, (Class<T>) FloatType.class);
             } else if (val instanceof ARGBType) {
                 writeARGB(writer, dims);
             } else {
@@ -80,14 +80,14 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         }
     }
 
-    private void writeUint8(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving as 'uint8'. Compression level: " + compressionLevel);
+    private void write(IHDF5Writer writer, long[] datasetDims, Class<T> pixelClass) {
+        log.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
         final int totalCheckpoints = numFrames * numChannels * dimZ;
         int checkpoint = 0;
         statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.uint8().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        createMDArray(writer, datasetDims, blockSize, pixelClass);
 
         RandomAccess<T> rai = image.randomAccess();
         for (int t = 0; t < numFrames; t++) {
@@ -101,23 +101,20 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                         rai.setPosition(z, image.dimensionIndex(Axes.Z));
 
                     // init MD-array
-                    byte[] flatArr = new byte[dimY * dimX];
+                    Object[] flatArr = new Object[dimY * dimX];
                     // copy data XY slice
                     for (int x = 0; x < dimX; x++) {
                         rai.setPosition(x, image.dimensionIndex(Axes.X));
                         for (int y = 0; y < dimY; y++) {
                             rai.setPosition(y, image.dimensionIndex(Axes.Y));
-
                             int index = y * dimX + x;
-                            UnsignedByteType type = (UnsignedByteType) rai.get();
-                            byte value = Integer.valueOf(type.get()).byteValue();
-                            flatArr[index] = value;
+                            flatArr[index] = getValue(rai, pixelClass);
                         }
                     }
-                    // save data
-                    MDByteArray arr = new MDByteArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
                     long[] offset = {t, z, 0, 0, c};
-                    writer.uint8().writeMDArrayBlockWithOffset(dataset, arr, offset);
+                    long[] sliceDims = Hdf5Utils.getXYSliceDims(datasetDims);
+                    // save data
+                    writeMDArray(writer, flatArr, offset, sliceDims, pixelClass);
                     // update progress bar
                     statusService.showProgress(++checkpoint, totalCheckpoints);
                 }
@@ -127,193 +124,82 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         statusService.showStatus("Finished Exporting HDF5.");
     }
 
-    private void writeUint16(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving as 'uint16'. Compression level: " + compressionLevel);
-        final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
-
-        int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.uint16().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
-
-        RandomAccess<T> rai = image.randomAccess();
-        for (int t = 0; t < numFrames; t++) {
-            if (image.dimensionIndex(Axes.TIME) >= 0)
-                rai.setPosition(t, image.dimensionIndex(Axes.TIME));
-            for (int c = 0; c < numChannels; c++) {
-                if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                    rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
-                for (int z = 0; z < dimZ; z++) {
-                    if (image.dimensionIndex(Axes.Z) >= 0)
-                        rai.setPosition(z, image.dimensionIndex(Axes.Z));
-
-                    // init MD-array
-                    short[] flatArr = new short[dimY * dimX];
-                    // copy data XY slice
-                    for (int x = 0; x < dimX; x++) {
-                        rai.setPosition(x, image.dimensionIndex(Axes.X));
-                        for (int y = 0; y < dimY; y++) {
-                            rai.setPosition(y, image.dimensionIndex(Axes.Y));
-
-                            int index = y * dimX + x;
-                            UnsignedShortType type = (UnsignedShortType) rai.get();
-                            short value = Integer.valueOf(type.get()).shortValue();
-                            flatArr[index] = value;
-                        }
-                    }
-                    // save data
-                    MDShortArray arr = new MDShortArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
-                    long[] offset = {t, z, 0, 0, c};
-                    writer.uint16().writeMDArrayBlockWithOffset(dataset, arr, offset);
-                    // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
-                }
-
+    private void writeMDArray(IHDF5Writer writer, Object[] flatArr, long[] offset, long[] sliceDims, Class<T> pixelClass) {
+        if (pixelClass == UnsignedByteType.class) {
+            byte[] arr = new byte[flatArr.length];
+            for (int i = 0; i < flatArr.length; i++) {
+                arr[i] = (byte) flatArr[i];
             }
+            MDByteArray mdArray = new MDByteArray(arr, sliceDims);
+            writer.uint8().writeMDArrayBlockWithOffset(dataset, mdArray, offset);
+        } else if (pixelClass == UnsignedShortType.class) {
+            short[] arr = new short[flatArr.length];
+            for (int i = 0; i < flatArr.length; i++) {
+                arr[i] = (short) flatArr[i];
+            }
+            MDShortArray mdArray = new MDShortArray(arr, sliceDims);
+            writer.uint16().writeMDArrayBlockWithOffset(dataset, mdArray, offset);
+        } else if (pixelClass == UnsignedIntType.class) {
+            int[] arr = new int[flatArr.length];
+            for (int i = 0; i < flatArr.length; i++) {
+                arr[i] = (int) flatArr[i];
+            }
+            MDIntArray mdArray = new MDIntArray(arr, sliceDims);
+            writer.uint32().writeMDArrayBlockWithOffset(dataset, mdArray, offset);
+        } else if (pixelClass == UnsignedLongType.class) {
+            long[] arr = new long[flatArr.length];
+            for (int i = 0; i < flatArr.length; i++) {
+                arr[i] = (long) flatArr[i];
+            }
+            MDLongArray mdArray = new MDLongArray(arr, sliceDims);
+            writer.uint64().writeMDArrayBlockWithOffset(dataset, mdArray, offset);
+        } else if (pixelClass == FloatType.class) {
+            float[] arr = new float[flatArr.length];
+            for (int i = 0; i < flatArr.length; i++) {
+                arr[i] = (float) flatArr[i];
+            }
+            MDFloatArray mdArray = new MDFloatArray(arr, sliceDims);
+            writer.float32().writeMDArrayBlockWithOffset(dataset, mdArray, offset);
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + pixelClass);
         }
-        statusService.showStatus("Finished Exporting HDF5.");
     }
 
-
-    private void writeUint32(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving as 'uint32'. Compression level: " + compressionLevel);
-        final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
-
-        int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.uint32().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
-
-        RandomAccess<T> rai = image.randomAccess();
-        for (int t = 0; t < numFrames; t++) {
-            if (image.dimensionIndex(Axes.TIME) >= 0)
-                rai.setPosition(t, image.dimensionIndex(Axes.TIME));
-            for (int c = 0; c < numChannels; c++) {
-                if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                    rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
-                for (int z = 0; z < dimZ; z++) {
-                    if (image.dimensionIndex(Axes.Z) >= 0)
-                        rai.setPosition(z, image.dimensionIndex(Axes.Z));
-
-                    // init MD-array
-                    int[] flatArr = new int[dimY * dimX];
-                    // copy data XY slice
-                    for (int x = 0; x < dimX; x++) {
-                        rai.setPosition(x, image.dimensionIndex(Axes.X));
-                        for (int y = 0; y < dimY; y++) {
-                            rai.setPosition(y, image.dimensionIndex(Axes.Y));
-
-                            int index = y * dimX + x;
-                            UnsignedIntType type = (UnsignedIntType) rai.get();
-                            int value = Long.valueOf(type.get()).intValue();
-                            flatArr[index] = value;
-                        }
-                    }
-                    // save data
-                    MDIntArray arr = new MDIntArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
-                    long[] offset = {t, z, 0, 0, c};
-                    writer.uint32().writeMDArrayBlockWithOffset(dataset, arr, offset);
-                    // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
-                }
-
-            }
+    private Object getValue(RandomAccess<T> rai, Class<T> pixelClass) {
+        if (pixelClass == UnsignedByteType.class) {
+            UnsignedByteType type = (UnsignedByteType) rai.get();
+            return Integer.valueOf(type.get()).byteValue();
+        } else if (pixelClass == UnsignedShortType.class) {
+            UnsignedShortType type = (UnsignedShortType) rai.get();
+            return Integer.valueOf(type.get()).shortValue();
+        } else if (pixelClass == UnsignedIntType.class) {
+            UnsignedIntType type = (UnsignedIntType) rai.get();
+            return Long.valueOf(type.get()).intValue();
+        } else if (pixelClass == UnsignedLongType.class) {
+            UnsignedLongType type = (UnsignedLongType) rai.get();
+            return type.get();
+        } else if (pixelClass == FloatType.class) {
+            FloatType type = (FloatType) rai.get();
+            return type.get();
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + pixelClass);
         }
-        statusService.showStatus("Finished Exporting HDF5.");
     }
 
-
-    private void writeUint64(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving as 'uint64'. Compression level: " + compressionLevel);
-        final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
-
-        int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.uint64().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
-
-        RandomAccess<T> rai = image.randomAccess();
-        for (int t = 0; t < numFrames; t++) {
-            if (image.dimensionIndex(Axes.TIME) >= 0)
-                rai.setPosition(t, image.dimensionIndex(Axes.TIME));
-            for (int c = 0; c < numChannels; c++) {
-                if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                    rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
-                for (int z = 0; z < dimZ; z++) {
-                    if (image.dimensionIndex(Axes.Z) >= 0)
-                        rai.setPosition(z, image.dimensionIndex(Axes.Z));
-
-                    // init MD-array
-                    long[] flatArr = new long[dimY * dimX];
-                    // copy data XY slice
-                    for (int x = 0; x < dimX; x++) {
-                        rai.setPosition(x, image.dimensionIndex(Axes.X));
-                        for (int y = 0; y < dimY; y++) {
-                            rai.setPosition(y, image.dimensionIndex(Axes.Y));
-
-                            int index = y * dimX + x;
-                            UnsignedLongType type = (UnsignedLongType) rai.get();
-                            flatArr[index] = type.get();
-                        }
-                    }
-                    // save data
-                    MDLongArray arr = new MDLongArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
-                    long[] offset = {t, z, 0, 0, c};
-                    writer.uint64().writeMDArrayBlockWithOffset(dataset, arr, offset);
-                    // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
-                }
-
-            }
+    private void createMDArray(IHDF5Writer writer, long[] datasetDims, int[] blockSize, Class<T> pixelClass) {
+        if (pixelClass == UnsignedByteType.class) {
+            writer.uint8().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        } else if (pixelClass == UnsignedShortType.class) {
+            writer.uint16().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        } else if (pixelClass == UnsignedIntType.class) {
+            writer.uint32().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        } else if (pixelClass == UnsignedLongType.class) {
+            writer.uint64().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        } else if (pixelClass == FloatType.class) {
+            writer.float32().createMDArray(dataset, datasetDims, blockSize, HDF5FloatStorageFeatures.createDeflationDelete(compressionLevel));
+        } else {
+            throw new IllegalArgumentException("Unsupported type: " + pixelClass);
         }
-        statusService.showStatus("Finished Exporting HDF5.");
-    }
-
-
-    private void writeFloat32(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving as 'float32'. Compression level: " + compressionLevel);
-        final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
-
-        int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.float32().createMDArray(dataset, datasetDims, blockSize, HDF5FloatStorageFeatures.createDeflationDelete(compressionLevel));
-
-        RandomAccess<T> rai = image.randomAccess();
-        for (int t = 0; t < numFrames; t++) {
-            if (image.dimensionIndex(Axes.TIME) >= 0)
-                rai.setPosition(t, image.dimensionIndex(Axes.TIME));
-            for (int c = 0; c < numChannels; c++) {
-                if (image.dimensionIndex(Axes.CHANNEL) >= 0)
-                    rai.setPosition(c, image.dimensionIndex(Axes.CHANNEL));
-                for (int z = 0; z < dimZ; z++) {
-                    if (image.dimensionIndex(Axes.Z) >= 0)
-                        rai.setPosition(z, image.dimensionIndex(Axes.Z));
-
-                    // init MD-array
-                    float[] flatArr = new float[dimY * dimX];
-                    // copy data XY slice
-                    for (int x = 0; x < dimX; x++) {
-                        rai.setPosition(x, image.dimensionIndex(Axes.X));
-                        for (int y = 0; y < dimY; y++) {
-                            rai.setPosition(y, image.dimensionIndex(Axes.Y));
-
-                            int index = y * dimX + x;
-                            FloatType type = (FloatType) rai.get();
-                            flatArr[index] = type.get();
-                        }
-                    }
-                    // save data
-                    MDFloatArray arr = new MDFloatArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
-                    long[] offset = {t, z, 0, 0, c};
-                    writer.float32().writeMDArrayBlockWithOffset(dataset, arr, offset);
-                    // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
-                }
-
-            }
-        }
-        statusService.showStatus("Finished Exporting HDF5.");
     }
 
     private void writeARGB(IHDF5Writer writer, long[] datasetDims) {
@@ -331,7 +217,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
-        writer.uint8().createMDArray(dataset, datasetDims, blockSize, HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+        createMDArray(writer, datasetDims, blockSize, (Class<T>) UnsignedByteType.class);
 
         RandomAccess<T> rai = image.randomAccess();
         for (int t = 0; t < numFrames; t++) {
@@ -342,7 +228,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                     rai.setPosition(z, image.dimensionIndex(Axes.Z));
                 for (int c = 0; c < ARGB_CHANNEL_NUM; c++) {
                     // init MD-array
-                    byte[] flatArr = new byte[dimY * dimX];
+                    Object[] flatArr = new Object[dimY * dimX];
                     boolean skipCopying = false;
                     if (isAlphaChannelPresent) {
                         if (image.dimensionIndex(Axes.CHANNEL) >= 0)
@@ -371,10 +257,10 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                             }
                         }
                     }
-                    // save data
-                    MDByteArray arr = new MDByteArray(flatArr, Hdf5Utils.getXYSliceDims(datasetDims));
                     long[] offset = {t, z, 0, 0, c};
-                    writer.uint8().writeMDArrayBlockWithOffset(dataset, arr, offset);
+                    long[] sliceDims = Hdf5Utils.getXYSliceDims(datasetDims);
+                    // save data
+                    writeMDArray(writer, flatArr, offset, sliceDims, (Class<T>) UnsignedByteType.class);
                     // update progress bar
                     statusService.showProgress(++checkpoint, totalCheckpoints);
                 }
