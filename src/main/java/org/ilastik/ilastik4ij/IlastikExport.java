@@ -7,7 +7,7 @@ package org.ilastik.ilastik4ij;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
-import ij.io.OpenDialog;
+import ij.io.SaveDialog;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.RealType;
@@ -18,6 +18,7 @@ import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -33,8 +34,8 @@ public class IlastikExport implements Command {
 
     @Override
     public void run() {
-        OpenDialog od = new OpenDialog("Select export path", "", "export.h5");
-        String hdf5FilePath = od.getPath();
+        SaveDialog sd = new SaveDialog("Select export path", "", ".h5");
+        String hdf5FilePath = Paths.get(sd.getDirectory(), sd.getFileName()).toString();
 
         GenericDialog gd = new GenericDialog("Export to HDF5");
         gd.addMessage("Axis order of the exported data set: 'TZYXC'");

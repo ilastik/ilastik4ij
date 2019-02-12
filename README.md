@@ -143,6 +143,7 @@ public class My_Plugin implements PlugIn {
 	}
 }
 ```
+replace `<DATASET_DIR>` with the input dataset where the HDF5 files reside and `<ILASTIK_PROJECT_PATH>` with the path to your ilastik Pixel Classification project file.
 
 ### Object Classification
 Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
