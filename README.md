@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ilastik/ilastik4ij.svg?branch=master)](https://travis-ci.org/ilastik/ilastik4ij)
 
-_(c) Carsten Haubold, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
+_(c) Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
 
 This repository contains ImageJ2 plugins that wrap ilastik workflows for usage in [ImageJ](https://imagej.net) 
 and [KNIME](https://www.knime.com). Data transfer is managed through temporary HDF5 file export/import, which can also be performed individually.
