@@ -117,33 +117,39 @@ Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
 * or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_. 
   ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png)
   
-#### Batch processing in headless mode
+#### Batch processing
 The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
 resulting probability maps in separate HDF5 files inside the input directory.
-```java
-import ij.*;
-import ij.process.*;
-import ij.gui.*;
-import java.awt.*;
-import ij.plugin.*;
-import java.io.File;
+```
+// set global variables
+pixelClassificationProject = "<ILASTIK_PROJECT_PATH>";
+outputType = "Probabilities";
+inputDataset = "data";
+outputDataset = "exported_data";
+axisOrder = "tzyxc";
+compressionLevel = 0;
 
-public class My_Plugin implements PlugIn {
-	public void run(String arg) {
-		File dir = new File("<DATASET_DIR>");
-		String inputDataset="data";
-		String outputDataset="exported_data";
-		String ilastikProject = "<ILASTIK_PROJECT_PATH>";
-		int i = 0;
-		for(File file : dir.listFiles((d, name) -> name.endsWith(".h5"))) {
-			IJ.run("Import HDF5", String.format("select=%s datasetname=%s axisorder=tzyxc", file.getAbsolutePath(), inputDataset));
-			IJ.run(IJ.getImage(), "Run Pixel Classification Prediction", String.format("saveonly=false projectfilename=%s chosenoutputtype=Probabilities", ilastikProject));
-			IJ.run(IJ.getImage(), "Export HDF5", String.format("select=%s/output%d.h5 datasetname=%s compressionlevel=0", file.getParent(), ++i, outputDataset));
-		}
-	}
+// process all H5 files in a given directory
+dataDir = "<DATASET_DIR>";
+fileList = getFileList(dataDir);
+for (i = 0; i < fileList.length; i++) {
+	// import image from the H5
+	fileName = dataDir + fileList[i];	
+	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
+	run("Import HDF5", importArgs);
+
+	// run pixel classification
+	inputImage = fileName + "/" + inputDataset;
+	pixelClassificationArgs = "projectfilename=" + pixelClassificationProject + " saveonly=false inputimage=" + inputImage + " chosenoutputtype=" + outputType;
+	run("Run Pixel Classification Prediction", pixelClassificationArgs);
+
+	// export probability maps to H5
+	outputFile = dataDir + "output" + i + ".h5";
+	exportArgs = "select=" + outputFile + " datasetname=" + outputDataset + " compressionlevel=" + compressionLevel;
+	run("Export HDF5", exportArgs);
 }
 ```
-replace `<DATASET_DIR>` with the input dataset where the HDF5 files reside and `<ILASTIK_PROJECT_PATH>` with the path to your ilastik Pixel Classification project file.
+replace `<DATASET_DIR>` with the input dataset where the HDF5 files reside (don't forget the trailing slash `/`) and `<ILASTIK_PROJECT_PATH>` with the path to your ilastik Pixel Classification project file.
 
 ### Object Classification
 Found at `Plugins -> ilastik -> Run Object Classification Prediction`.

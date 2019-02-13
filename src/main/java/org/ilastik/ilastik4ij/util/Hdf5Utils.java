@@ -30,7 +30,7 @@ public class Hdf5Utils {
     }
 
     private static final long BLOCK_SIZE_2D = 128;
-    private static final long BLOCK_SIZE_3D = 64;
+    private static final long BLOCK_SIZE_3D = 32;
 
     public static <T extends NativeType<T>> T getNativeType(String dtype) {
         @SuppressWarnings("unchecked")
