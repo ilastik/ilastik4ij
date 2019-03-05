@@ -11,7 +11,7 @@
 
     <groupId>org.ilastik</groupId>
     <artifactId>ilastik4ij</artifactId>
-    <version>1.4.1-SNAPSHOT</version>
+    <version>1.5.1-SNAPSHOT</version>
 
     <name>ilastik imageJ modules</name>
     <description>These ImageJ plugins wrap ilastik workflows</description>
