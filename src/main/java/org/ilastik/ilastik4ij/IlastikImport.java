@@ -61,6 +61,7 @@ public class IlastikImport implements Command {
             if (gd.wasCanceled()) return;
 
             String datasetName = Hdf5Utils.parseDataset(gd.getNextChoice());
+            rank = datasets.get(datasetName).getRank();
             String axisOrder = gd.getNextString();
             boolean applyLUT = gd.getNextBoolean();
             if (isValidAxisOrder(rank, axisOrder)) {
