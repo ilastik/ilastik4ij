@@ -63,6 +63,22 @@ must be equal to the number of dimensions listed in the description above.
 If you choose `ApplyLUT`, after loading the `glasbey_inverted` lookup table will be applied for you, which is
 a sensible option for connected component labellings (e.g. a tracking result) or per-object predictions.
 
+#### Batch processing
+
+The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro:
+
+```
+dataDir = "<DATASET_DIR>";
+fileList = getFileList(dataDir);
+for (i = 0; i < fileList.length; i++) {
+	// import image from the H5
+	fileName = dataDir + fileList[i];	
+	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
+	run("Import HDF5", importArgs);
+}
+```
+
+
 ### Export
 
 Found at `Plugins -> ilastik -> Export HDF5`.
