@@ -22,7 +22,8 @@ import org.scijava.log.LogService;
 
 import javax.swing.*;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -92,11 +93,13 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                             rai.setPosition(x, AXES.indexOf(Axes.X));
                             for (int y = 0; y < dsConfig.dimY; y++) {
                                 rai.setPosition(y, AXES.indexOf(Axes.Y));
-                                int destIndex = y * dsConfig.dimX + x;
-                                if (dsConfig.getExtent('x') < dsConfig.getExtent('y')) {
-                                    destIndex = x * dsConfig.dimY + y;
-                                }
 
+                                int destIndex;
+                                if (dsConfig.isXYOrder()) {
+                                    destIndex = x * dsConfig.dimY + y;
+                                } else {
+                                    destIndex = y * dsConfig.dimX + x;
+                                }
 
                                 if (type instanceof FloatType) {
                                     FloatType raiType = (FloatType) rai.get();

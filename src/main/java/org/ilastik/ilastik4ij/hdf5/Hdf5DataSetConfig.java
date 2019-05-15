@@ -43,8 +43,11 @@ public class Hdf5DataSetConfig {
         typeInfo = Hdf5Utils.getTypeInfo(dsInfo);
     }
 
-    public int getExtent(char axis) {
-        return this.axisExtents.get(axis);
+    /**
+     * @return true if X axis is before Y, or false otherwise
+     */
+    public boolean isXYOrder() {
+        return axisIndices.get('x') < axisIndices.get('y');
     }
 
     public long[] getSliceOffset(int t, int z, int c) {
