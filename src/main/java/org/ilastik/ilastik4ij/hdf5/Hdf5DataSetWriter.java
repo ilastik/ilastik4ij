@@ -39,8 +39,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private final String dataset;
     private final int compressionLevel;
 
-    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LoggerCallback log,
-                             StatusService statusService) {
+    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LoggerCallback log, StatusService statusService) {
         this.image = image;
         this.numFrames = getDimension(image, Axes.TIME);
         this.numChannels = getDimension(image, Axes.CHANNEL);

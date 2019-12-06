@@ -16,14 +16,15 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.ilastik.ilastik4ij.executors.LoggerCallback;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
 
 import javax.swing.*;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -35,22 +36,22 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
     private final String filename;
     private final String dataset;
     private final String axesorder;
-    private final LogService log;
-    private final StatusService statusService;
+    private final LoggerCallback logger;
+    private final Optional<StatusService> statusService;
 
-    public Hdf5DataSetReader(String filename, String dataset, String axesorder, LogService log, StatusService statusService) {
+    public Hdf5DataSetReader( String filename, String dataset, String axesorder, LoggerCallback logger, StatusService statusService) {
         this.filename = filename;
         this.dataset = dataset;
         this.axesorder = axesorder;
-        this.log = log;
-        this.statusService = statusService;
+        this.logger = logger;
+        this.statusService = Optional.ofNullable(statusService);
     }
 
     public ImgPlus<T> read() {
         try (IHDF5Reader reader = HDF5Factory.openForReading(filename)) {
             HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
             Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(dsInfo, axesorder);
-            log.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
+            logger.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
 
             // construct output image
             final long[] dims = {dsConfig.dimX, dsConfig.dimY, dsConfig.numChannels, dsConfig.dimZ, dsConfig.numFrames};
@@ -59,7 +60,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                     .mapToObj(String::valueOf)
                     .collect(Collectors.joining(", "));
 
-            log.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
+            logger.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
 
             final T type = Hdf5Utils.getNativeType(dsConfig.typeInfo);
 
@@ -76,7 +77,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
 
             final int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
             AtomicInteger checkpoint = new AtomicInteger();
-            SwingUtilities.invokeLater(() -> statusService.showStatus(checkpoint.get(), totalCheckpoints, "Importing HDF5..."));
+            SwingUtilities.invokeLater(() -> statusService.ifPresent( s ->  s.showStatus(checkpoint.get(), totalCheckpoints, "Importing HDF5...")));
 
             for (int frame = 0; frame < dsConfig.numFrames; ++frame) {
                 rai.setPosition(frame, AXES.indexOf(Axes.TIME));
@@ -121,11 +122,11 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                                 }
                             }
                         }
-                        SwingUtilities.invokeLater(() -> statusService.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
+                        SwingUtilities.invokeLater(() -> statusService.ifPresent( s -> s.showProgress(checkpoint.incrementAndGet(), totalCheckpoints)));
                     }
                 }
             }
-            SwingUtilities.invokeLater(() -> statusService.showStatus("Finished Importing HDF5."));
+            SwingUtilities.invokeLater(() -> statusService.ifPresent( s -> s.showStatus("Finished Importing HDF5.")));
 
             ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString());
             result.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);

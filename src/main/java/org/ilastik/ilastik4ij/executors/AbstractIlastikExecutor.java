@@ -2,20 +2,21 @@ package org.ilastik.ilastik4ij.executors;
 
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractIlastikExecutor {
-    protected static final String tempInRawFileName = "tempInRawFileName";
-    protected static final String tempOutFileName = "tempOutFileName";
-    protected static final String tempProbFilename = "tempProbFilename";
-    protected static final String tempSegFilename = "tempSegFilename";
+
+    protected static final String tempFileRawInput = "tempFileRawInput";
+    protected static final String tempFileOutput = "tempFileOutput";
+    protected static final String tempFileSecondInput = "tempFileSegmentationOrProbabilitiesInput";
 
     private final int numThreads;
     private final int maxRamMb;
@@ -25,6 +26,12 @@ public abstract class AbstractIlastikExecutor {
     protected final LoggerCallback logger;
     protected final StatusService statusService;
 
+    enum SecondInputType
+    {
+        None,
+        Segmentation,
+        Probability
+    }
 
     public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb) {
         this.numThreads = numThreads;
@@ -35,14 +42,51 @@ public abstract class AbstractIlastikExecutor {
         this.statusService = statusService;
     }
 
-    public abstract Map<String, String> prepareTempFiles(ImgPlus<? extends RealType<?>> img) throws IOException;
+    protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, SecondInputType secondInputType );
 
-    public abstract List<String> buildCommandLine(Map<String, String> tempFiles);
+    public void runIlastik( ImgPlus<? extends RealType<?>> img, SecondInputType secondInputType ) throws IOException {
 
+        final Map< String, String > tempFiles = prepareTempFiles( secondInputType );
 
-    public void runIlastik(ImgPlus<? extends RealType<?>> img) throws IOException {
-        List<String> commandLine = buildCommandLine(prepareTempFiles(img));
+        List<String> commandLine = buildCommandLine( tempFiles, secondInputType );
 
+        executeCommandLine( commandLine );
+
+        ImgPlus< ? > imgPlus = new Hdf5DataSetReader(tempFiles.get( tempFileOutput ), "exported_data", "tzyxc", logger, statusService).read();
+
+        deleteTempFiles( tempFiles );
+    }
+
+    private Map<String, String> prepareTempFiles(SecondInputType secondInputType) throws IOException
+    {
+        LinkedHashMap<String, String> tempFiles = new LinkedHashMap<>();
+
+        tempFiles.put( tempFileRawInput, IlastikUtilities.getTemporaryFileName("_in_raw.h5"));
+        tempFiles.put( tempFileOutput, IlastikUtilities.getTemporaryFileName("_out.h5") );
+
+        if ( ! secondInputType.equals( SecondInputType.None ) )
+        {
+            tempFiles.put( tempFileSecondInput, IlastikUtilities.getTemporaryFileName("_in_2nd.h5") );
+        }
+
+        return tempFiles;
+    }
+
+    private void deleteTempFiles( Map< String, String > tempFiles )
+    {
+        logger.info("Deleting temporary files...");
+
+        for( String tempFilePath : tempFiles.keySet() )
+        {
+            final File tempFile = new File( tempFilePath );
+            if ( tempFile.exists() ) tempFile.delete();
+        }
+
+        logger.info( "...done." );
+    }
+
+    private void executeCommandLine( List< String > commandLine ) throws IOException
+    {
         logger.info("Running ilastik headless command:");
         logger.info(commandLine.toString());
 
@@ -52,7 +96,7 @@ public abstract class AbstractIlastikExecutor {
         // run ilastik
         final Process p = pB.start();
 
-        // write ilastik output to IJ log
+        // write ilastik output to log
         IlastikUtilities.redirectOutputToLogService(p.getInputStream(), logger, false);
         IlastikUtilities.redirectOutputToLogService(p.getErrorStream(), logger, true);
 

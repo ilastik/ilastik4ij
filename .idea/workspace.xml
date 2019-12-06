@@ -1,0 +1,604 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="e0255db3-a829-4fa6-9de9-6687c39a180e" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/PixelClassification.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/AbstractIlastikExecutor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/AbstractIlastikExecutor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/PixelClassificationPrediction.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/PixelClassificationPrediction.java" afterDir="false" />
+    </list>
+    <ignored path="$PROJECT_DIR$/classes/" />
+    <ignored path="$PROJECT_DIR$/target/" />
+    <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DefaultGradleProjectSettings">
+    <option name="testRunner" value="GRADLE" />
+    <option name="delegatedBuild" value="true" />
+  </component>
+  <component name="FileEditorManager">
+    <leaf>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/DummyLoggerCallback.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="57">
+              <caret line="3" column="10" selection-start-line="3" selection-start-column="10" selection-end-line="3" selection-end-column="10" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/PixelClassificationPrediction.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="126">
+              <caret line="38" column="72" lean-forward="true" selection-start-line="38" selection-start-column="7" selection-end-line="38" selection-end-column="72" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/util/IlastikUtilities.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="219">
+              <caret line="44" column="25" selection-start-line="44" selection-start-column="25" selection-end-line="44" selection-end-column="25" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikTrackingPrediction.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="19">
+              <caret line="51" column="13" selection-start-line="51" selection-start-column="13" selection-end-line="51" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikPixelClassificationPredictionCommand.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="235">
+              <caret line="141" column="121" lean-forward="true" selection-start-line="141" selection-start-column="8" selection-end-line="141" selection-end-column="121" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikObjectClassificationPrediction.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="19">
+              <caret line="52" column="13" selection-start-line="52" selection-start-column="13" selection-end-line="52" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/AbstractIlastikExecutor.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="276">
+              <caret line="54" column="121" selection-start-line="54" selection-start-column="121" selection-end-line="54" selection-end-column="121" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/WorkflowTests.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="-106">
+              <caret line="9" column="13" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/PixelClassification.java">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="548">
+              <caret line="37" column="27" lean-forward="true" selection-start-line="37" selection-start-column="27" selection-end-line="37" selection-end-column="27" />
+              <folding>
+                <element signature="imports" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+    </leaf>
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Class" />
+      </list>
+    </option>
+  </component>
+  <component name="FindInProjectRecents">
+    <findStrings>
+      <find>prepare</find>
+    </findStrings>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="IdeDocumentHistory">
+    <option name="CHANGED_PATHS">
+      <list>
+        <option value="$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/PixelClassification.java" />
+        <option value="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/PixelClassificationPrediction.java" />
+        <option value="$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/AbstractIlastikExecutor.java" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectConfigurationFiles">
+    <option name="files">
+      <list>
+        <option value="$PROJECT_DIR$/ilastik4ij.iml" />
+        <option value="$PROJECT_DIR$/.idea/misc.xml" />
+        <option value="$PROJECT_DIR$/.idea/compiler.xml" />
+        <option value="$PROJECT_DIR$/.idea/vcs.xml" />
+        <option value="$PROJECT_DIR$/.idea/encodings.xml" />
+        <option value="$PROJECT_DIR$/.idea/modules.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__cisd_jhdf5_14_12_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_fifesoft_autocomplete_2_6_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_fifesoft_languagesupport_2_6_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_fifesoft_rsyntaxtextarea_2_6_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_ben_manes_caffeine_caffeine_2_4_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jffi_1_2_16.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jffi_native_1_2_16.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_constants_0_9_9.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_enxio_0_16.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_netdb_1_1_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_posix_3_0_44.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_unixsocket_0_17.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_jnr_jnr_x86asm_1_0_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_github_sbridges_object_inspector_object_inspector_0_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_google_guava_guava_21_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_googlecode_efficient_java_matrix_library_ejml_0_24.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_headius_invokebinder_1_10.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_headius_modulator_1_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_headius_options_1_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_headius_unsafe_fences_1_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_jcraft_jsch_0_1_55.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_jcraft_jzlib_1_1_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_martiansoftware_nailgun_server_0_9_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_miglayout_miglayout_swing_3_7_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__com_sun_codemodel_codemodel_2_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__commons_io_commons_io_2_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__commons_lang_commons_lang_2_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__commons_logging_commons_logging_1_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__de_erichseifert_vectorgraphics2d_VectorGraphics2D_0_13.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__edu_emory_mathcs_jtransforms_2_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__edu_mines_mines_jtk_20151125.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__edu_ucar_udunits_4_3_18.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__gov_nist_math_jama_1_0_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__io_scif_scifio_0_37_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__io_scif_scifio_jai_imageio_1_1_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__jitk_jitk_tps_3_0_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__joda_time_joda_time_2_10_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__junit_junit_4_12.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__log4j_log4j_1_2_17.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_iharder_base64_2_3_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_ij_1_52i.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_2_0_0_rc_71.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_common_0_28_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_deprecated_0_1_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_mesh_0_7_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_notebook_0_7_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_ops_0_43_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_plugins_batch_0_1_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_plugins_commands_0_8_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_plugins_tools_0_3_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_plugins_uploader_ssh_0_3_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_plugins_uploader_webdav_0_2_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_scripting_0_8_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_ui_awt_0_3_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_ui_swing_0_22_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imagej_imagej_updater_0_9_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_5_6_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_algorithm_0_11_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_algorithm_fft_0_2_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_cache_1_0_0_beta_11.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_ij_2_0_0_beta_44.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_realtransform_2_1_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_imglib2_imglib2_roi_0_7_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_sf_jung_jung_api_2_0_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_sf_jung_jung_graph_impl_2_0_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_sf_trove4j_trove4j_3_0_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_sourceforge_collections_collections_generic_4_01.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__net_sourceforge_jdatepicker_jdatepicker_1_3_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_compress_1_4_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_lang3_3_8_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_math3_3_6_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_math_2_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_text_1_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_commons_commons_vfs2_2_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_extras_beanshell_bsh_2_0b6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_ivy_ivy_2_4_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_maven_scm_maven_scm_api_1_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_maven_scm_maven_scm_provider_svn_commons_1_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_apache_maven_scm_maven_scm_provider_svnexe_1_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_bushe_eventbus_1_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_clojure_clojure_1_8_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_codehaus_gpars_gpars_1_2_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_codehaus_groovy_groovy_2_4_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_codehaus_jsr166_mirror_jsr166y_1_7_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_codehaus_plexus_plexus_utils_1_5_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_hamcrest_hamcrest_core_1_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jfree_jfreechart_1_5_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jhotdraw_jhotdraw_7_6_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_joml_joml_1_9_12.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_dirgra_0_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_extras_bytelist_1_0_15.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_jcodings_jcodings_1_0_27.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_joni_joni_2_1_15.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_jruby_core_9_1_17_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_jruby_jruby_stdlib_9_1_17_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_knowm_xchart_xchart_3_5_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_markdownj_markdownj_0_3_0_1_0_2b4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_mozilla_rhino_1_7_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_multiverse_multiverse_core_0_7_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_netlib_blas_0_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_netlib_f2jutil_0_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_netlib_lapack_0_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_netlib_netlib_java_0_9_3_renjin_patched_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_netlib_xerbla_0_8.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ocpsoft_prettytime_prettytime_4_0_1_Final.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ojalgo_ojalgo_45_1_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_5_0_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_commons_5_0_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_tree_5_0_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_ow2_asm_asm_util_5_0_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_datasets_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_gcc_runtime_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_grDevices_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_graphics_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_methods_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_renjin_appl_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_renjin_core_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_renjin_gnur_runtime_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_renjin_script_engine_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_stats_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_renjin_utils_0_8_1906.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scala_lang_modules_scala_xml_2_12_1_0_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scala_lang_scala_compiler_2_12_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scala_lang_scala_library_2_12_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scala_lang_scala_reflect_2_12_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_batch_processor_0_3_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_jython_shaded_2_7_1_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_minimaven_2_2_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_parsington_1_0_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_common_2_77_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_plugins_commands_0_2_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_plugins_platforms_0_3_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_plugins_text_markdown_0_1_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_plugins_text_plain_0_1_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_search_0_6_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_table_0_4_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_ui_awt_0_1_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scijava_ui_swing_0_12_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_script_editor_0_5_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_beanshell_0_3_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_clojure_0_1_6.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_groovy_0_2_7.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_java_0_4_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_javascript_0_4_4.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_jruby_0_3_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_jython_0_4_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_renjin_0_2_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_scripting_scala_0_2_1.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_scijava_swing_checkbox_tree_1_0_2.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__org_tukaani_xz_1_0.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/Maven__regexp_regexp_1_3.xml" />
+        <option value="$PROJECT_DIR$/.idea/libraries/R_User_Library.xml" />
+      </list>
+    </option>
+  </component>
+  <component name="ProjectFrameBounds" extendedState="6" fullScreen="true">
+    <option name="y" value="23" />
+    <option name="width" value="1440" />
+    <option name="height" value="877" />
+  </component>
+  <component name="ProjectView">
+    <navigator proportions="" version="1">
+      <foldersAlwaysOnTop value="true" />
+    </navigator>
+    <panes>
+      <pane id="ProjectPane">
+        <subPane>
+          <expand>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="executors" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="hdf5" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="main" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="util" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="ilastik4ij" type="b2602c69:ProjectViewProjectNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+              <item name="src" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+              <item name="java" type="462c0819:PsiDirectoryNode" />
+              <item name="ilastik4ij" type="462c0819:PsiDirectoryNode" />
+            </path>
+          </expand>
+          <select />
+        </subPane>
+      </pane>
+      <pane id="Scope" />
+      <pane id="PackagesPane" />
+    </panes>
+  </component>
+  <component name="PropertiesComponent">
+    <property name="ASKED_SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
+    <property name="extract.method.default.visibility" value="private" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/pom.xml" />
+    <property name="project.structure.last.edited" value="Project" />
+    <property name="project.structure.proportion" value="0.0" />
+    <property name="project.structure.side.proportion" value="0.0" />
+  </component>
+  <component name="RunDashboard">
+    <option name="ruleStates">
+      <list>
+        <RuleState>
+          <option name="name" value="ConfigurationTypeDashboardGroupingRule" />
+        </RuleState>
+        <RuleState>
+          <option name="name" value="StatusDashboardGroupingRule" />
+        </RuleState>
+      </list>
+    </option>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="e0255db3-a829-4fa6-9de9-6687c39a180e" name="Default Changelist" comment="" />
+      <created>1575658267929</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1575658267929</updated>
+    </task>
+    <servers />
+  </component>
+  <component name="ToolWindowManager">
+    <frame x="0" y="0" width="1440" height="900" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Designer" />
+      <window_info id="Favorites" side_tool="true" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.26323318" />
+      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Terminal" visible="true" weight="0.14698794" />
+      <window_info anchor="bottom" id="Event Log" side_tool="true" />
+      <window_info anchor="bottom" id="Message" order="0" />
+      <window_info anchor="bottom" id="Find" order="1" />
+      <window_info anchor="bottom" id="Run" order="2" />
+      <window_info anchor="bottom" id="Debug" order="3" weight="0.4" />
+      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+      <window_info anchor="bottom" id="TODO" order="6" />
+      <window_info anchor="right" id="Maven" />
+      <window_info anchor="right" id="Palette&#9;" />
+      <window_info anchor="right" id="R Packages" />
+      <window_info anchor="right" id="R Graphics" />
+      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
+      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
+    </layout>
+  </component>
+  <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/DummyLoggerCallback.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" column="10" selection-start-line="3" selection-start-column="10" selection-end-line="3" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/WorkflowTests.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-106">
+          <caret line="9" column="13" selection-start-line="9" selection-start-column="13" selection-end-line="9" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/test/java/org/ilastik/ilastik4ij/PixelClassification.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="548">
+          <caret line="37" column="27" lean-forward="true" selection-start-line="37" selection-start-column="27" selection-end-line="37" selection-end-column="27" />
+          <folding>
+            <element signature="imports" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikObjectClassificationPrediction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="19">
+          <caret line="52" column="13" selection-start-line="52" selection-start-column="13" selection-end-line="52" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/util/IlastikUtilities.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="219">
+          <caret line="44" column="25" selection-start-line="44" selection-start-column="25" selection-end-line="44" selection-end-column="25" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/PixelClassificationPrediction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="126">
+          <caret line="38" column="72" lean-forward="true" selection-start-line="38" selection-start-column="7" selection-end-line="38" selection-end-column="72" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikPixelClassificationPredictionCommand.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="235">
+          <caret line="141" column="121" lean-forward="true" selection-start-line="141" selection-start-column="8" selection-end-line="141" selection-end-column="121" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/IlastikTrackingPrediction.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="19">
+          <caret line="51" column="13" selection-start-line="51" selection-start-column="13" selection-end-line="51" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/main/java/org/ilastik/ilastik4ij/executors/AbstractIlastikExecutor.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="276">
+          <caret line="54" column="121" selection-start-line="54" selection-start-column="121" selection-end-line="54" selection-end-column="121" />
+        </state>
+      </provider>
+    </entry>
+  </component>
+  <component name="masterDetails">
+    <states>
+      <state key="ArtifactsStructureConfigurable.UI">
+        <settings>
+          <artifact-editor />
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="FacetStructureConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="GlobalLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="JdkListConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ModuleStructureConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectJDKs.UI">
+        <settings>
+          <last-edited>1.8</last-edited>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+      <state key="ProjectLibrariesConfigurable.UI">
+        <settings>
+          <splitter-proportions>
+            <option name="proportions">
+              <list>
+                <option value="0.2" />
+              </list>
+            </option>
+          </splitter-proportions>
+        </settings>
+      </state>
+    </states>
+  </component>
+</project>
