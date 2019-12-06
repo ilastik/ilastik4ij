@@ -4,3 +4,13 @@
 .settings/
 /nbproject/private/
 /bin/
+.DS_Store
+.classpath
+.project
+.settings
+.factorypath
+.idea
+target
+*.iml
+*.class
+
