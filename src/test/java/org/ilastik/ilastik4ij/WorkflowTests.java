@@ -5,9 +5,6 @@ import net.imagej.ImageJ;
 import io.scif.services.DatasetIOService;
 import java.io.IOException;
 import net.imagej.Dataset;
-import org.ilastik.ilastik4ij.IlastikObjectClassificationPrediction;
-import org.ilastik.ilastik4ij.IlastikPixelClassificationPrediction;
-import org.ilastik.ilastik4ij.IlastikTrackingPrediction;
 import org.scijava.Context;
 
 public class WorkflowTests {
@@ -28,7 +25,7 @@ public class WorkflowTests {
             e.printStackTrace();
         }
 
-        ij.command().run(IlastikPixelClassificationPrediction.class, true);
+        ij.command().run(IlastikPixelClassificationPredictionCommand.class, true);
     }
 
     public static void testObjectClassificationWorkflow() {

@@ -47,7 +47,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public class IlastikPixelClassificationPrediction implements Command {
+public class IlastikPixelClassificationPredictionCommand implements Command {
 
     // needed services:
     @Parameter

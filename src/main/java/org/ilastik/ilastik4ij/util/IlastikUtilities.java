@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
-import org.scijava.log.LogService;
+import org.ilastik.ilastik4ij.executors.LoggerCallback;
 
 public class IlastikUtilities {
 	/*
@@ -57,26 +57,23 @@ public class IlastikUtilities {
      * @param logger
      * @throws IOException
      */
-    public static void redirectOutputToLogService(final InputStream in, final LogService logger, final Boolean isErrorStream) {
-        Thread t = new Thread() {
-            @Override
-            public void run() {
+    public static void redirectOutputToLogService(final InputStream in, final LoggerCallback logger, final Boolean isErrorStream) {
+        Thread t = new Thread(() -> {
 
-                String line;
+            String line;
 
-                try (BufferedReader bis = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
-                    while ((line = bis.readLine()) != null) {
-                        if (isErrorStream) {
-                            logger.error(line);
-                        } else {
-                            logger.info(line);
-                        }
+            try (BufferedReader bis = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
+                while ((line = bis.readLine()) != null) {
+                    if (isErrorStream) {
+                        logger.error(line);
+                    } else {
+                        logger.info(line);
                     }
-                } catch (IOException ioe) {
-                    throw new RuntimeException("Could not read ilastik output", ioe);
                 }
+            } catch (IOException ioe) {
+                throw new RuntimeException("Could not read ilastik output", ioe);
             }
-        };
+        });
 
 //        t.setUncaughtExceptionHandler(new DefaultUncaughtExceptionHandler(KNIPGateway.log()));
         t.start();

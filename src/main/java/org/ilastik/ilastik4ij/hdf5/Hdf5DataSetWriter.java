@@ -16,11 +16,13 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.ilastik.ilastik4ij.executors.LoggerCallback;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
 
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Hdf5DataSetWriter<T extends Type<T>> {
@@ -31,13 +33,13 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private final int dimZ;
     private final int dimY;
     private final int dimX;
-    private final LogService log;
-    private final StatusService statusService;
+    private final LoggerCallback log;
+    private final Optional<StatusService> statusService;
     private final String filename;
     private final String dataset;
     private final int compressionLevel;
 
-    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LogService log,
+    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LoggerCallback log,
                              StatusService statusService) {
         this.image = image;
         this.numFrames = getDimension(image, Axes.TIME);
@@ -49,7 +51,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         this.dataset = dataset;
         this.compressionLevel = compressionLevel;
         this.log = log;
-        this.statusService = statusService;
+        this.statusService = Optional.ofNullable(statusService);
     }
 
     @SuppressWarnings("unchecked")
@@ -83,8 +85,9 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private void write(IHDF5Writer writer, long[] datasetDims, Class<T> pixelClass) {
         log.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
         final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
+        final AtomicInteger checkpoint = new AtomicInteger(0);
+        statusService.ifPresent(status -> status.showStatus(checkpoint.get(), totalCheckpoints, "Exporting HDF5..."));
+
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
         createMDArray(writer, datasetDims, blockSize, pixelClass);
@@ -116,12 +119,12 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                     // save data
                     writeMDArray(writer, flatArr, offset, sliceDims, pixelClass);
                     // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
+                    statusService.ifPresent(status -> status.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
                 }
 
             }
         }
-        statusService.showStatus("Finished Exporting HDF5.");
+        statusService.ifPresent(status -> status.showStatus("Finished Exporting HDF5."));
     }
 
     private void writeMDArray(IHDF5Writer writer, Object[] flatArr, long[] offset, long[] sliceDims, Class<T> pixelClass) {
@@ -213,8 +216,8 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         }
 
         final int totalCheckpoints = numFrames * ARGB_CHANNEL_NUM * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
+        final AtomicInteger checkpoint = new AtomicInteger(0);
+        statusService.ifPresent(s -> s.showStatus(checkpoint.get(), totalCheckpoints, "Exporting HDF5..."));
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
         createMDArray(writer, datasetDims, blockSize, (Class<T>) UnsignedByteType.class);
@@ -262,12 +265,12 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                     // save data
                     writeMDArray(writer, flatArr, offset, sliceDims, (Class<T>) UnsignedByteType.class);
                     // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
+                    statusService.ifPresent(s -> s.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
                 }
 
             }
         }
-        statusService.showStatus("Finished Exporting HDF5.");
+        statusService.ifPresent(s -> s.showStatus("Finished Exporting HDF5."));
     }
 
     private int getDimension(ImgPlus<T> image, AxisType axis) {
