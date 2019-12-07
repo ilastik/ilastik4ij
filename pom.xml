@@ -81,6 +81,10 @@
     <dependencies>
         <dependency>
             <groupId>net.imagej</groupId>
+            <artifactId>imagej-legacy</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>net.imagej</groupId>
             <artifactId>ij</artifactId>
         </dependency>
         <dependency>

@@ -25,6 +25,7 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.junit.AfterClass;
@@ -139,7 +140,7 @@ public class Hdf5DataSetReaderTest {
         Dataset input = datasetIOService.open(TEST_JPG_RESOURCE);
         ImgPlus<T> imgPlus = (ImgPlus<T>) input.getImgPlus();
         String h5Path = testH5.getPath();
-        new Hdf5DataSetWriter<T>(imgPlus, h5Path, DATASET, 0, logService, statusService).write();
+        new Hdf5DataSetWriter<T>(imgPlus, h5Path, DATASET, 0, new LogServiceWrapper( logService ), statusService).write();
         // Loading file in tzyxc order
         ImgPlus<T> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
         long[] dims = new long[5];
@@ -178,7 +179,7 @@ public class Hdf5DataSetReaderTest {
         Img<ARGBType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new ARGBType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<ARGBType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<ARGBType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
+        Hdf5DataSetWriter<ARGBType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, new LogServiceWrapper( logService ), statusService);
         hdf5.write();
         // Loading file in tzyxc order
         ImgPlus<ARGBType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
@@ -225,7 +226,7 @@ public class Hdf5DataSetReaderTest {
         Img<FloatType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new FloatType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<FloatType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<FloatType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
+        Hdf5DataSetWriter<FloatType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, new LogServiceWrapper( logService ), statusService);
         hdf5.write();
         // Loading file in tzyxc order
         ImgPlus<FloatType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
@@ -266,7 +267,7 @@ public class Hdf5DataSetReaderTest {
         Img<UnsignedShortType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedShortType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedShortType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
+        Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, new LogServiceWrapper( logService ), statusService);
         hdf5.write();
         // Loading file in tzyxc order
         ImgPlus<UnsignedShortType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
@@ -307,7 +308,7 @@ public class Hdf5DataSetReaderTest {
         Img<UnsignedIntType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedIntType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedIntType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<UnsignedIntType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
+        Hdf5DataSetWriter<UnsignedIntType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, new LogServiceWrapper( logService ), statusService);
         hdf5.write();
         // Loading file in tzyxc order
         ImgPlus<UnsignedIntType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
@@ -336,7 +337,7 @@ public class Hdf5DataSetReaderTest {
 
     private <T extends NativeType<T>> ImgPlus<T> readFromHdf5(String filename, String dataset, String axesOrder,
                                                               LogService logService, StatusService statusService) {
-        return new Hdf5DataSetReader<T>(filename, dataset, axesOrder, logService, statusService).read();
+        return new Hdf5DataSetReader<T>(filename, dataset, axesOrder, new LogServiceWrapper( logService ), statusService).read();
     }
 
 }

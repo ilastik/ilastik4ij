@@ -27,7 +27,6 @@ public class ObjectClassification extends AbstractIlastikExecutor {
 
         // TODO: Adapt to object classification
 
-        List<String> commandLine = new ArrayList<>();
 //        commandLine.add(executableFilePath.getAbsolutePath());
 //        commandLine.add("--headless");
 //        commandLine.add("--project=" + projectFileName.getAbsolutePath());
@@ -39,15 +38,21 @@ public class ObjectClassification extends AbstractIlastikExecutor {
 //        }
 //        commandLine.add(tempFiles.get( rawInputTempFile ));
 
-        //TODO: move to object classification
-//        if (tempFiles.containsKey(tempSegFilename)) {
-//            commandLine.add("--segmentation_image=" + tempFiles.get(tempSegFilename));
-//        } else {
-//            if (!tempFiles.containsKey(tempProbFilename)) {
-//                throw new IllegalStateException("No tempProbFilename provided");
-//            }
-//            commandLine.add("--prediction_maps=" + tempFiles.get(tempProbFilename));
-//        }
+        List<String> commandLine = new ArrayList<>();
+        commandLine.add(executableFilePath.getAbsolutePath());
+        commandLine.add("--headless");
+        commandLine.add("--project=" + projectFileName.getAbsolutePath());
+        commandLine.add("--output_filename_format=" + tempFiles.get( outputTempFile ));
+        commandLine.add("--output_format=hdf5");
+        commandLine.add("--output_axis_order=tzyxc");
+        commandLine.add("--raw_data=" + tempFiles.get( rawInputTempFile ));
+
+        if (secondInputType.equals("Segmentation")) {
+            commandLine.add("--segmentation_image=" + tempFiles.get( secondInputTempFile ));
+        } else {
+            commandLine.add("--prediction_maps=" + tempFiles.get( secondInputTempFile ));
+        }
+
         return commandLine;
     }
 }

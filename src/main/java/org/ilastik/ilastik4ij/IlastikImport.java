@@ -16,6 +16,7 @@ import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
@@ -33,8 +34,10 @@ import java.util.stream.Collectors;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Import HDF5")
 public class IlastikImport implements Command {
+
     @Parameter
     private LogService log;
+
     @Parameter
     private StatusService statusService;
 
@@ -95,7 +98,7 @@ public class IlastikImport implements Command {
 
         Instant start = Instant.now();
 
-        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(hdf5FilePath, datasetName, axisOrder, log, statusService).read();
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(hdf5FilePath, datasetName, axisOrder, new LogServiceWrapper( log ), statusService).read();
         ImageJFunctions.show(imgPlus);
 
         Instant finish = Instant.now();

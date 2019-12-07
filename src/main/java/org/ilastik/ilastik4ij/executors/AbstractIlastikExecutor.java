@@ -1,6 +1,7 @@
 package org.ilastik.ilastik4ij.executors;
 
 import net.imagej.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
@@ -17,7 +18,7 @@ import java.util.Map;
 public abstract class AbstractIlastikExecutor {
 
     protected static final String rawInputTempFile = "tempFileRawInput";
-    protected static final String tempFileOutput = "tempFileOutput";
+    protected static final String outputTempFile = "tempFileOutput";
     protected static final String secondInputTempFile = "tempFileSegmentationOrProbabilitiesInput";
 
     private final int numThreads;
@@ -54,8 +55,9 @@ public abstract class AbstractIlastikExecutor {
      * @return
      * @throws IOException
      */
-    protected ImgPlus<?> executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, SecondInputType secondInputImgType ) throws IOException {
-        final Map< String, String > tempFiles = prepareTempFiles( secondInputImgType );
+    protected < T extends NativeType< T >> ImgPlus< T > executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, SecondInputType secondInputImgType ) throws IOException {
+
+        final Map< String, String > tempFiles = prepareTempFiles( secondInputImg != null );
 
         stageInputFiles( rawInputImg, secondInputImg, tempFiles );
 
@@ -63,7 +65,7 @@ public abstract class AbstractIlastikExecutor {
 
         executeCommandLine( commandLine );
 
-        ImgPlus< ? > outputImg = new Hdf5DataSetReader(tempFiles.get(tempFileOutput), "exported_data", "tzyxc", logger, statusService).read();
+        ImgPlus< T > outputImg = new Hdf5DataSetReader(tempFiles.get( outputTempFile ), "exported_data", "tzyxc", logger, statusService).read();
 
         deleteTempFiles( tempFiles );
 
@@ -84,14 +86,14 @@ public abstract class AbstractIlastikExecutor {
         }
     }
 
-    private Map<String, String> prepareTempFiles( SecondInputType secondInputType ) throws IOException
+    private Map<String, String> prepareTempFiles( boolean hasSecondInputImg ) throws IOException
     {
         LinkedHashMap<String, String> tempFiles = new LinkedHashMap<>();
 
         tempFiles.put( rawInputTempFile, IlastikUtilities.getTemporaryFileName("_in_raw.h5"));
-        tempFiles.put( tempFileOutput, IlastikUtilities.getTemporaryFileName("_out.h5") );
+        tempFiles.put( outputTempFile, IlastikUtilities.getTemporaryFileName("_out.h5") );
 
-        if ( ! secondInputType.equals( SecondInputType.Null ) )
+        if ( hasSecondInputImg )
         {
             tempFiles.put( secondInputTempFile, IlastikUtilities.getTemporaryFileName("_in_2nd.h5") );
         }

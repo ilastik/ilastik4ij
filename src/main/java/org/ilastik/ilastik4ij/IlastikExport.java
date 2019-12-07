@@ -11,6 +11,7 @@ import ij.io.SaveDialog;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
@@ -24,8 +25,10 @@ import java.time.Instant;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
 public class IlastikExport implements Command {
+
     @Parameter
     private LogService log;
+
     @Parameter
     private StatusService statusService;
 
@@ -62,7 +65,7 @@ public class IlastikExport implements Command {
 
         @SuppressWarnings("unchecked")
         ImgPlus<T> imgPlus = (ImgPlus<T>) input.getImgPlus();
-        new Hdf5DataSetWriter<>(imgPlus, hdf5FilePath, datasetName, compressionLevel, log, statusService).write();
+        new Hdf5DataSetWriter<>(imgPlus, hdf5FilePath, datasetName, compressionLevel, new LogServiceWrapper( log ), statusService).write();
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
