@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.ui;
 
 import ij.IJ;
 import ij.gui.GenericDialog;
@@ -24,7 +24,7 @@ import java.time.Duration;
 import java.time.Instant;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
-public class IlastikExport implements Command {
+public class IlastikExportCommnd implements Command {
 
     @Parameter
     private LogService log;

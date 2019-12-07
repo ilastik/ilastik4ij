@@ -1,12 +1,7 @@
 package org.ilastik.ilastik4ij;
 
-import ij.IJ;
-import ij.ImagePlus;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
-import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
@@ -28,13 +23,12 @@ public class ObjectClassificationTest
 
 		// Run test
 		//
-
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
 		// Open input images
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( rawInputImagePath, ij );
+		ImgPlus< R > rawInput = TestHelpers.openImg( rawInputImagePath, ij.dataset() );
 		ImgPlus< R > probabilitiesInput = new Hdf5DataSetReader( probabilitiesInputImagePath, "exported_data", "tzyxc", new LogServiceWrapper( ij.log() ), ij.status() ).read();
 
 		ImageJFunctions.show( rawInput, "raw input" );
@@ -45,7 +39,7 @@ public class ObjectClassificationTest
 		final File ilastikApp = new File( ilastikPath );
 		final File ilastikProject = new File( ilastikProjectPath );
 		final ObjectClassification prediction = new ObjectClassification( ilastikApp, ilastikProject,  new LogServiceWrapper( ij.log() ), ij.status(), 4, 10000 );
-		final ImgPlus< R > predictedObjects = (ImgPlus) prediction.classifyObjects( rawInput, probabilitiesInput, AbstractIlastikExecutor.SecondInputType.Probability );
+		final ImgPlus< R > predictedObjects = (ImgPlus) prediction.classifyObjects( rawInput, probabilitiesInput, AbstractIlastikExecutor.PixelClassificationType.Probability );
 
 		ImageJFunctions.show( predictedObjects, "object classification" );
 	}

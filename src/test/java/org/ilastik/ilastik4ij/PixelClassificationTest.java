@@ -27,7 +27,7 @@ public class PixelClassificationTest
 
 		// Open input image
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij );
+		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
 
 		ImageJFunctions.show( rawInput, "raw input" );
 

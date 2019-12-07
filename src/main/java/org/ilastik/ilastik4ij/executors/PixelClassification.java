@@ -10,27 +10,19 @@ import java.io.IOException;
 import java.util.*;
 
 public class PixelClassification extends AbstractIlastikExecutor {
-    private OutputType outputType;
-
-    public enum OutputType
-    {
-        Segmentation,
-        Probabilities
-    }
 
     public PixelClassification( File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb )
     {
         super( executableFilePath, projectFileName, logger, statusService, numThreads, maxRamMb );
     }
 
-    public <T extends NativeType<T>> ImgPlus<T> classifyPixels( ImgPlus<? extends RealType<?>> rawInputImg, OutputType outputType ) throws IOException
+    public <T extends NativeType<T>> ImgPlus<T> classifyPixels( ImgPlus<? extends RealType<?>> rawInputImg, PixelClassificationType pixelClassificationType ) throws IOException
     {
-        this.outputType = outputType;
-        return executeIlastik(rawInputImg, null, null);
+        return executeIlastik(rawInputImg, null, pixelClassificationType);
     }
 
     @Override
-    protected List<String> buildCommandLine(Map<String, String> tempFiles, SecondInputType secondInputType) {
+    protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelClassificationType pixelClassificationType ) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(executableFilePath.getAbsolutePath());
         commandLine.add("--headless");
@@ -38,20 +30,11 @@ public class PixelClassification extends AbstractIlastikExecutor {
         commandLine.add("--output_filename_format=" + tempFiles.get( outputTempFile ));
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
-        if (outputType.equals( OutputType.Segmentation )) {
+        if (pixelClassificationType.equals( PixelClassificationType.Segmentation )) {
             commandLine.add("--export_source=Simple Segmentation");
         }
         commandLine.add(tempFiles.get( rawInputTempFile ));
 
-        //TODO: move to object classification
-//        if (tempFiles.containsKey(tempSegFilename)) {
-//            commandLine.add("--segmentation_image=" + tempFiles.get(tempSegFilename));
-//        } else {
-//            if (!tempFiles.containsKey(tempProbFilename)) {
-//                throw new IllegalStateException("No tempProbFilename provided");
-//            }
-//            commandLine.add("--prediction_maps=" + tempFiles.get(tempProbFilename));
-//        }
         return commandLine;
     }
 }

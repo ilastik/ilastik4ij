@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.ui;
 
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
@@ -33,7 +33,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Import HDF5")
-public class IlastikImport implements Command {
+public class IlastikImportCommand implements Command {
 
     @Parameter
     private LogService log;
@@ -70,7 +70,7 @@ public class IlastikImport implements Command {
             if (isValidAxisOrder(rank, axisOrder)) {
                 loadDataset(hdf5FilePath, datasetName, axisOrder);
                 if (applyLUT) {
-                    IJ.run("glasbey_inverted");
+                    DisplayUtils.applyGlasbeyLUT();
                 }
             }
         }

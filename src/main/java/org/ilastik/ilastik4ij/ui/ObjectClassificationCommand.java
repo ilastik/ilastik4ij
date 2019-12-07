@@ -28,10 +28,8 @@ package org.ilastik.ilastik4ij.ui;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import net.imglib2.type.NativeType;
-import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
 import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
-import org.ilastik.ilastik4ij.executors.PixelClassification;
+import org.ilastik.ilastik4ij.executors.ObjectClassification;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -44,8 +42,8 @@ import java.io.IOException;
 
 import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.*;
 
-@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public class PixelClassificationCommand implements Command {
+@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
+public class ObjectClassificationCommand implements Command {
 
     @Parameter
 	public LogService logService;
@@ -66,8 +64,11 @@ public class PixelClassificationCommand implements Command {
     @Parameter(label = "Raw input image")
 	public Dataset inputImage;
 
-    @Parameter(label = "Output type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
-	public String chosenOutputType = "Probabilities";
+	@Parameter(label = "Pixel Probability or Segmentation image")
+	public Dataset inputProbOrSegImage;
+
+	@Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
+	public String secondInputType = "Probabilities";
 
 	public IlastikOptions ilastikOptions;
 
@@ -91,14 +92,15 @@ public class PixelClassificationCommand implements Command {
 
 	private void runClassification() throws IOException
 	{
-		final PixelClassification pixelClassification = new PixelClassification( ilastikOptions.getExecutableFile(), projectFileName, new LogServiceWrapper( logService ), statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
+		final ObjectClassification objectClassification = new ObjectClassification( ilastikOptions.getExecutableFile(), projectFileName, new LogServiceWrapper( logService ), statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
 
-		final ImgPlus< ? extends NativeType< ? > > classifiedPixels = pixelClassification.classifyPixels( inputImage.getImgPlus(), PixelClassificationType.valueOf( chosenOutputType ) );
+		final PixelClassificationType pixelClassificationType = PixelClassificationType.valueOf( secondInputType );
 
-		ImageJFunctions.show( ( ImgPlus ) classifiedPixels );
+		final ImgPlus< ? > classifiedObjects = objectClassification.classifyObjects( inputImage.getImgPlus(), inputProbOrSegImage.getImgPlus(), pixelClassificationType );
 
-		if (chosenOutputType.equals("Segmentation")) {
-			DisplayUtils.applyGlasbeyLUT();
-		}
+		ImageJFunctions.show( ( ImgPlus ) classifiedObjects );
+
+		DisplayUtils.applyGlasbeyLUT();
 	}
+
 }

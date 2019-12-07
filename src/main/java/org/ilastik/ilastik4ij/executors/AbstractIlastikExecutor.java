@@ -29,7 +29,7 @@ public abstract class AbstractIlastikExecutor {
     protected final LoggerCallback logger;
     protected final StatusService statusService;
 
-    public enum SecondInputType
+    public enum PixelClassificationType
     {
         Segmentation,
         Probability
@@ -44,24 +44,24 @@ public abstract class AbstractIlastikExecutor {
         this.statusService = statusService;
     }
 
-    protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, SecondInputType secondInputType );
+    protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelClassificationType pixelClassificationType );
 
     /**
      *
      *
      * @param rawInputImg intensity input image
      * @param secondInputImg probability or segmentation input image (not used for pixel classification)
-     * @param secondInputImgType
+     * @param pixelClassificationType
      * @return
      * @throws IOException
      */
-    protected < T extends NativeType< T >> ImgPlus< T > executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, SecondInputType secondInputImgType ) throws IOException {
+    protected < T extends NativeType< T >> ImgPlus< T > executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelClassificationType pixelClassificationType ) throws IOException {
 
         final Map< String, String > tempFiles = prepareTempFiles( secondInputImg != null );
 
         stageInputFiles( rawInputImg, secondInputImg, tempFiles );
 
-        List<String> commandLine = buildCommandLine( tempFiles, secondInputImgType );
+        List<String> commandLine = buildCommandLine( tempFiles, pixelClassificationType );
 
         executeCommandLine( commandLine );
 

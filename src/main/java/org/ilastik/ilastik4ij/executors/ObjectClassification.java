@@ -17,13 +17,13 @@ public class ObjectClassification extends AbstractIlastikExecutor {
         super( executableFilePath, projectFileName, logger, statusService, numThreads, maxRamMb );
     }
 
-    public ImgPlus< ? > classifyObjects( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, SecondInputType secondInputType ) throws IOException
+    public ImgPlus< ? > classifyObjects( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelClassificationType pixelClassificationType ) throws IOException
     {
-        return executeIlastik( rawInputImg, secondInputImg, secondInputType);
+        return executeIlastik( rawInputImg, secondInputImg, pixelClassificationType );
     }
 
     @Override
-    protected List<String> buildCommandLine(Map<String, String> tempFiles, SecondInputType secondInputType) {
+    protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelClassificationType pixelClassificationType ) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(executableFilePath.getAbsolutePath());
         commandLine.add("--headless");
@@ -33,7 +33,7 @@ public class ObjectClassification extends AbstractIlastikExecutor {
         commandLine.add("--output_axis_order=tzyxc");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
-        if (secondInputType.equals(SecondInputType.Segmentation)) {
+        if ( pixelClassificationType.equals( PixelClassificationType.Segmentation)) {
             commandLine.add("--segmentation_image=" + tempFiles.get(secondInputTempFile));
         } else {
             commandLine.add("--prediction_maps=" + tempFiles.get(secondInputTempFile));

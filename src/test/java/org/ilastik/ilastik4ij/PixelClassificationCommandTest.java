@@ -4,8 +4,6 @@ import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
-import org.ilastik.ilastik4ij.executors.PixelClassification;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
 import org.ilastik.ilastik4ij.ui.PixelClassificationCommand;
 
@@ -29,7 +27,7 @@ public class PixelClassificationCommandTest
 
 		// Open input image
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij );
+		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
 		ImageJFunctions.show( rawInput, "raw input" );
 
 		// Configure options
@@ -39,7 +37,6 @@ public class PixelClassificationCommandTest
 
 		// Classify pixels
 		//
-
 		final PixelClassificationCommand command = new PixelClassificationCommand();
 		command.logService = ij.log();
 		command.statusService = ij.status();
@@ -49,7 +46,6 @@ public class PixelClassificationCommandTest
 		command.inputImage = ij.dataset().create( rawInput );
 		command.projectFileName = new File( ilastikProjectPath );
 		command.run();
-
 	}
 
 }
