@@ -23,13 +23,12 @@
  *
  * Author: Carsten Haubold
  */
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.ui;
 
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Map;
 
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
@@ -46,34 +45,25 @@ import org.scijava.options.OptionsPlugin;
  * shared configuration.
  */
 @Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
-public class IlastikOptions extends OptionsPlugin {
-
+public class IlastikOptions extends OptionsPlugin
+{
     @Parameter
     LogService log;
 
-    // own parameters:
-    @Parameter(label = "Path to ilastik executable")
-    private File executableFilePath = new File("/opt/ilastik/run_ilastik.sh");
+    @Parameter(label = "Path to ilastik executable, e.g.,\n" +
+            "MacOS: /Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik\n" +
+            "Windows: ...\n" +
+            "Linux: /opt/ilastik/run_ilastik.sh")
+    private File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
     private int numThreads = -1;
 
     @Parameter(min = "256", label="Maximum amount of RAM (in MB) that ilastik is allowed to use.")
     private int maxRamMb = 4096;
-    
-    private static String getOS() {
-        return System.getProperty("os.name", "generic").toLowerCase();
-    }
 
-    public String getExecutableFilePath() {
-        final String os = getOS();
-        String macExtension = "";
-        // On Mac OS X we must call the program within the app to be able to add arguments
-        if (os.contains("mac") || os.contains("darwin")) 
-        {
-            macExtension = "/Contents/MacOS/ilastik";
-        }
-        return executableFilePath.getAbsolutePath().concat(macExtension);
+    public File getExecutableFile() {
+        return executableFile;
     }
 
     public int getMaxRamMb() {
@@ -84,8 +74,8 @@ public class IlastikOptions extends OptionsPlugin {
         return numThreads;
     }
 
-    public void setExecutableFilePath(String executableFilePath) {
-        this.executableFilePath = new File(executableFilePath);
+    public void setExecutableFile( File executableFile ) {
+        this.executableFile = executableFile;
     }
 
     public void setNumThreads(int numThreads) {
@@ -102,18 +92,6 @@ public class IlastikOptions extends OptionsPlugin {
      * @return True if properly configured
      */
     public Boolean isConfigured() {
-        Path p = Paths.get(getExecutableFilePath());
-        return Files.exists(p) && maxRamMb > 0;
-    }
-
-    public void configureProcessBuilderEnvironment(ProcessBuilder pb) {
-        final Map<String, String> env = pb.environment();
-        if (numThreads >= 0) {
-            env.put("LAZYFLOW_THREADS", String.valueOf(numThreads));
-        }
-        env.put("LAZYFLOW_TOTAL_RAM_MB", String.valueOf(maxRamMb));
-        env.put("LANG", "en_US.UTF-8");
-        env.put("LC_ALL", "en_US.UTF-8");
-        env.put("LC_CTYPE", "en_US.UTF-8");
+        return getExecutableFile().exists() && maxRamMb > 0;
     }
 }
