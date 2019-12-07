@@ -127,8 +127,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                 }
             }
             SwingUtilities.invokeLater(() -> statusService.ifPresent( s -> s.showStatus("Finished Importing HDF5.")));
-
-            ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString());
+            ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString(), new AxisType[]{ Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME });
             result.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);
             result.setValidBits(dsConfig.bitdepth);
             return result;

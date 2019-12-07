@@ -24,33 +24,19 @@ public class ObjectClassification extends AbstractIlastikExecutor {
 
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, SecondInputType secondInputType) {
-
-        // TODO: Adapt to object classification
-
-//        commandLine.add(executableFilePath.getAbsolutePath());
-//        commandLine.add("--headless");
-//        commandLine.add("--project=" + projectFileName.getAbsolutePath());
-//        commandLine.add("--output_filename_format=" + tempFiles.get( tempFileOutput ));
-//        commandLine.add("--output_format=hdf5");
-//        commandLine.add("--output_axis_order=tzyxc");
-//        if (outputType.equals( OutputType.Segmentation )) {
-//            commandLine.add("--export_source=\"Simple Segmentation\"");
-//        }
-//        commandLine.add(tempFiles.get( rawInputTempFile ));
-
         List<String> commandLine = new ArrayList<>();
         commandLine.add(executableFilePath.getAbsolutePath());
         commandLine.add("--headless");
         commandLine.add("--project=" + projectFileName.getAbsolutePath());
-        commandLine.add("--output_filename_format=" + tempFiles.get( outputTempFile ));
+        commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
-        commandLine.add("--raw_data=" + tempFiles.get( rawInputTempFile ));
+        commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
-        if (secondInputType.equals("Segmentation")) {
-            commandLine.add("--segmentation_image=" + tempFiles.get( secondInputTempFile ));
+        if (secondInputType.equals(SecondInputType.Segmentation)) {
+            commandLine.add("--segmentation_image=" + tempFiles.get(secondInputTempFile));
         } else {
-            commandLine.add("--prediction_maps=" + tempFiles.get( secondInputTempFile ));
+            commandLine.add("--prediction_maps=" + tempFiles.get(secondInputTempFile));
         }
 
         return commandLine;

@@ -81,7 +81,7 @@ public abstract class AbstractIlastikExecutor {
 
         if (secondInputImg != null)
         {
-            logger.info("Staging second input image as temporary file " + tempFiles.get( rawInputTempFile ));
+            logger.info("Staging second input image as temporary file " + tempFiles.get( secondInputTempFile ));
             new Hdf5DataSetWriter(secondInputImg, tempFiles.get( secondInputTempFile ), "data", compressionLevel, logger, statusService).write();
         }
     }

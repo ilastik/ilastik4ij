@@ -275,7 +275,8 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private int getDimension(ImgPlus<T> image, AxisType axis) {
         int dimensionIndex = image.dimensionIndex(axis);
         if (dimensionIndex >= 0) {
-            return Math.toIntExact(image.dimension(dimensionIndex));
+            final int dimension = Math.toIntExact( image.dimension( dimensionIndex ) );
+            return dimension;
         } else {
             if (Axes.X.equals(axis) || Axes.Y.equals(axis)) {
                 throw new IllegalStateException("Image must have X and Y dimensions");

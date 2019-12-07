@@ -10,6 +10,7 @@ import net.imagej.axis.AxisType;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import net.imglib2.view.Views;
 
 public abstract class TestHelpers
 {
@@ -17,7 +18,8 @@ public abstract class TestHelpers
 	{
 		final ImagePlus imagePlus = IJ.openImage( inputImagePath );
 		final RandomAccessibleInterval< R > raiXYCZ = ImageJFunctions.wrapReal( imagePlus );
-		AxisType[] axisTypes = new AxisType[]{ Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z };
-		return ( ImgPlus< R > ) new ImgPlus( ij.dataset().create( raiXYCZ ), "image", axisTypes );
+		final RandomAccessibleInterval< R > raiXYCZT = Views.addDimension( raiXYCZ, 0, 0 );
+		AxisType[] axisTypes = new AxisType[]{ Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME };
+		return ( ImgPlus< R > ) new ImgPlus( ij.dataset().create( raiXYCZT ), "image", axisTypes );
 	}
 }

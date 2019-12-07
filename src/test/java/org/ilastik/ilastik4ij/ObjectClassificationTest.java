@@ -40,7 +40,6 @@ public class ObjectClassificationTest
 		ImageJFunctions.show( rawInput, "raw input" );
 		ImageJFunctions.show( probabilitiesInput, "probabilities input" );
 
-
 		// Classify pixels
 		//
 		final File ilastikApp = new File( ilastikPath );
