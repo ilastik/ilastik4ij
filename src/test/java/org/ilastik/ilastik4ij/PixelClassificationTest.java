@@ -22,35 +22,28 @@ public class PixelClassificationTest
 		final String ilastikProjectPath = "/Users/tischer/Documents/tobias-kletter/ilastik-test/tubulin_dna_volume_pixel_classification.ilp";
 
 
-		// Run test
+		// Open input image
 		//
-
 		final ImageJ ij = new ImageJ();
 		ij.ui().showUI();
 
-		// Open input image
-		//
-//		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
-
-		final ImagePlus imagePlus = IJ.openImage( inputImagePath );
-
-		final ImgPlus< R > rawInput = ij.convert().convert( imagePlus, ImgPlus.class );
-
-		ImageJFunctions.show( rawInput, "raw input" );
+		final ImagePlus inputImp = IJ.openImage( inputImagePath );
+		inputImp.show();
 
 		// Classify pixels
 		//
-		final File ilastikApp = new File( ilastikPath );
-		final File ilastikProject = new File( ilastikProjectPath );
-
 		final PixelClassification prediction = new PixelClassification(
 				new File( ilastikPath ),
 				new File( ilastikProjectPath ),
-				new LogServiceWrapper( ij.log() ), ij.status(),
+				new LogServiceWrapper( ij.log() ),
+				ij.status(),
 				4,
 				10000 );
 
-		final ImgPlus< R > classifiedPixels = (ImgPlus) prediction.classifyPixels( rawInput, PixelClassificationType.Segmentation );
+		final ImgPlus< R > classifiedPixels =
+				(ImgPlus) prediction.classifyPixels(
+						ij.convert().convert( inputImp, ImgPlus.class ),
+						PixelClassificationType.Segmentation );
 
 		ImageJFunctions.show( classifiedPixels, "segmentation" );
 	}
