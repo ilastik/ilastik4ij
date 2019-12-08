@@ -28,22 +28,25 @@ package org.ilastik.ilastik4ij.ui;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
-import org.ilastik.ilastik4ij.executors.ObjectClassification;
+import net.imglib2.type.NativeType;
+import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
+import org.ilastik.ilastik4ij.executors.PixelClassification;
+import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
 import java.io.File;
 import java.io.IOException;
 
 import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.*;
 
-@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
-public class ObjectClassificationCommand implements Command {
+@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
+public class IlastikPixelClassificationCommand implements Command {
 
     @Parameter
 	public LogService logService;
@@ -53,6 +56,9 @@ public class ObjectClassificationCommand implements Command {
 
     @Parameter
 	public OptionsService optionsService;
+
+    @Parameter
+	public UIService uiService;
 
     // own parameters:
 //    @Parameter(label = "Save temporary file for training only, without prediction.")
@@ -64,11 +70,11 @@ public class ObjectClassificationCommand implements Command {
     @Parameter(label = "Raw input image")
 	public Dataset inputImage;
 
-	@Parameter(label = "Pixel Probability or Segmentation image")
-	public Dataset inputProbOrSegImage;
+    @Parameter(label = "Output type", choices = {PIXEL_CLASSIFICATION_TYPE_PROBABILITIES, PIXEL_CLASSIFICATION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
+	public String pixelClassificationType = PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
 
-	@Parameter(label = "Second Input Type", choices = {"Segmentation", "Probabilities"}, style = "radioButtonHorizontal")
-	public String secondInputType = "Probabilities";
+	@Parameter(type = ItemIO.OUTPUT)
+	private ImgPlus<? extends NativeType<?>> predictions;
 
 	public IlastikOptions ilastikOptions;
 
@@ -92,15 +98,23 @@ public class ObjectClassificationCommand implements Command {
 
 	private void runClassification() throws IOException
 	{
-		final ObjectClassification objectClassification = new ObjectClassification( ilastikOptions.getExecutableFile(), projectFileName, new LogServiceWrapper( logService ), statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
+		final PixelClassification pixelClassification = new PixelClassification( ilastikOptions.getExecutableFile(), projectFileName, new LogServiceWrapper( logService ), statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
 
-		final PixelClassificationType pixelClassificationType = PixelClassificationType.valueOf( secondInputType );
+		predictions = pixelClassification.classifyPixels( inputImage.getImgPlus(), PixelClassificationType.valueOf( pixelClassificationType ) );
 
-		final ImgPlus< ? > classifiedObjects = objectClassification.classifyObjects( inputImage.getImgPlus(), inputProbOrSegImage.getImgPlus(), pixelClassificationType );
-
-		ImageJFunctions.show( ( ImgPlus ) classifiedObjects );
-
-		DisplayUtils.applyGlasbeyLUT();
+		showOutput();
 	}
 
+	private void showOutput()
+	{
+		if ( ! uiService.isHeadless() )
+		{
+			ImageJFunctions.show( ( ImgPlus ) predictions );
+
+			if ( pixelClassificationType.equals( "Segmentation" ) )
+			{
+				DisplayUtils.applyGlasbeyLUT();
+			}
+		}
+	}
 }

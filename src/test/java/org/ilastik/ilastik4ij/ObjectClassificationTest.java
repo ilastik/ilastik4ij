@@ -1,16 +1,19 @@
 package org.ilastik.ilastik4ij;
 
+import ij.IJ;
+import ij.ImagePlus;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
-import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
+import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
 import org.ilastik.ilastik4ij.executors.ObjectClassification;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 
 import java.io.File;
 import java.io.IOException;
+
+import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.*;
 
 public class ObjectClassificationTest
 {
@@ -28,18 +31,31 @@ public class ObjectClassificationTest
 
 		// Open input images
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( rawInputImagePath, ij.dataset() );
+		final ImagePlus rawInputImp = IJ.openImage( rawInputImagePath );
+
+		// open ilastik hdf5 output
 		ImgPlus< R > probabilitiesInput = new Hdf5DataSetReader( probabilitiesInputImagePath, "exported_data", "tzyxc", new LogServiceWrapper( ij.log() ), ij.status() ).read();
 
-		ImageJFunctions.show( rawInput, "raw input" );
+		rawInputImp.show();
 		ImageJFunctions.show( probabilitiesInput, "probabilities input" );
 
 		// Classify pixels
 		//
-		final File ilastikApp = new File( ilastikPath );
-		final File ilastikProject = new File( ilastikProjectPath );
-		final ObjectClassification prediction = new ObjectClassification( ilastikApp, ilastikProject,  new LogServiceWrapper( ij.log() ), ij.status(), 4, 10000 );
-		final ImgPlus< R > predictedObjects = (ImgPlus) prediction.classifyObjects( rawInput, probabilitiesInput, AbstractIlastikExecutor.PixelClassificationType.Probability );
+
+		final ObjectClassification prediction =
+				new ObjectClassification(
+						new File( ilastikPath ),
+						new File( ilastikProjectPath ),
+						new LogServiceWrapper( ij.log() ),
+						ij.status(),
+						4,
+						10000 );
+
+		final ImgPlus< R > predictedObjects =
+				prediction.classifyObjects(
+						ij.convert().convert( rawInputImp, ImgPlus.class ),
+						probabilitiesInput,
+						PixelClassificationType.Probabilities );
 
 		ImageJFunctions.show( predictedObjects, "object classification" );
 	}

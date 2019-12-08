@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.executors;
+package org.ilastik.ilastik4ij.logging;
 
 public interface LoggerCallback {
     void info(String message);

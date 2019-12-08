@@ -4,8 +4,9 @@ import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
-import org.ilastik.ilastik4ij.ui.PixelClassificationCommand;
+import org.ilastik.ilastik4ij.ui.IlastikPixelClassificationCommand;
 
 import java.io.File;
 import java.io.IOException;
@@ -37,12 +38,12 @@ public class PixelClassificationCommandTest
 
 		// Classify pixels
 		//
-		final PixelClassificationCommand command = new PixelClassificationCommand();
+		final IlastikPixelClassificationCommand command = new IlastikPixelClassificationCommand();
 		command.logService = ij.log();
 		command.statusService = ij.status();
 		command.optionsService = ij.options();
 		command.ilastikOptions = options;
-		command.chosenOutputType = "Probabilities";
+		command.pixelClassificationType = AbstractIlastikExecutor.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
 		command.inputImage = ij.dataset().create( rawInput );
 		command.projectFileName = new File( ilastikProjectPath );
 		command.run();

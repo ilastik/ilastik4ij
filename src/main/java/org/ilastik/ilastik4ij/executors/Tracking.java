@@ -11,14 +11,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ObjectClassification extends AbstractIlastikExecutor {
+public class Tracking extends AbstractIlastikExecutor {
 
-    public ObjectClassification( File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb )
+    public Tracking( File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb )
     {
         super( executableFilePath, projectFileName, logger, statusService, numThreads, maxRamMb );
     }
 
-    public ImgPlus< ? > classifyObjects( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelClassificationType pixelClassificationType ) throws IOException
+    public ImgPlus< ? > trackObjects( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelClassificationType pixelClassificationType ) throws IOException
     {
         return executeIlastik( rawInputImg, secondInputImg, pixelClassificationType );
     }
@@ -32,6 +32,7 @@ public class ObjectClassification extends AbstractIlastikExecutor {
         commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
+        commandLine.add("--export_source=Tracking-Result");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
         if ( pixelClassificationType.equals( PixelClassificationType.Segmentation)) {

@@ -3,6 +3,7 @@ package org.ilastik.ilastik4ij.executors;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.logging.LoggerCallback;
 import org.scijava.app.StatusService;
 
 import java.io.File;

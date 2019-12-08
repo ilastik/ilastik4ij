@@ -5,6 +5,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.logging.LoggerCallback;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.scijava.app.StatusService;
 
@@ -32,8 +33,13 @@ public abstract class AbstractIlastikExecutor {
     public enum PixelClassificationType
     {
         Segmentation,
-        Probability
+        Probabilities
     }
+
+    // TODO: This can be removed once scijava choice parameters can be enums
+    public static final String PIXEL_CLASSIFICATION_TYPE_SEGMENTATION = "Segmentation";
+    public static final String PIXEL_CLASSIFICATION_TYPE_PROBABILITIES = "Probabilities";
+
 
     public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb) {
         this.numThreads = numThreads;

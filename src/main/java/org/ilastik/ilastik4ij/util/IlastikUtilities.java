@@ -33,7 +33,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 
-import org.ilastik.ilastik4ij.executors.LoggerCallback;
+import org.ilastik.ilastik4ij.logging.LoggerCallback;
 
 public class IlastikUtilities {
 	/*

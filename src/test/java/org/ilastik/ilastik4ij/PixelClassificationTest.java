@@ -1,10 +1,13 @@
 package org.ilastik.ilastik4ij;
 
+import ij.IJ;
+import ij.ImagePlus;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
+import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelClassificationType;
+import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
 import org.ilastik.ilastik4ij.executors.PixelClassification;
 
 import java.io.File;
@@ -27,7 +30,11 @@ public class PixelClassificationTest
 
 		// Open input image
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
+//		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
+
+		final ImagePlus imagePlus = IJ.openImage( inputImagePath );
+
+		final ImgPlus< R > rawInput = ij.convert().convert( imagePlus, ImgPlus.class );
 
 		ImageJFunctions.show( rawInput, "raw input" );
 
@@ -35,8 +42,15 @@ public class PixelClassificationTest
 		//
 		final File ilastikApp = new File( ilastikPath );
 		final File ilastikProject = new File( ilastikProjectPath );
-		final PixelClassification prediction = new PixelClassification( ilastikApp, ilastikProject,  new LogServiceWrapper( ij.log() ), ij.status(), 4, 10000 );
-		final ImgPlus< R > classifiedPixels = (ImgPlus)  prediction.classifyPixels( rawInput, PixelClassification.OutputType.Segmentation );
+
+		final PixelClassification prediction = new PixelClassification(
+				new File( ilastikPath ),
+				new File( ilastikProjectPath ),
+				new LogServiceWrapper( ij.log() ), ij.status(),
+				4,
+				10000 );
+
+		final ImgPlus< R > classifiedPixels = (ImgPlus) prediction.classifyPixels( rawInput, PixelClassificationType.Segmentation );
 
 		ImageJFunctions.show( classifiedPixels, "segmentation" );
 	}

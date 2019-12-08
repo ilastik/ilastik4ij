@@ -11,7 +11,7 @@ import ij.io.SaveDialog;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.executors.LogServiceWrapper;
+import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
