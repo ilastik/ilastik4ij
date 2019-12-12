@@ -29,7 +29,6 @@ import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
-import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
 import org.ilastik.ilastik4ij.executors.PixelClassification;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
@@ -70,8 +69,8 @@ public class IlastikPixelClassificationCommand implements Command {
     @Parameter(label = "Raw input image")
 	public Dataset inputImage;
 
-    @Parameter(label = "Output type", choices = {PIXEL_CLASSIFICATION_TYPE_PROBABILITIES, PIXEL_CLASSIFICATION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
-	public String pixelClassificationType = PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
+    @Parameter(label = "Output type", choices = { UiConstants.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES, UiConstants.PIXEL_CLASSIFICATION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
+	public String pixelClassificationType = UiConstants.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private ImgPlus<? extends NativeType<?>> predictions;
@@ -98,9 +97,9 @@ public class IlastikPixelClassificationCommand implements Command {
 
 	private void runClassification() throws IOException
 	{
-		final PixelClassification pixelClassification = new PixelClassification( ilastikOptions.getExecutableFile(), projectFileName, new LogServiceWrapper( logService ), statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
+		final PixelClassification pixelClassification = new PixelClassification( ilastikOptions.getExecutableFile(), projectFileName, logService, statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb() );
 
-		predictions = pixelClassification.classifyPixels( inputImage.getImgPlus(), PixelClassificationType.valueOf( pixelClassificationType ) );
+		predictions = pixelClassification.classifyPixels( inputImage.getImgPlus(), PixelPredictionType.valueOf( pixelClassificationType ) );
 
 		showOutput();
 	}

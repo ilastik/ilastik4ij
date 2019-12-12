@@ -1,18 +1,18 @@
 package org.ilastik.ilastik4ij;
 
+import ij.IJ;
+import ij.ImagePlus;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import net.imagej.ImgPlus;
-import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
 import org.ilastik.ilastik4ij.ui.IlastikPixelClassificationCommand;
+import org.ilastik.ilastik4ij.ui.UiConstants;
 
 import java.io.File;
 import java.io.IOException;
 
-public class PixelClassificationCommandTest
-{
+public class PixelClassificationCommandDemo {
 	public static < R extends RealType< R > > void main( String[] args ) throws IOException
 	{
 		// Configure paths
@@ -28,8 +28,8 @@ public class PixelClassificationCommandTest
 
 		// Open input image
 		//
-		ImgPlus< R > rawInput = TestHelpers.openImg( inputImagePath, ij.dataset() );
-		ImageJFunctions.show( rawInput, "raw input" );
+		final ImagePlus inputImp = IJ.openImage( inputImagePath );
+		inputImp.show();
 
 		// Configure options
 		//
@@ -43,10 +43,9 @@ public class PixelClassificationCommandTest
 		command.statusService = ij.status();
 		command.optionsService = ij.options();
 		command.ilastikOptions = options;
-		command.pixelClassificationType = AbstractIlastikExecutor.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
-		command.inputImage = ij.dataset().create( rawInput );
+		command.pixelClassificationType = UiConstants.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
+		command.inputImage = ij.convert().convert( inputImp, Dataset.class );
 		command.projectFileName = new File( ilastikProjectPath );
 		command.run();
 	}
-
 }

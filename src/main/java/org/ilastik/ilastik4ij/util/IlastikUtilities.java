@@ -26,14 +26,10 @@
 
 package org.ilastik.ilastik4ij.util;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.Charset;
+import org.scijava.log.LogService;
 
-import org.ilastik.ilastik4ij.logging.LoggerCallback;
+import java.io.*;
+import java.nio.charset.Charset;
 
 public class IlastikUtilities {
 	/*
@@ -54,10 +50,10 @@ public class IlastikUtilities {
      * Redirect an input stream to the log service (used for command line output)
      *
      * @param in input stream
-     * @param logger
+     * @param logService
      * @throws IOException
      */
-    public static void redirectOutputToLogService(final InputStream in, final LoggerCallback logger, final Boolean isErrorStream) {
+    public static void redirectOutputToLogService( final InputStream in, final LogService logService, final Boolean isErrorStream) {
         Thread t = new Thread(() -> {
 
             String line;
@@ -65,9 +61,9 @@ public class IlastikUtilities {
             try (BufferedReader bis = new BufferedReader(new InputStreamReader(in, Charset.defaultCharset()))) {
                 while ((line = bis.readLine()) != null) {
                     if (isErrorStream) {
-                        logger.error(line);
+                        logService.error(line);
                     } else {
-                        logger.info(line);
+                        logService.info(line);
                     }
                 }
             } catch (IOException ioe) {

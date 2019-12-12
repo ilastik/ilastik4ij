@@ -16,7 +16,6 @@ import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.logging.LogServiceWrapper;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
@@ -36,7 +35,7 @@ import java.util.stream.Collectors;
 public class IlastikImportCommand implements Command {
 
     @Parameter
-    private LogService log;
+    private LogService logService;
 
     @Parameter
     private StatusService statusService;
@@ -74,7 +73,7 @@ public class IlastikImportCommand implements Command {
                 }
             }
         }
-        log.info("Done loading HDF5 file!");
+        logService.info("Done loading HDF5 file!");
     }
 
     private String defaultAxisOrder(int rank) {
@@ -98,12 +97,13 @@ public class IlastikImportCommand implements Command {
 
         Instant start = Instant.now();
 
-        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(hdf5FilePath, datasetName, axisOrder, new LogServiceWrapper( log ), statusService).read();
+        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(hdf5FilePath, datasetName,
+                axisOrder, logService, statusService).read();
         ImageJFunctions.show(imgPlus);
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();
-        log.info("Loading HDF5 dataset took: " + timeElapsed);
+        logService.info("Loading HDF5 dataset took: " + timeElapsed);
     }
 
     private Map<String, HDF5DataSetInformation> findAvailableDatasets(IHDF5Reader reader, String path) {
@@ -112,7 +112,7 @@ public class IlastikImportCommand implements Command {
 
         Map<String, HDF5DataSetInformation> result = new LinkedHashMap<>();
         for (HDF5LinkInformation info : members) {
-            log.info(info.getPath() + ": " + info.getType());
+            logService.info(info.getPath() + ": " + info.getType());
             switch (info.getType()) {
                 case DATASET:
                     result.put(info.getPath(), reader.object().getDataSetInformation(info.getPath()));

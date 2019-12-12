@@ -5,9 +5,9 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
-import org.ilastik.ilastik4ij.logging.LoggerCallback;
 import org.ilastik.ilastik4ij.util.IlastikUtilities;
 import org.scijava.app.StatusService;
+import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,51 +27,37 @@ public abstract class AbstractIlastikExecutor {
 
     protected final File executableFilePath;
     protected final File projectFileName;
-    protected final LoggerCallback logger;
+    protected final LogService logService;
     protected final StatusService statusService;
 
-    public enum PixelClassificationType
-    {
+    public enum PixelPredictionType {
         Segmentation,
         Probabilities
     }
 
-    // TODO: This can be removed once scijava choice parameters can be enums
-    public static final String PIXEL_CLASSIFICATION_TYPE_SEGMENTATION = "Segmentation";
-    public static final String PIXEL_CLASSIFICATION_TYPE_PROBABILITIES = "Probabilities";
 
-
-    public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LoggerCallback logger, StatusService statusService, int numThreads, int maxRamMb) {
+    public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LogService logService, StatusService statusService, int numThreads, int maxRamMb) {
         this.numThreads = numThreads;
         this.maxRamMb = maxRamMb;
         this.executableFilePath = executableFilePath;
         this.projectFileName = projectFileName;
-        this.logger = logger;
+        this.logService = logService;
         this.statusService = statusService;
     }
 
-    protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelClassificationType pixelClassificationType );
+    protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType );
 
-    /**
-     *
-     *
-     * @param rawInputImg intensity input image
-     * @param secondInputImg probability or segmentation input image (not used for pixel classification)
-     * @param pixelClassificationType
-     * @return
-     * @throws IOException
-     */
-    protected < T extends NativeType< T >> ImgPlus< T > executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelClassificationType pixelClassificationType ) throws IOException {
+    protected < T extends NativeType< T >> ImgPlus< T > executeIlastik( ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelPredictionType pixelPredictionType ) throws IOException {
 
         final Map< String, String > tempFiles = prepareTempFiles( secondInputImg != null );
 
         stageInputFiles( rawInputImg, secondInputImg, tempFiles );
 
-        List<String> commandLine = buildCommandLine( tempFiles, pixelClassificationType );
+        List<String> commandLine = buildCommandLine( tempFiles, pixelPredictionType );
 
         executeCommandLine( commandLine );
 
-        ImgPlus< T > outputImg = new Hdf5DataSetReader(tempFiles.get( outputTempFile ), "exported_data", "tzyxc", logger, statusService).read();
+        ImgPlus< T > outputImg = new Hdf5DataSetReader(tempFiles.get( outputTempFile ), "exported_data", "tzyxc", logService, statusService).read();
 
         deleteTempFiles( tempFiles );
 
@@ -82,13 +68,13 @@ public abstract class AbstractIlastikExecutor {
     {
         int compressionLevel = 1;
 
-        logger.info("Staging raw input image as temporary file " + tempFiles.get( rawInputTempFile ));
-        new Hdf5DataSetWriter(rawInputImg, tempFiles.get( rawInputTempFile ), "data", compressionLevel, logger, statusService).write();
+        logService.info("Staging raw input image as temporary file " + tempFiles.get( rawInputTempFile ));
+        new Hdf5DataSetWriter(rawInputImg, tempFiles.get( rawInputTempFile ), "data", compressionLevel, logService, statusService).write();
 
         if (secondInputImg != null)
         {
-            logger.info("Staging second input image as temporary file " + tempFiles.get( secondInputTempFile ));
-            new Hdf5DataSetWriter(secondInputImg, tempFiles.get( secondInputTempFile ), "data", compressionLevel, logger, statusService).write();
+            logService.info("Staging second input image as temporary file " + tempFiles.get( secondInputTempFile ));
+            new Hdf5DataSetWriter(secondInputImg, tempFiles.get( secondInputTempFile ), "data", compressionLevel, logService, statusService).write();
         }
     }
 
@@ -109,21 +95,23 @@ public abstract class AbstractIlastikExecutor {
 
     private void deleteTempFiles( Map< String, String > tempFiles )
     {
-        logger.info("Deleting temporary files...");
+        logService.info("Deleting temporary files...");
 
-        for( String tempFilePath : tempFiles.keySet() )
+        for( String tempFilePath : tempFiles.values() )
         {
             final File tempFile = new File( tempFilePath );
-            if ( tempFile.exists() ) tempFile.delete();
+            if ( tempFile.exists() ) {
+                tempFile.delete();
+            }
         }
 
-        logger.info( "...done." );
+        logService.info( "...done." );
     }
 
     private void executeCommandLine( List< String > commandLine ) throws IOException
     {
-        logger.info("Running ilastik headless command:");
-        logger.info(commandLine.toString());
+        logService.info("Running ilastik headless command:");
+        logService.info(commandLine.toString());
 
         ProcessBuilder pB = new ProcessBuilder(commandLine);
         configureProcessBuilderEnvironment(pB);
@@ -132,23 +120,23 @@ public abstract class AbstractIlastikExecutor {
         final Process p = pB.start();
 
         // write ilastik output to log
-        IlastikUtilities.redirectOutputToLogService(p.getInputStream(), logger, false);
-        IlastikUtilities.redirectOutputToLogService(p.getErrorStream(), logger, true);
+        IlastikUtilities.redirectOutputToLogService(p.getInputStream(), logService, false);
+        IlastikUtilities.redirectOutputToLogService(p.getErrorStream(), logService, true);
 
         try {
             p.waitFor();
         } catch (InterruptedException e) {
-            logger.warn("Execution got interrupted");
+            logService.warn("Execution got interrupted");
             p.destroy();
         }
 
         // 0 indicates successful execution
         if (p.exitValue() != 0) {
-            logger.error("ilastik crashed");
+            logService.error("ilastik crashed");
             throw new RuntimeException("Execution of ilastik was not successful.");
         }
 
-        logger.info("ilastik finished successfully!");
+        logService.info("ilastik finished successfully!");
     }
 
     private void configureProcessBuilderEnvironment(ProcessBuilder pb) {

@@ -16,9 +16,9 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import org.ilastik.ilastik4ij.logging.LoggerCallback;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
+import org.scijava.log.LogService;
 
 import javax.swing.*;
 import java.nio.file.Paths;
@@ -36,14 +36,14 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
     private final String filename;
     private final String dataset;
     private final String axesorder;
-    private final LoggerCallback logger;
+    private final LogService logService;
     private final Optional<StatusService> statusService;
 
-    public Hdf5DataSetReader( String filename, String dataset, String axesorder, LoggerCallback logger, StatusService statusService) {
+    public Hdf5DataSetReader( String filename, String dataset, String axesorder, LogService logService, StatusService statusService) {
         this.filename = filename;
         this.dataset = dataset;
         this.axesorder = axesorder;
-        this.logger = logger;
+        this.logService = logService;
         this.statusService = Optional.ofNullable(statusService);
     }
 
@@ -51,7 +51,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
         try (IHDF5Reader reader = HDF5Factory.openForReading(filename)) {
             HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
             Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(dsInfo, axesorder);
-            logger.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
+            logService.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
 
             // construct output image
             final long[] dims = {dsConfig.dimX, dsConfig.dimY, dsConfig.numChannels, dsConfig.dimZ, dsConfig.numFrames};
@@ -60,7 +60,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                     .mapToObj(String::valueOf)
                     .collect(Collectors.joining(", "));
 
-            logger.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
+            logService.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
 
             final T type = Hdf5Utils.getNativeType(dsConfig.typeInfo);
 
@@ -68,9 +68,8 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                 throw new IllegalArgumentException("Unsupported data type: " + dsConfig.typeInfo);
             }
             // used default cell dimensions
-            final ImgFactory<T> imgFactory = new CellImgFactory<>();
-
-            final Img<T> img = imgFactory.create(dims, type);
+            final ImgFactory<T> imgFactory = new CellImgFactory<>(type);
+            final Img<T> img = imgFactory.create(dims);
 
             RandomAccess rai = img.randomAccess();
             final int[] extents = dsConfig.getXYSliceExtent();

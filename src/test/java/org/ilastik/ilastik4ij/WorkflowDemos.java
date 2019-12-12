@@ -1,14 +1,15 @@
 package org.ilastik.ilastik4ij;
 
-
 import net.imagej.ImageJ;
 import io.scif.services.DatasetIOService;
 import java.io.IOException;
 import net.imagej.Dataset;
+import org.ilastik.ilastik4ij.ui.IlastikObjectClassificationCommand;
+import org.ilastik.ilastik4ij.ui.IlastikPixelClassificationCommand;
+import org.ilastik.ilastik4ij.ui.IlastikTrackingCommand;
 import org.scijava.Context;
 
-public class WorkflowTests {
-
+public class WorkflowDemos {
     public static void testPixelClassificationWorkflow() {
         // Launch ImageJ as usual.
         final ImageJ ij = new ImageJ();
@@ -25,11 +26,11 @@ public class WorkflowTests {
             e.printStackTrace();
         }
 
-        ij.command().run(IlastikPixelClassificationPredictionCommand.class, true);
+        ij.command().run(IlastikPixelClassificationCommand.class, true);
     }
 
     public static void testObjectClassificationWorkflow() {
-// Launch ImageJ as usual.
+		// Launch ImageJ as usual.
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
 
@@ -44,11 +45,11 @@ public class WorkflowTests {
             e.printStackTrace();
         }
 
-        ij.command().run(IlastikObjectClassificationPrediction.class, true);
+        ij.command().run(IlastikObjectClassificationCommand.class, true);
     }
 
     public static void testTrackingWorkflow() {
-// Launch ImageJ as usual.
+    	// Launch ImageJ as usual.
         final ImageJ ij = new ImageJ();
         ij.ui().showUI();
         Context context = ij.getContext();
@@ -70,9 +71,9 @@ public class WorkflowTests {
             e.printStackTrace();
         }
 
-        ij.command().run(IlastikTrackingPrediction.class, true);
+        ij.command().run(IlastikTrackingCommand.class, true);
     }
-    
+
     public static void main(String... args)
     {
         testTrackingWorkflow();
