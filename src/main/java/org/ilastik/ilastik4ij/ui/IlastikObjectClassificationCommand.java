@@ -72,8 +72,8 @@ public class IlastikObjectClassificationCommand implements Command {
 	@Parameter(label = "Pixel Probability or Segmentation image")
 	public Dataset inputProbOrSegImage;
 
-	@Parameter(label = "Second Input Type", choices = { UiConstants.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES, UiConstants.PIXEL_CLASSIFICATION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
-	public String secondInputType = UiConstants.PIXEL_CLASSIFICATION_TYPE_PROBABILITIES;
+	@Parameter(label = "Second Input Type", choices = { UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES, UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION }, style = "radioButtonHorizontal")
+	public String secondInputType = UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES;
 
 	@Parameter(type = ItemIO.OUTPUT)
 	private ImgPlus<? extends NativeType<?> > predictions;

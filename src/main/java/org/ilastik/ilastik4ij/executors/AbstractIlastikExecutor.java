@@ -68,12 +68,10 @@ public abstract class AbstractIlastikExecutor {
     {
         int compressionLevel = 1;
 
-        logService.info("Staging raw input image as temporary file " + tempFiles.get( rawInputTempFile ));
         new Hdf5DataSetWriter(rawInputImg, tempFiles.get( rawInputTempFile ), "data", compressionLevel, logService, statusService).write();
 
         if (secondInputImg != null)
         {
-            logService.info("Staging second input image as temporary file " + tempFiles.get( secondInputTempFile ));
             new Hdf5DataSetWriter(secondInputImg, tempFiles.get( secondInputTempFile ), "data", compressionLevel, logService, statusService).write();
         }
     }
@@ -89,6 +87,8 @@ public abstract class AbstractIlastikExecutor {
         {
             tempFiles.put( secondInputTempFile, IlastikUtilities.getTemporaryFileName("_in_2nd.h5") );
         }
+
+        logService.info( "Temporary files: " + tempFiles );
 
         return Collections.unmodifiableMap( tempFiles );
     }

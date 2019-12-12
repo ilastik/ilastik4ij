@@ -2,12 +2,15 @@ package org.ilastik.ilastik4ij;
 
 import ij.IJ;
 import ij.ImagePlus;
+import io.scif.services.DatasetIOService;
+import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.ObjectClassification;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
+import org.scijava.Context;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,13 +32,12 @@ public class ObjectClassificationDemo {
 
 		// Open input images
 		//
-		final ImagePlus rawInputImp = IJ.openImage( rawInputImagePath );
+		Context context = ij.getContext();
+		DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
+		final Dataset inputDataset = datasetIOService.open( rawInputImagePath );
 
 		// open ilastik hdf5 output
 		ImgPlus< R > probabilitiesInput = new Hdf5DataSetReader( probabilitiesInputImagePath, "exported_data", "tzyxc", ij.log(), ij.status() ).read();
-
-		rawInputImp.show();
-		ImageJFunctions.show( probabilitiesInput, "probabilities input" );
 
 		// Classify pixels
 		//
@@ -51,7 +53,7 @@ public class ObjectClassificationDemo {
 
 		final ImgPlus< R > predictedObjects =
 				prediction.classifyObjects(
-						ij.convert().convert( rawInputImp, ImgPlus.class ),
+						(ImgPlus) inputDataset.getImgPlus(),
 						probabilitiesInput,
 						PixelPredictionType.Probabilities );
 
