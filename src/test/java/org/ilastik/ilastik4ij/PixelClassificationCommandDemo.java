@@ -28,9 +28,8 @@ public class PixelClassificationCommandDemo {
 
 		// Open input image
 		//
-		Context context = ij.getContext();
-		DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
-		final Dataset inputDataset = datasetIOService.open( inputImagePath );
+		final Dataset inputDataset = ij.scifio().datasetIO().open( inputImagePath );
+		ij.ui().show( inputDataset );
 
 		// Configure options
 		//

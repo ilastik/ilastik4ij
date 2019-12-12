@@ -21,7 +21,7 @@ public class ObjectClassificationDemo {
 	public static < R extends RealType< R > > void main( String[] args ) throws IOException
 	{
 		final String ilastikPath = "/Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik";
-		final String rawInputImagePath = "/Users/tischer/Documents/tobias-kletter/ilastik-test/tubulin_dna_volume.zip";
+		final String inputImagePath = "/Users/tischer/Documents/tobias-kletter/ilastik-test/tubulin_dna_volume.zip";
 		final String probabilitiesInputImagePath = "/Users/tischer/Documents/tobias-kletter/ilastik-test/tubulin_dna_volume-data_Probabilities.h5";
 		final String ilastikProjectPath = "/Users/tischer/Documents/tobias-kletter/ilastik-test/tubulin_dna_volume_object_classification.ilp";
 
@@ -32,9 +32,8 @@ public class ObjectClassificationDemo {
 
 		// Open input images
 		//
-		Context context = ij.getContext();
-		DatasetIOService datasetIOService = context.getService(DatasetIOService.class);
-		final Dataset inputDataset = datasetIOService.open( rawInputImagePath );
+		final Dataset inputDataset = ij.scifio().datasetIO().open( inputImagePath );
+		ij.ui().show( inputDataset );
 
 		// open ilastik hdf5 output
 		ImgPlus< R > probabilitiesInput = new Hdf5DataSetReader( probabilitiesInputImagePath, "exported_data", "tzyxc", ij.log(), ij.status() ).read();
