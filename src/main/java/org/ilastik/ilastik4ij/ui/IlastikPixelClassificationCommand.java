@@ -59,10 +59,6 @@ public class IlastikPixelClassificationCommand implements Command {
     @Parameter
 	public UIService uiService;
 
-    // own parameters:
-//    @Parameter(label = "Save temporary file for training only, without prediction.")
-//    private Boolean saveOnly = false;
-
     @Parameter(label = "Trained ilastik project file")
     public File projectFileName;
 
