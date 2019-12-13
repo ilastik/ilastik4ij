@@ -17,9 +17,9 @@ import java.io.File;
  */
 @Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
 public class IlastikOptions extends OptionsPlugin {
-    @Parameter(label = "Path to ilastik executable, e.g.,\n" +
-            "MacOS: /Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik\n" +
-            "Windows: ...\n" +
+    @Parameter(label = "Path to ilastik executable, e.g. " +
+            "MacOS: /Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik, " +
+            "Windows: C:\\\\Program Files\\ilastik\\ilastik.exe, " +
             "Linux: /opt/ilastik/run_ilastik.sh")
     private File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 
