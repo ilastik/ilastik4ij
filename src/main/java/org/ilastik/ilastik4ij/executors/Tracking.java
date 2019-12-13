@@ -1,7 +1,7 @@
 package org.ilastik.ilastik4ij.executors;
 
 import net.imagej.ImgPlus;
-
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
@@ -14,18 +14,17 @@ import java.util.Map;
 
 public class Tracking extends AbstractIlastikExecutor {
 
-    public Tracking( File executableFilePath, File projectFileName, LogService logService, StatusService statusService, int numThreads, int maxRamMb )
-    {
-        super( executableFilePath, projectFileName, logService, statusService, numThreads, maxRamMb );
+    public Tracking(File executableFilePath, File projectFileName, LogService logService, StatusService statusService, int numThreads, int maxRamMb) {
+        super(executableFilePath, projectFileName, logService, statusService, numThreads, maxRamMb);
     }
 
-    public ImgPlus< ? > trackObjects( ImgPlus<? extends RealType<?> > rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg, PixelPredictionType pixelPredictionType ) throws IOException
-    {
-        return executeIlastik( rawInputImg, secondInputImg, pixelPredictionType );
+    public <T extends NativeType<T>> ImgPlus<T> trackObjects(ImgPlus<? extends RealType<?>> rawInputImg, ImgPlus<? extends RealType<?>> secondInputImg,
+                                                             PixelPredictionType pixelPredictionType) throws IOException {
+        return executeIlastik(rawInputImg, secondInputImg, pixelPredictionType);
     }
 
     @Override
-    protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType ) {
+    protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType) {
         List<String> commandLine = new ArrayList<>();
         commandLine.add(executableFilePath.getAbsolutePath());
         commandLine.add("--headless");
@@ -36,7 +35,7 @@ public class Tracking extends AbstractIlastikExecutor {
         commandLine.add("--export_source=Tracking-Result");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
-        if ( pixelPredictionType.equals( PixelPredictionType.Segmentation)) {
+        if (pixelPredictionType == PixelPredictionType.Segmentation) {
             commandLine.add("--segmentation_image=" + tempFiles.get(secondInputTempFile));
         } else {
             commandLine.add("--prediction_maps=" + tempFiles.get(secondInputTempFile));
