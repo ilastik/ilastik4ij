@@ -13,4 +13,6 @@
 target
 *.iml
 *.class
+*.ipr
+*.iws
 

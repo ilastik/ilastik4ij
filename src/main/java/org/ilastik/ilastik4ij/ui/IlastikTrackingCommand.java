@@ -62,7 +62,8 @@ public class IlastikTrackingCommand implements Command {
         try {
             runTracking();
         } catch (IOException e) {
-            e.printStackTrace();
+            logService.error("Tracking command failed", e);
+            throw new RuntimeException(e);
         }
     }
 

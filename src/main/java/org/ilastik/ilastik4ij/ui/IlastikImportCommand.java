@@ -38,7 +38,11 @@ public class IlastikImportCommand implements Command {
     @Override
     public void run() {
         OpenDialog od = new OpenDialog("Select HDF5 file", "", "");
-        String hdf5FilePath = od.getPath();
+        final String hdf5FilePath = od.getPath();
+        if (hdf5FilePath == null) {
+            logService.info("No HDF5 file selected");
+            return;
+        }
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(hdf5FilePath)) {
             Map<String, HDF5DataSetInformation> datasets = findAvailableDatasets(reader, "/");

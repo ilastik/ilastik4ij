@@ -59,7 +59,8 @@ public class IlastikPixelClassificationCommand implements Command {
         try {
             runClassification();
         } catch (IOException e) {
-            e.printStackTrace();
+            logService.error("Pixel classification command failed", e);
+            throw new RuntimeException(e);
         }
     }
 

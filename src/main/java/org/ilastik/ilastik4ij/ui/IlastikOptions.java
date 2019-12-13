@@ -1,30 +1,22 @@
 package org.ilastik.ilastik4ij.ui;
 
-import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import org.scijava.log.LogService;
+import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
-import org.scijava.options.OptionsPlugin;
+
+import java.io.File;
 
 
 /**
  * The ilastik options let you configure where your ilastik installation is,
  * and how many processors and RAM it is allowed to use.
- *
+ * <p>
  * Because of the way option plugins work in ImageJ, there is always just one instance
  * of this class, that can be requested by every plugin to get these values of
  * shared configuration.
  */
 @Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
-public class IlastikOptions extends OptionsPlugin
-{
-    @Parameter
-    LogService log;
-
+public class IlastikOptions extends OptionsPlugin {
     @Parameter(label = "Path to ilastik executable, e.g.,\n" +
             "MacOS: /Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik\n" +
             "Windows: ...\n" +
@@ -34,7 +26,7 @@ public class IlastikOptions extends OptionsPlugin
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
     private int numThreads = -1;
 
-    @Parameter(min = "256", label="Maximum amount of RAM (in MB) that ilastik is allowed to use.")
+    @Parameter(min = "256", label = "Maximum amount of RAM (in MB) that ilastik is allowed to use.")
     private int maxRamMb = 4096;
 
     public File getExecutableFile() {
@@ -49,7 +41,7 @@ public class IlastikOptions extends OptionsPlugin
         return numThreads;
     }
 
-    public void setExecutableFile( File executableFile ) {
+    public void setExecutableFile(File executableFile) {
         this.executableFile = executableFile;
     }
 
@@ -59,14 +51,5 @@ public class IlastikOptions extends OptionsPlugin
 
     public void setMaxRamMb(int maxRamMb) {
         this.maxRamMb = maxRamMb;
-    }
-
-    /**
-     * As soon as all parameters above have been set, the service is properly
-     * configured
-     * @return True if properly configured
-     */
-    public Boolean isConfigured() {
-        return getExecutableFile().exists() && maxRamMb > 0;
     }
 }

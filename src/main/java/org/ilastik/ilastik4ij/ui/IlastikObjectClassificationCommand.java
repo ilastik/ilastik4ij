@@ -62,7 +62,8 @@ public class IlastikObjectClassificationCommand implements Command {
         try {
             runClassification();
         } catch (IOException e) {
-            e.printStackTrace();
+            logService.error("Object classification command failed", e);
+            throw new RuntimeException(e);
         }
     }
 
