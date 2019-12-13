@@ -39,7 +39,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
     private final LogService logService;
     private final Optional<StatusService> statusService;
 
-    public Hdf5DataSetReader( String filename, String dataset, String axesorder, LogService logService, StatusService statusService) {
+    public Hdf5DataSetReader(String filename, String dataset, String axesorder, LogService logService, StatusService statusService) {
         this.filename = filename;
         this.dataset = dataset;
         this.axesorder = axesorder;
@@ -76,7 +76,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
 
             final int totalCheckpoints = dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ;
             AtomicInteger checkpoint = new AtomicInteger();
-            SwingUtilities.invokeLater(() -> statusService.ifPresent( s ->  s.showStatus(checkpoint.get(), totalCheckpoints, "Importing HDF5...")));
+            SwingUtilities.invokeLater(() -> statusService.ifPresent(s -> s.showStatus(checkpoint.get(), totalCheckpoints, "Importing HDF5...")));
 
             for (int frame = 0; frame < dsConfig.numFrames; ++frame) {
                 rai.setPosition(frame, AXES.indexOf(Axes.TIME));
@@ -121,12 +121,12 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                                 }
                             }
                         }
-                        SwingUtilities.invokeLater(() -> statusService.ifPresent( s -> s.showProgress(checkpoint.incrementAndGet(), totalCheckpoints)));
+                        SwingUtilities.invokeLater(() -> statusService.ifPresent(s -> s.showProgress(checkpoint.incrementAndGet(), totalCheckpoints)));
                     }
                 }
             }
-            SwingUtilities.invokeLater(() -> statusService.ifPresent( s -> s.showStatus("Finished Importing HDF5.")));
-            ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString(), new AxisType[]{ Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME });
+            SwingUtilities.invokeLater(() -> statusService.ifPresent(s -> s.showStatus("Finished Importing HDF5.")));
+            ImgPlus<T> result = new ImgPlus<>(img, Paths.get(filename, dataset).toString(), new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME});
             result.initializeColorTables(dsConfig.numFrames * dsConfig.numChannels * dsConfig.dimZ);
             result.setValidBits(dsConfig.bitdepth);
             return result;

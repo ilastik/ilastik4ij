@@ -23,7 +23,7 @@ public class ObjectClassificationDemo {
     public static void main(String[] args) throws IOException {
         final String ilastikPath = "/opt/ilastik-1.3.3post1-Linux/run_ilastik.sh";
         final String inputImagePath = "/2d_cells_apoptotic.tif";
-        final String inputSegmPath = "/2d_cells_apoptotic_1channel-data_Probabilities.tif";
+        final String inputProbabMaps = "/2d_cells_apoptotic_1channel-data_Probabilities.tif";
         final String ilastikProjectPath = "/obj_class_2d_cells_apoptotic.ilp";
 
         // Open ImageJ
@@ -43,16 +43,16 @@ public class ObjectClassificationDemo {
         ij.scifio().location().mapFile("rawInputFile", ira1);
         final Dataset inputDataset = ij.scifio().datasetIO().open("rawInputFile");
 
-        // Open segmentation image
+        // Open pmaps image
         //
-        final InputStream segmFileStream = PixelClassificationDemo.class.getResourceAsStream(inputSegmPath);
-        final ByteBuffer bb2 = ByteBuffer.allocate(segmFileStream.available());
-        while (segmFileStream.available() > 0) {
-            bb2.put((byte) segmFileStream.read());
+        final InputStream pmapsFileStream = PixelClassificationDemo.class.getResourceAsStream(inputProbabMaps);
+        final ByteBuffer bb2 = ByteBuffer.allocate(pmapsFileStream.available());
+        while (pmapsFileStream.available() > 0) {
+            bb2.put((byte) pmapsFileStream.read());
         }
         final IRandomAccess ira2 = new ByteArrayHandle(bb2);
-        ij.scifio().location().mapFile("segmFile", ira2);
-        final Dataset segmDataset = ij.scifio().datasetIO().open("segmFile");
+        ij.scifio().location().mapFile("pmapsFile", ira2);
+        final Dataset pmapsDataset = ij.scifio().datasetIO().open("pmapsFile");
 
         ij.ui().show(inputDataset);
 
@@ -62,7 +62,7 @@ public class ObjectClassificationDemo {
         Path tmpIlastikProjectFile = Paths.get(IOUtils.getTemporaryFileName("obj_class.ilp"));
         Files.copy(projectFileStream, tmpIlastikProjectFile);
 
-        // Classify pixels
+        // Classify objects
         //
         final ObjectClassification prediction = new ObjectClassification(
                 new File(ilastikPath),
@@ -73,7 +73,7 @@ public class ObjectClassificationDemo {
                 1024
         );
 
-        final ImgPlus classifiedObjects = prediction.classifyObjects(inputDataset.getImgPlus(), segmDataset.getImgPlus(),
+        final ImgPlus classifiedObjects = prediction.classifyObjects(inputDataset.getImgPlus(), pmapsDataset.getImgPlus(),
                 PixelPredictionType.Probabilities);
 
         ImageJFunctions.show(classifiedObjects, "Classified objects");
