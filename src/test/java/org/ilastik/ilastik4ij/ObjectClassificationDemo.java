@@ -6,6 +6,8 @@ import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.ObjectClassification;
 import org.ilastik.ilastik4ij.util.IOUtils;
 
@@ -20,7 +22,7 @@ import java.nio.file.Paths;
 import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelPredictionType;
 
 public class ObjectClassificationDemo {
-    public static void main(String[] args) throws IOException {
+    public static <T extends RealType<T> & NativeType<T>> void main(String[] args) throws IOException {
         final String ilastikPath = "/opt/ilastik-1.3.3post1-Linux/run_ilastik.sh";
         final String inputImagePath = "/2d_cells_apoptotic.tif";
         final String inputProbabMaps = "/2d_cells_apoptotic_1channel-data_Probabilities.tif";
@@ -73,7 +75,7 @@ public class ObjectClassificationDemo {
                 1024
         );
 
-        final ImgPlus classifiedObjects = prediction.classifyObjects(inputDataset.getImgPlus(), pmapsDataset.getImgPlus(),
+        final ImgPlus<T> classifiedObjects = prediction.classifyObjects(inputDataset.getImgPlus(), pmapsDataset.getImgPlus(),
                 PixelPredictionType.Probabilities);
 
         ImageJFunctions.show(classifiedObjects, "Classified objects");

@@ -3,6 +3,7 @@ package org.ilastik.ilastik4ij;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor;
 import org.ilastik.ilastik4ij.executors.Tracking;
@@ -12,7 +13,7 @@ import java.io.File;
 import java.io.IOException;
 
 public class TrackingDemo {
-    public static <T extends RealType<T>> void main(String[] args) throws IOException {
+    public static <T extends RealType<T> & NativeType<T>> void main(String[] args) throws IOException {
         final String ilastikPath = "/opt/ilastik-1.3.3post1-Linux/run_ilastik.sh";
         final String ilastikProjectPath = "/home/adrian/MyProject_tracking.ilp";
         final String inputImagePath = "/home/adrian/workspace/ilastik-datasets/mitocheck_2d+t/mitocheck_94570_2D+t_01-53_5D.h5";

@@ -5,6 +5,7 @@ import ij.gui.GenericDialog;
 import ij.io.SaveDialog;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.scijava.app.StatusService;
@@ -54,7 +55,7 @@ public class IlastikExportCommand implements Command {
         }
     }
 
-    private <T extends RealType<T>> void saveImage(String hdf5FilePath, String datasetName, int compressionLevel) {
+    private <T extends RealType<T> & NativeType<T>> void saveImage(String hdf5FilePath, String datasetName, int compressionLevel) {
         Instant start = Instant.now();
 
         @SuppressWarnings("unchecked")
