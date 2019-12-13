@@ -21,6 +21,8 @@ import org.scijava.app.StatusService;
 import org.scijava.log.LogService;
 
 import java.util.Arrays;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 public class Hdf5DataSetWriter<T extends Type<T>> {
@@ -31,14 +33,13 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private final int dimZ;
     private final int dimY;
     private final int dimX;
-    private final LogService log;
-    private final StatusService statusService;
+    private final LogService logService;
+    private final Optional<StatusService> statusService;
     private final String filename;
     private final String dataset;
     private final int compressionLevel;
 
-    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LogService log,
-                             StatusService statusService) {
+    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LogService logService, StatusService statusService) {
         this.image = image;
         this.numFrames = getDimension(image, Axes.TIME);
         this.numChannels = getDimension(image, Axes.CHANNEL);
@@ -48,8 +49,8 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         this.filename = filename;
         this.dataset = dataset;
         this.compressionLevel = compressionLevel;
-        this.log = log;
-        this.statusService = statusService;
+        this.logService = logService;
+        this.statusService = Optional.ofNullable(statusService);
     }
 
     @SuppressWarnings("unchecked")
@@ -58,7 +59,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         String shape = Arrays.stream(dims)
                 .mapToObj(String::valueOf)
                 .collect(Collectors.joining(", "));
-        log.info(String.format("Exporting image of shape (%s). Axis order: 'TZYXC'", shape));
+        logService.info(String.format("Exporting image of shape (%s). Axis order: 'TZYXC'", shape));
 
         try (IHDF5Writer writer = HDF5Factory.open(filename)) {
             T val = image.firstElement();
@@ -81,10 +82,11 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     }
 
     private void write(IHDF5Writer writer, long[] datasetDims, Class<T> pixelClass) {
-        log.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
+        logService.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
         final int totalCheckpoints = numFrames * numChannels * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
+        final AtomicInteger checkpoint = new AtomicInteger(0);
+        statusService.ifPresent(status -> status.showStatus(checkpoint.get(), totalCheckpoints, "Exporting HDF5..."));
+
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
         createMDArray(writer, datasetDims, blockSize, pixelClass);
@@ -116,12 +118,12 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                     // save data
                     writeMDArray(writer, flatArr, offset, sliceDims, pixelClass);
                     // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
+                    statusService.ifPresent(status -> status.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
                 }
 
             }
         }
-        statusService.showStatus("Finished Exporting HDF5.");
+        statusService.ifPresent(status -> status.showStatus("Finished Exporting HDF5."));
     }
 
     private void writeMDArray(IHDF5Writer writer, Object[] flatArr, long[] offset, long[] sliceDims, Class<T> pixelClass) {
@@ -203,18 +205,18 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     }
 
     private void writeARGB(IHDF5Writer writer, long[] datasetDims) {
-        log.info("Saving ARGB as 'uint8' (4 channels). Compression level: " + compressionLevel);
+        logService.info("Saving ARGB as 'uint8' (4 channels). Compression level: " + compressionLevel);
 
         boolean isAlphaChannelPresent = true;
         if (numChannels == ARGB_CHANNEL_NUM - 1) {
-            log.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
+            logService.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
             isAlphaChannelPresent = false;
             datasetDims[4] = ARGB_CHANNEL_NUM; // set channel dimension to 4 explicitly
         }
 
         final int totalCheckpoints = numFrames * ARGB_CHANNEL_NUM * dimZ;
-        int checkpoint = 0;
-        statusService.showStatus(checkpoint, totalCheckpoints, "Exporting HDF5...");
+        final AtomicInteger checkpoint = new AtomicInteger(0);
+        statusService.ifPresent(s -> s.showStatus(checkpoint.get(), totalCheckpoints, "Exporting HDF5..."));
 
         int[] blockSize = Hdf5Utils.blockSize(datasetDims);
         createMDArray(writer, datasetDims, blockSize, (Class<T>) UnsignedByteType.class);
@@ -262,18 +264,19 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
                     // save data
                     writeMDArray(writer, flatArr, offset, sliceDims, (Class<T>) UnsignedByteType.class);
                     // update progress bar
-                    statusService.showProgress(++checkpoint, totalCheckpoints);
+                    statusService.ifPresent(s -> s.showProgress(checkpoint.incrementAndGet(), totalCheckpoints));
                 }
 
             }
         }
-        statusService.showStatus("Finished Exporting HDF5.");
+        statusService.ifPresent(s -> s.showStatus("Finished Exporting HDF5."));
     }
 
     private int getDimension(ImgPlus<T> image, AxisType axis) {
         int dimensionIndex = image.dimensionIndex(axis);
         if (dimensionIndex >= 0) {
-            return Math.toIntExact(image.dimension(dimensionIndex));
+            final int dimension = Math.toIntExact(image.dimension(dimensionIndex));
+            return dimension;
         } else {
             if (Axes.X.equals(axis) || Axes.Y.equals(axis)) {
                 throw new IllegalStateException("Image must have X and Y dimensions");

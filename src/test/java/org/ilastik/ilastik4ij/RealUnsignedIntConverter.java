@@ -6,8 +6,6 @@ import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
 
 /**
- * @author Ashis Ravindran
- * <p>
  * Unofficial Converter class to convert images to 32 bit UnsignedIntType.
  * The constant 4294967295 used is simply (2^32-1) => Max value of 32 bit Integer.
  */
