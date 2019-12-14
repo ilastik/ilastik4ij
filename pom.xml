@@ -139,6 +139,12 @@
                                             <resource>META-INF/json/org.scijava.plugin.Plugin</resource>
                                         </transformer>
                                     </transformers>
+                                    <artifactSet>
+                                        <excludes>
+                                            <exclude>net.imagej:*</exclude>
+                                            <exclude>net.imglib2:*</exclude>
+                                        </excludes>
+                                    </artifactSet>
                                     <filters>
                                         <filter>
                                             <!--
