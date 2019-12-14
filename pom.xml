@@ -197,6 +197,12 @@
             <groupId>cisd</groupId>
             <artifactId>jhdf5</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20190722</version>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>net.imagej</groupId>

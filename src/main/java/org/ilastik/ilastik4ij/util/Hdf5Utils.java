@@ -2,6 +2,8 @@ package org.ilastik.ilastik4ij.util;
 
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
+import ch.systemsx.cisd.hdf5.HDF5Factory;
+import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -9,15 +11,19 @@ import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedLongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class Hdf5Utils {
     private static final Map<String, NativeType<?>> H5_TO_IMGLIB2_TYPE;
+    public static final String INPUT_DATA_INFOS_AXISTAGS = "Input Data/infos/lane0000/Raw Data/axistags";
 
     static {
         Map<String, NativeType<?>> map = new HashMap<>();
@@ -113,5 +119,19 @@ public class Hdf5Utils {
                 type += dsInfo.toString();
         }
         return type;
+    }
+
+    public static String parseAxisOrder(String ilastikProjectPath) {
+        try (IHDF5Reader reader = HDF5Factory.openForReading(ilastikProjectPath)) {
+            byte[] bytes = reader.readAsByteArray(INPUT_DATA_INFOS_AXISTAGS);
+            String jsonString = new String(bytes);
+            JSONObject jsonObject = new JSONObject(jsonString);
+            JSONArray axes = (JSONArray) jsonObject.get("axes");
+            String axisOrder = StreamSupport.stream(axes.spliterator(), false).map(o -> {
+                JSONObject obj = (JSONObject) o;
+                return (String) obj.get("key");
+            }).collect(Collectors.joining(""));
+            return axisOrder;
+        }
     }
 }
