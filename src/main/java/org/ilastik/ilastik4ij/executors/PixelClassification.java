@@ -36,6 +36,7 @@ public class PixelClassification extends AbstractIlastikExecutor {
         if (pixelPredictionType == PixelPredictionType.Segmentation) {
             commandLine.add("--export_source=Simple Segmentation");
         }
+        commandLine.add("--input_axes=tzyxc");
         commandLine.add(tempFiles.get(rawInputTempFile));
 
         return commandLine;

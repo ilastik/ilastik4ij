@@ -33,6 +33,7 @@ public class Tracking extends AbstractIlastikExecutor {
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
         commandLine.add("--export_source=Tracking-Result");
+        commandLine.add("--input_axes=tzyxc");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
         if (pixelPredictionType == PixelPredictionType.Segmentation) {

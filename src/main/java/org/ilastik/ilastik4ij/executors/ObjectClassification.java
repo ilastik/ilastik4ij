@@ -34,6 +34,7 @@ public class ObjectClassification extends AbstractIlastikExecutor {
         commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
         commandLine.add("--output_format=hdf5");
         commandLine.add("--output_axis_order=tzyxc");
+        commandLine.add("--input_axes=tzyxc");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
         if (secondInputType == PixelPredictionType.Segmentation) {
