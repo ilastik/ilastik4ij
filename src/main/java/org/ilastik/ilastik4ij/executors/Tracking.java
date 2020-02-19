@@ -36,7 +36,7 @@ public class Tracking extends AbstractIlastikExecutor {
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
         if (pixelPredictionType == PixelPredictionType.Segmentation) {
-            commandLine.add("--segmentation_image=" + tempFiles.get(secondInputTempFile));
+            commandLine.add("--binary_image=" + tempFiles.get(secondInputTempFile));
         } else {
             commandLine.add("--prediction_maps=" + tempFiles.get(secondInputTempFile));
         }
