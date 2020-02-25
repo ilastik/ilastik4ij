@@ -30,14 +30,17 @@ public class IlastikOptions extends OptionsPlugin {
     private int maxRamMb = 4096;
 
     public File getExecutableFile() {
+        load();
         return executableFile;
     }
 
     public int getMaxRamMb() {
+        load();
         return maxRamMb;
     }
 
     public int getNumThreads() {
+        load();
         return numThreads;
     }
 
