@@ -40,7 +40,7 @@ public class IlastikPixelClassificationCommand implements Command {
     public Dataset inputImage;
 
     @Parameter(label = "Output type", choices = {UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES, UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
-    public String pixelClassificationType = UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES;
+    public String pixelClassificationType;
 
     @Parameter(type = ItemIO.OUTPUT)
     private ImgPlus<? extends NativeType<?>> predictions;
@@ -71,6 +71,6 @@ public class IlastikPixelClassificationCommand implements Command {
         PixelPredictionType pixelPredictionType = PixelPredictionType.valueOf(pixelClassificationType);
         this.predictions = pixelClassification.classifyPixels(inputImage.getImgPlus(), pixelPredictionType);
 
-        DisplayUtils.showOutput(uiService, predictions, pixelPredictionType);
+        DisplayUtils.showOutput(uiService, predictions);
     }
 }
