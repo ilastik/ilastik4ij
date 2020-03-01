@@ -139,7 +139,7 @@ resulting probability maps in separate HDF5 files inside the input directory.
 ```
 // set global variables
 pixelClassificationProject = "<ILASTIK_PROJECT_PATH>";
-outputType = "Probabilities";
+outputType = "Probabilities"; //  or "Segmentation"
 inputDataset = "data";
 outputDataset = "exported_data";
 axisOrder = "tzyxc";
@@ -156,7 +156,7 @@ for (i = 0; i < fileList.length; i++) {
 
 	// run pixel classification
 	inputImage = fileName + "/" + inputDataset;
-	pixelClassificationArgs = "projectfilename=" + pixelClassificationProject + " saveonly=false inputimage=" + inputImage + " chosenoutputtype=" + outputType;
+	pixelClassificationArgs = "projectfilename=" + pixelClassificationProject + " saveonly=false inputimage=" + inputImage + " pixelclassificationtype=" + outputType;
 	run("Run Pixel Classification Prediction", pixelClassificationArgs);
 
 	// export probability maps to H5
