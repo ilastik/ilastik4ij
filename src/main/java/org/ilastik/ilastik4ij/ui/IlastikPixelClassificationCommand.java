@@ -71,6 +71,6 @@ public class IlastikPixelClassificationCommand implements Command {
         PixelPredictionType pixelPredictionType = PixelPredictionType.valueOf(pixelClassificationType);
         this.predictions = pixelClassification.classifyPixels(inputImage.getImgPlus(), pixelPredictionType);
 
-        DisplayUtils.showOutput(uiService, predictions);
+        // DisplayUtils.showOutput(uiService, predictions);
     }
 }
