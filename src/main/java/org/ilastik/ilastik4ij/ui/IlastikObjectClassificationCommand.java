@@ -74,6 +74,6 @@ public class IlastikObjectClassificationCommand implements Command {
 
         this.predictions = objectClassification.classifyObjects(inputImage.getImgPlus(), inputProbOrSegImage.getImgPlus(), secondInputImageType);
 
-        DisplayUtils.showOutput(uiService, predictions, PixelPredictionType.Segmentation);
+        // DisplayUtils.showOutput(uiService, predictions);
     }
 }

@@ -3,7 +3,6 @@ package org.ilastik.ilastik4ij.ui;
 import ij.IJ;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
-import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelPredictionType;
 import org.scijava.ui.UIService;
 
 public class DisplayUtils {
@@ -21,13 +20,9 @@ public class DisplayUtils {
         applyLUT(GLASBEY_INVERTED);
     }
 
-    public static void showOutput(UIService uiService, ImgPlus<?> predictions, PixelPredictionType pixelPredictionType) {
+    public static void showOutput(UIService uiService, ImgPlus<?> predictions) {
         if (!uiService.isHeadless()) {
             ImageJFunctions.show((ImgPlus) predictions);
-
-            if (pixelPredictionType == PixelPredictionType.Segmentation) {
-                DisplayUtils.applyGlasbeyLUT();
-            }
         }
     }
 }

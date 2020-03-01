@@ -74,6 +74,6 @@ public class IlastikTrackingCommand implements Command {
         this.predictions = tracking.trackObjects(inputImage.getImgPlus(), inputProbOrSegImage.getImgPlus(),
                 PixelPredictionType.valueOf(secondInputType));
 
-        DisplayUtils.showOutput(uiService, predictions, PixelPredictionType.Segmentation);
+        // DisplayUtils.showOutput(uiService, predictions);
     }
 }
