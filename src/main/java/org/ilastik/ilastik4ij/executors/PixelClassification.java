@@ -26,18 +26,12 @@ public class PixelClassification extends AbstractIlastikExecutor {
 
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType) {
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(executableFilePath.getAbsolutePath());
-        commandLine.add("--headless");
-        commandLine.add("--project=" + projectFileName.getAbsolutePath());
-        commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
-        commandLine.add("--output_format=hdf5");
-        commandLine.add("--output_axis_order=tzyxc");
+        List<String> commandLine = new ArrayList<>(this.baseCommand);
         if (pixelPredictionType == PixelPredictionType.Segmentation) {
             commandLine.add("--export_source=Simple Segmentation");
         }
-        commandLine.add("--input_axes=tzyxc");
-        commandLine.add(tempFiles.get(rawInputTempFile));
+        commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
+        commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
 
         return commandLine;
     }

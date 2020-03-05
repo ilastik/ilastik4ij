@@ -27,14 +27,7 @@ public class ObjectClassification extends AbstractIlastikExecutor {
 
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType secondInputType) {
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(executableFilePath.getAbsolutePath());
-        commandLine.add("--headless");
-        commandLine.add("--project=" + projectFileName.getAbsolutePath());
-        commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
-        commandLine.add("--output_format=hdf5");
-        commandLine.add("--output_axis_order=tzyxc");
-        commandLine.add("--input_axes=tzyxc");
+        List<String> commandLine = new ArrayList<>(this.baseCommand);
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 
         if (secondInputType == PixelPredictionType.Segmentation) {
@@ -42,6 +35,8 @@ public class ObjectClassification extends AbstractIlastikExecutor {
         } else {
             commandLine.add("--prediction_maps=" + tempFiles.get(secondInputTempFile));
         }
+
+        commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
 
         return commandLine;
     }
