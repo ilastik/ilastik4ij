@@ -11,6 +11,7 @@ import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -35,6 +36,8 @@ public abstract class AbstractIlastikExecutor {
         Probabilities
     }
 
+    protected final List<String> baseCommand;
+
 
     public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LogService logService,
                                    StatusService statusService, int numThreads, int maxRamMb) {
@@ -44,8 +47,26 @@ public abstract class AbstractIlastikExecutor {
         this.projectFileName = projectFileName;
         this.logService = logService;
         this.statusService = statusService;
+        this.baseCommand = Arrays.asList(
+            executableFilePath.getAbsolutePath(),
+            "--headless",
+            "--project=" + projectFileName.getAbsolutePath(),
+            "--output_format=hdf5",
+            "--output_axis_order=tzyxc",
+            "--input_axes=tzyxc",
+            "--readonly",
+            "--output_internal_path=exported_data",
+            "--input_axes=tzyxc"
+        );
     }
 
+    /*
+     * implementations of the buildCommandLine method need to call the following lines:
+     *       List<String> commandLine = new ArrayList<>();
+     *       commandLine.add(this.baseCommand);
+     * then add the appropriate workflow arguments with
+     *       commandLine.add("...");
+     */
     protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType);
 
     protected <T extends NativeType<T>> ImgPlus<T> executeIlastik(ImgPlus<? extends RealType<?>> rawInputImg,
