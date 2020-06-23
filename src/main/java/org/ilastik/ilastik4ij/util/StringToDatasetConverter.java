@@ -34,7 +34,6 @@ public class StringToDatasetConverter extends AbstractConverter<String, Dataset>
 
     @Override
     public <T> T convert(Object src, Class<T> dest) {
-        assert src instanceof String;
         String name = (String) src;
         // First conversion : String to ImagePlus
         ImagePlus imagePlus = cs.convert(name, ImagePlus.class);
