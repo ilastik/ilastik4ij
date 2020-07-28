@@ -163,6 +163,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20200518</version>
+        </dependency>
+        <dependency>
             <groupId>net.imagej</groupId>
             <artifactId>imagej-legacy</artifactId>
         </dependency>
