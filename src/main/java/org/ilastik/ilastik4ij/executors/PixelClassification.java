@@ -30,6 +30,9 @@ public class PixelClassification extends AbstractIlastikExecutor {
         if (pixelPredictionType == PixelPredictionType.Segmentation) {
             commandLine.add("--export_source=Simple Segmentation");
         }
+        else if (pixelPredictionType == PixelPredictionType.Probabilities) {
+            commandLine.add("--export_source=Probabilities");
+        }
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
         commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
 
