@@ -1,5 +1,6 @@
 package org.ilastik.ilastik4ij.executors;
 
+import ij.IJ;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -26,10 +27,10 @@ public abstract class AbstractIlastikExecutor {
     private final int numThreads;
     private final int maxRamMb;
 
-    protected final File executableFilePath;
     protected final File projectFileName;
     protected final LogService logService;
     protected final StatusService statusService;
+    private final File executableFile;
 
     public enum PixelPredictionType {
         Segmentation,
@@ -39,16 +40,15 @@ public abstract class AbstractIlastikExecutor {
     protected final List<String> baseCommand;
 
 
-    public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LogService logService,
+    public AbstractIlastikExecutor(File executableFile, File projectFileName, LogService logService,
                                    StatusService statusService, int numThreads, int maxRamMb) {
         this.numThreads = numThreads;
         this.maxRamMb = maxRamMb;
-        this.executableFilePath = executableFilePath;
+        this.executableFile = executableFile;
         this.projectFileName = projectFileName;
         this.logService = logService;
         this.statusService = statusService;
         this.baseCommand = Arrays.asList(
-            executableFilePath.getAbsolutePath(),
             "--headless",
             "--project=" + projectFileName.getAbsolutePath(),
             "--output_format=hdf5",
@@ -68,6 +68,26 @@ public abstract class AbstractIlastikExecutor {
      *       commandLine.add("...");
      */
     protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType);
+
+    /*
+     * OS-aware getter for executable file path
+     *
+     * currently adds the internal path to the OSX executable from the .app path.
+     */
+    protected String getExecutableFilePath() {
+        if (!IJ.isMacOSX()){
+            return executableFile.getAbsolutePath();
+        }
+        String pth = executableFile.toString();
+        // Backwards compatibility. If it doesn't end with .app, do nothing, assume it is set correctly already
+        if (pth.endsWith(".app")){
+            File execPath = new File(pth + "/Contents/MacOS/ilastik");
+            return execPath.getAbsolutePath();
+        }
+        else {
+            return executableFile.getAbsolutePath();
+        }
+    }
 
     protected <T extends NativeType<T>> ImgPlus<T> executeIlastik(ImgPlus<? extends RealType<?>> rawInputImg,
                                                                   ImgPlus<? extends RealType<?>> secondInputImg,
