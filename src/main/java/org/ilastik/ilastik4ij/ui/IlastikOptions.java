@@ -1,7 +1,9 @@
 package org.ilastik.ilastik4ij.ui;
 
+import ij.IJ;
 import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
+import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Plugin;
 
 import java.io.File;
@@ -17,10 +19,11 @@ import java.io.File;
  */
 @Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
 public class IlastikOptions extends OptionsPlugin {
-    @Parameter(label = "Path to ilastik executable, e.g. " +
-            "MacOS: /Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik, " +
-            "Windows: C:\\\\Program Files\\ilastik\\ilastik.exe, " +
-            "Linux: /opt/ilastik/run_ilastik.sh")
+    private static final String ILASTIK_PATH_WIN = "C:\\\\Program Files\\ilastik-1.3.3\\ilastik.exe";
+    private static final String ILASTIK_PATH_LINUX = "/opt/ilastik-1.3.3-Linux/run_ilastik.sh";
+    private static final String ILASTIK_PATH_MACOS = "/Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik";
+
+    @Parameter(label = "Path to ilastik executable")
     private File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
@@ -28,6 +31,25 @@ public class IlastikOptions extends OptionsPlugin {
 
     @Parameter(min = "256", label = "Maximum amount of RAM (in MB) that ilastik is allowed to use.")
     private int maxRamMb = 4096;
+
+	@Override
+	public void initialize() {
+        final String os = System.getProperty("os.name").toLowerCase();
+        String executableLocation = null;
+
+        if (IJ.isWindows()) {
+            executableLocation = ILASTIK_PATH_WIN;
+        } else if (IJ.isLinux()) {
+            executableLocation = ILASTIK_PATH_LINUX;
+        } else if (IJ.isMacOSX()) {
+            executableLocation = ILASTIK_PATH_MACOS;
+        }
+
+        if (executableLocation != null) {
+            final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
+            executableFileItem.setLabel("Path to ilastik executable, e.g. " + executableLocation);
+        }
+	}
 
     public File getExecutableFile() {
         load();
