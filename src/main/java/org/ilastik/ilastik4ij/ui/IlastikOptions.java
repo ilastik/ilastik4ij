@@ -5,6 +5,7 @@ import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
 import java.io.File;
 
@@ -34,20 +35,27 @@ public class IlastikOptions extends OptionsPlugin {
 
 	@Override
 	public void initialize() {
-        final String os = System.getProperty("os.name").toLowerCase();
         String executableLocation = null;
+        String fileChooserStyle = null;
 
         if (IJ.isWindows()) {
             executableLocation = ILASTIK_PATH_WIN;
+            fileChooserStyle = FileWidget.OPEN_STYLE;
         } else if (IJ.isLinux()) {
             executableLocation = ILASTIK_PATH_LINUX;
+            fileChooserStyle = FileWidget.OPEN_STYLE;
         } else if (IJ.isMacOSX()) {
             executableLocation = ILASTIK_PATH_MACOS;
+            fileChooserStyle = FileWidget.DIRECTORY_STYLE;
         }
 
         if (executableLocation != null) {
             final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
             executableFileItem.setLabel("Path to ilastik executable, e.g. " + executableLocation);
+        }
+        if (fileChooserStyle != null){
+            final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
+            executableFileItem.setWidgetStyle(fileChooserStyle);
         }
 	}
 

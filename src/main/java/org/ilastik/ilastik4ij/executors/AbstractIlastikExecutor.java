@@ -74,7 +74,7 @@ public abstract class AbstractIlastikExecutor {
     private String getExecutableFilePath() {
         Path p = executableFile.toPath().toAbsolutePath().normalize();
         // Convert macOS app bundle path to executable path.
-        if (IJ.isMacOSX() && p.endsWith(".app")) {
+        if (IJ.isMacOSX() && p.toString().endsWith(".app")) {
             p = p.resolve(Paths.get("Contents", "MacOS", "ilastik"));
         }
         return p.toString();
