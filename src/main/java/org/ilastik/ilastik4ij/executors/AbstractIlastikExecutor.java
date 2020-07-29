@@ -12,11 +12,8 @@ import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.lang.reflect.Array;
+import java.util.*;
 
 public abstract class AbstractIlastikExecutor {
 
@@ -62,8 +59,7 @@ public abstract class AbstractIlastikExecutor {
 
     /*
      * implementations of the buildCommandLine method need to call the following lines:
-     *       List<String> commandLine = new ArrayList<>();
-     *       commandLine.add(this.baseCommand);
+     *       List<String> commandLine = getBaseCommand();
      * then add the appropriate workflow arguments with
      *       commandLine.add("...");
      */
@@ -74,7 +70,7 @@ public abstract class AbstractIlastikExecutor {
      *
      * currently adds the internal path to the OSX executable from the .app path.
      */
-    protected String getExecutableFilePath() {
+    private String getExecutableFilePath() {
         if (!IJ.isMacOSX()){
             return executableFile.getAbsolutePath();
         }
@@ -87,6 +83,18 @@ public abstract class AbstractIlastikExecutor {
         else {
             return executableFile.getAbsolutePath();
         }
+    }
+
+    /*
+     * return a List of command line arguments that are common for all workflows
+     *
+     * intended to be called in respective implementations of buildCommandLine
+     */
+    protected List<String> getBaseCommand(){
+        List<String> baseCMD = new ArrayList<>();
+        baseCMD.add(getExecutableFilePath());
+        baseCMD.addAll(baseCommand);
+        return baseCMD;
     }
 
     protected <T extends NativeType<T>> ImgPlus<T> executeIlastik(ImgPlus<? extends RealType<?>> rawInputImg,

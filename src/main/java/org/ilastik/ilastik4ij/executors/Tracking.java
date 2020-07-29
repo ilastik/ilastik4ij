@@ -25,9 +25,7 @@ public class Tracking extends AbstractIlastikExecutor {
 
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType) {
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(getExecutableFilePath());
-        commandLine.addAll(baseCommand);
+        List<String> commandLine = getBaseCommand();
         commandLine.add("--export_source=Tracking-Result");
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
 

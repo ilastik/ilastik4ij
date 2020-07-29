@@ -28,10 +28,7 @@ public class ObjectClassification extends AbstractIlastikExecutor {
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType secondInputType) {
 
-        List<String> commandLine = new ArrayList<>();
-        commandLine.add(getExecutableFilePath());
-        commandLine.addAll(baseCommand);
-        commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
+        List<String> commandLine = getBaseCommand();
 
         if (secondInputType == PixelPredictionType.Segmentation) {
             commandLine.add("--segmentation_image=" + tempFiles.get(secondInputTempFile));
