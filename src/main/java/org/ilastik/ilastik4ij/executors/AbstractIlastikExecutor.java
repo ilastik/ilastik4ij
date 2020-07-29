@@ -12,7 +12,8 @@ import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Array;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 public abstract class AbstractIlastikExecutor {
@@ -71,18 +72,12 @@ public abstract class AbstractIlastikExecutor {
      * currently adds the internal path to the OSX executable from the .app path.
      */
     private String getExecutableFilePath() {
-        if (!IJ.isMacOSX()){
-            return executableFile.getAbsolutePath();
+        Path p = executableFile.toPath().toAbsolutePath().normalize();
+        // Convert macOS app bundle path to executable path.
+        if (IJ.isMacOSX() && p.endsWith(".app")) {
+            p = p.resolve(Paths.get("Contents", "MacOS", "ilastik"));
         }
-        String pth = executableFile.toString();
-        // Backwards compatibility. If it doesn't end with .app, do nothing, assume it is set correctly already
-        if (pth.endsWith(".app")){
-            File execPath = new File(pth + "/Contents/MacOS/ilastik");
-            return execPath.getAbsolutePath();
-        }
-        else {
-            return executableFile.getAbsolutePath();
-        }
+        return p.toString();
     }
 
     /*
