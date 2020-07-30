@@ -24,7 +24,7 @@ public class IlastikOptions extends OptionsPlugin {
     private static final String ILASTIK_PATH_LINUX = "/opt/ilastik-1.3.3-Linux/run_ilastik.sh";
     private static final String ILASTIK_PATH_MACOS = "/Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik";
 
-    @Parameter(label = "Path to ilastik executable")
+    @Parameter(label = "Path to ilastik executable", style = FileWidget.OPEN_STYLE)
     private File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
@@ -36,28 +36,25 @@ public class IlastikOptions extends OptionsPlugin {
 	@Override
 	public void initialize() {
         String executableLocation = null;
-        String fileChooserStyle = null;
 
         if (IJ.isWindows()) {
             executableLocation = ILASTIK_PATH_WIN;
-            fileChooserStyle = FileWidget.OPEN_STYLE;
         } else if (IJ.isLinux()) {
             executableLocation = ILASTIK_PATH_LINUX;
-            fileChooserStyle = FileWidget.OPEN_STYLE;
         } else if (IJ.isMacOSX()) {
             executableLocation = ILASTIK_PATH_MACOS;
-            fileChooserStyle = FileWidget.DIRECTORY_STYLE;
+            getExecutableFileItem().setWidgetStyle(FileWidget.DIRECTORY_STYLE);
         }
 
         if (executableLocation != null) {
-            final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
-            executableFileItem.setLabel("Path to ilastik executable, e.g. " + executableLocation);
-        }
-        if (fileChooserStyle != null){
-            final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
-            executableFileItem.setWidgetStyle(fileChooserStyle);
+            getExecutableFileItem().setLabel("Path to ilastik executable, e.g. " + executableLocation);
         }
 	}
+
+	private final MutableModuleItem<File> getExecutableFileItem(){
+        final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
+        return executableFileItem;
+    }
 
     public File getExecutableFile() {
         load();
