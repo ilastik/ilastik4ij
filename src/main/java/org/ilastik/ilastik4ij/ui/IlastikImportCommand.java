@@ -10,6 +10,7 @@ import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
+import org.scijava.ui.UIService;
 
 import javax.swing.*;
 import java.time.Duration;
@@ -27,12 +28,15 @@ public class IlastikImportCommand implements Command, DatasetLoader  {
     @Parameter
     private StatusService statusService;
 
+    @Parameter
+    private UIService uiService;
+
     private static IlastikImportDialog dialog = null;
     
     public void run() {
         SwingUtilities.invokeLater(() -> {
             if (dialog == null) {
-                dialog = new IlastikImportDialog(logService, this);
+                dialog = new IlastikImportDialog(logService, uiService, this);
             }
             dialog.setVisible(true);
         });

@@ -3,13 +3,15 @@ package org.ilastik.ilastik4ij.ui;
 import ij.IJ;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.scijava.log.LogService;
+import org.scijava.ui.UIService;
+import org.scijava.widget.FileWidget;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
+import java.io.File;
 import java.util.Vector;
 
 class IlastikImportDialog extends JDialog {
@@ -28,6 +30,7 @@ class IlastikImportDialog extends JDialog {
     private final JLabel applyLutLabel = new JLabel("Apply LUT:");
     private final DefaultComboBoxModel<String> datasetNameModel = new DefaultComboBoxModel<>();
     private final LogService logService;
+    private final UIService uiService;
     private final DatasetLoader loader;
     private Vector<HDF5DatasetEntryProvider.DatasetEntry> datasetEntries = new Vector<>();
 
@@ -105,27 +108,28 @@ class IlastikImportDialog extends JDialog {
         }
     }
 
-    public IlastikImportDialog(LogService logService, DatasetLoader loader) {
+    public IlastikImportDialog(LogService logService, UIService uiService, DatasetLoader loader) {
+        this.uiService = uiService;
+        this.logService = logService;
+        this.loader = loader;
+
         setTitle("Import HDF5");
         setLocationRelativeTo(null);
 
-        this.logService = logService;
-        this.loader = loader;
 
         datasetName.setModel(datasetNameModel);
 
         cancelBtn.addActionListener(actionEvent -> dispose());
 
         hdf5PathBrowse.addActionListener(actionEvent -> {
-            final JFileChooser fc = new JFileChooser();
-            FileNameExtensionFilter filter = new FileNameExtensionFilter("HDF5 files", "h5", "hdf5");
-            fc.setFileFilter(filter);
-            int returnVal = fc.showOpenDialog(this);
-            if (returnVal == JFileChooser.APPROVE_OPTION) {
-                hdf5Path.setText(fc.getSelectedFile().getAbsolutePath());
+            File parent = new File(hdf5Path.getText());
+            File result = uiService.chooseFile(parent, FileWidget.OPEN_STYLE);
+            if (result != null) {
+                hdf5Path.setText(result.getAbsolutePath());
                 updateDatasets();
             }
         });
+
         hdf5Path.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
