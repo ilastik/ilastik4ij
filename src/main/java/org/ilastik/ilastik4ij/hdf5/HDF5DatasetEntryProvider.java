@@ -4,6 +4,7 @@ import ch.systemsx.cisd.hdf5.*;
 import ncsa.hdf.hdf5lib.exceptions.HDF5AttributeException;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.scijava.log.LogService;
 
@@ -92,30 +93,22 @@ public class HDF5DatasetEntryProvider {
     }
 
     private static String parseAxisTags(String jsonString) throws HDF5DatasetEntryProvider.InvalidAxisTagsException {
-        JSONObject axisObject = new JSONObject(jsonString);
-        JSONArray axesArray = axisObject.optJSONArray("axes");
-        StringBuilder axisTags = new StringBuilder();
+        try {
+            JSONObject axisObject = new JSONObject(jsonString);
+            JSONArray axesArray = axisObject.getJSONArray("axes");
+            StringBuilder axisTags = new StringBuilder();
 
-        if (axesArray == null) {
+            for (int i = 0; i < axesArray.length(); i++) {
+                JSONObject axisEntry = axesArray.getJSONObject(i);
+                String axisTag = axisEntry.getString("key");
+
+                axisTags.append(axisTag);
+            }
+
+            return axisTags.toString();
+        } catch (JSONException e) {
             throw new HDF5DatasetEntryProvider.InvalidAxisTagsException();
         }
-
-        for (int i = 0; i < axesArray.length(); i++) {
-            JSONObject axisEntry = axesArray.optJSONObject(i);
-            if (axisEntry == null) {
-                throw new HDF5DatasetEntryProvider.InvalidAxisTagsException();
-            }
-
-            String axisTag = axisEntry.optString("key");
-
-            if (axisTag == null) {
-                throw new HDF5DatasetEntryProvider.InvalidAxisTagsException();
-            }
-
-            axisTags.append(axisTag);
-        }
-
-        return axisTags.toString();
     }
 
     public static class DatasetEntry {
