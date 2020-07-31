@@ -54,15 +54,17 @@ public class HDF5DatasetEntryProvider {
     }
 
     private String defaultAxisOrder(int rank) {
+        // Uses ilastik default axis order,
+        // see https://github.com/ilastik/ilastik/blob/a1bb868b0a8d43ac3c89e681cc89d43be9591ff7/lazyflow/utility/helpers.py#L107
         switch (rank) {
             case 5:
                 return "tzyxc";
             case 4:
-                return "txyc";
+                return "zyxc";
             case 3:
                 return "zyx";
             default:
-                return "xy";
+                return "yx";
         }
     }
 
