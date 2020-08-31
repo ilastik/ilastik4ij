@@ -27,10 +27,11 @@ public class HDF5DatasetEntryProvider {
         return this.findAvailableDatasets("/");
     }
 
-    private DatasetEntry getDatasetInfo(String internalPath, IHDF5Reader reader) {
+    private DatasetEntry getDatasetEntry(String internalPath, IHDF5Reader reader) {
         HDF5DataSetInformation hdf5DatasetInfo = reader.object().getDataSetInformation(internalPath);
         int dsRank = hdf5DatasetInfo.getRank();
         String axisTags = defaultAxisOrder(dsRank);
+        logService.info("Detected internal path " + internalPath);
 
         try {
             String axisTagsJSON = reader.string().getAttr(internalPath, "axistags");
@@ -71,6 +72,7 @@ public class HDF5DatasetEntryProvider {
 
     private Vector<DatasetEntry> findAvailableDatasets(String intenalPath) {
         Vector<DatasetEntry> result = new Vector<>();
+        logService.info("Trying to open: " + path);
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(path)) {
             HDF5LinkInformation link = reader.object().getLinkInformation(intenalPath);
@@ -79,7 +81,7 @@ public class HDF5DatasetEntryProvider {
             for (HDF5LinkInformation linkInfo : members) {
                 switch (linkInfo.getType()) {
                     case DATASET:
-                        DatasetEntry datasetEntry = getDatasetInfo(linkInfo.getPath(), reader);
+                        DatasetEntry datasetEntry = getDatasetEntry(linkInfo.getPath(), reader);
                         result.add(datasetEntry);
                         break;
                     case GROUP:
@@ -114,14 +116,14 @@ public class HDF5DatasetEntryProvider {
     public static class DatasetEntry {
         public final String path;
         public final String axisTags;
-        public final String name;
+        public final String verboseName;
         public final int rank;
 
-        public DatasetEntry(String path, int rank, String axisTags, String name) {
+        public DatasetEntry(String path, int rank, String axisTags, String verboseName) {
             this.path = path;
             this.rank = rank;
             this.axisTags = axisTags;
-            this.name = name;
+            this.verboseName = verboseName;
         }
 
     }

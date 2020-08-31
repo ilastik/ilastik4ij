@@ -28,7 +28,7 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
         assertEquals("/exported_data", info.path);
-        assertEquals("/exported_data: (7, 6, 5, 4, 3) uint16", info.name);
+        assertEquals("/exported_data: (7, 6, 5, 4, 3) uint16", info.verboseName);
         assertEquals("tzyxc", info.axisTags);
     }
 
@@ -39,7 +39,7 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
         assertEquals("/exported_data", info.path);
-        assertEquals("/exported_data: (256, 256, 256, 1) float32", info.name);
+        assertEquals("/exported_data: (256, 256, 256, 1) float32", info.verboseName);
         assertEquals("zyxc", info.axisTags);
     }
 }

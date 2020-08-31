@@ -1,5 +1,7 @@
 package org.ilastik.ilastik4ij.ui;
 
+import ij.Macro;
+import ij.plugin.frame.Recorder;
 import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
@@ -34,13 +36,33 @@ public class IlastikImportCommand implements Command, DatasetLoader  {
     private static IlastikImportDialog dialog = null;
     
     public void run() {
-        SwingUtilities.invokeLater(() -> {
-            if (dialog == null) {
-                dialog = new IlastikImportDialog(logService, uiService, this);
-            }
+        String options = Macro.getOptions();
+        IlastikImportModel importModel = new IlastikImportModel();
+        importModel.setLogService(logService);
+        importModel.setDatasetLoader(this);
+
+        if (options != null) {
+            importModel.setPath(Macro.getValue(options, "select", ""));
+            importModel.setDatasetPath(Macro.getValue(options, "datasetname", ""));
+            importModel.setAxisTags(Macro.getValue(options, "axisorder", ""));
+        }
+
+        if (!importModel.isValid()) {
+            dialog = new IlastikImportDialog(importModel, logService, uiService);
             dialog.setVisible(true);
-        });
-        logService.info("Done loading HDF5 file!");
+            if (dialog.wasCancelled()) {
+                logService.warn("Cancel loading HDF5 file!");
+                return;
+            }
+        }
+
+        this.loadDataset(importModel.getPath(), importModel.getDatasetPath(), importModel.getAxisTags());
+        if (Recorder.record) {
+            Recorder.recordOption("select", importModel.getPath());
+            Recorder.recordOption("datasetname", importModel.getDatasetPath());
+            Recorder.recordOption("axisorder", importModel.getAxisTags());
+        }
+
     }
 
     public <T extends RealType<T> & NativeType<T>> void loadDataset(String hdf5FilePath, String datasetName, String axisOrder) {
