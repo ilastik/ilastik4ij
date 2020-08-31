@@ -82,7 +82,9 @@ public class HDF5DatasetEntryProvider {
                 switch (linkInfo.getType()) {
                     case DATASET:
                         DatasetEntry datasetEntry = getDatasetEntry(linkInfo.getPath(), reader);
-                        result.add(datasetEntry);
+                        if (datasetEntry.rank >= 2) {
+                            result.add(datasetEntry);
+                        }
                         break;
                     case GROUP:
                         result.addAll(findAvailableDatasets(linkInfo.getPath()));
