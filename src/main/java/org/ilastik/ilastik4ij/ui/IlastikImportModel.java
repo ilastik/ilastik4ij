@@ -1,39 +1,32 @@
 package org.ilastik.ilastik4ij.ui;
 
-import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import com.sun.istack.internal.Nullable;
-import ij.IJ;
-import org.apache.commons.lang.StringUtils;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider.DatasetEntry;
 import org.scijava.log.LogService;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.HashMap;
-import java.util.Observable;
 import java.util.Vector;
 
-class IlastikImportModel extends Observable {
+class IlastikImportModel {
+    public static final String PROPERTY_PATH = "path";
+    public static final String PROPERTY_DATASET_IDX = "datasetIdx";
+    public static final String PROPERTY_AXIS_TAGS = "axisTags";
+
     private String path = "";
-    private boolean isPathValid = false;
-
     private int datasetIdx = -1;
-
     private String axisTags = "";
-    private boolean isAxisTagsValid = false;
+
+    private boolean isPathValid = false;
 
     private boolean applyLut = false;
     private Vector<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
-    private DatasetLoader loader;
     private LogService logService;
+    private final PropertyChangeSupport propertyChangeSupport;
 
     public IlastikImportModel() {
-    }
-
-    public IlastikImportModel setDatasetLoader(DatasetLoader loader) {
-        this.loader = loader;
-        return this;
+         propertyChangeSupport = new PropertyChangeSupport(this);
     }
 
     public IlastikImportModel setLogService(LogService logService) {
@@ -73,6 +66,7 @@ class IlastikImportModel extends Observable {
         }
 
         this.isPathValid = true;
+        String oldPath = this.path;
         this.path = path;
 
         try {
@@ -84,8 +78,7 @@ class IlastikImportModel extends Observable {
             this.setDatasetIdx(-1);
         }
 
-        setChanged();
-        notifyObservers();
+        firePropertyChange(PROPERTY_PATH, oldPath, path);
     }
 
     public void setDatasetPath(String path) {
@@ -114,10 +107,10 @@ class IlastikImportModel extends Observable {
         if (this.datasetIdx == idx) {
             return;
         }
+        int oldIdx = this.datasetIdx;
         this.datasetIdx = idx;
 
-        setChanged();
-        notifyObservers();
+        firePropertyChange(PROPERTY_DATASET_IDX, oldIdx, idx);
     }
 
     public boolean isDatasetIdxValid() {
@@ -150,10 +143,10 @@ class IlastikImportModel extends Observable {
         if (this.axisTags.equals(axisTags)) {
             return;
         }
+        String oldValue = this.axisTags;
         this.axisTags = axisTags;
 
-        setChanged();
-        notifyObservers();
+        firePropertyChange(PROPERTY_AXIS_TAGS, oldValue, axisTags);
     }
 
     public boolean isAxisTagsValid() {
@@ -162,6 +155,24 @@ class IlastikImportModel extends Observable {
         } else {
             return false;
         }
+    }
+
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.addPropertyChangeListener(listener);
+    }
+
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        propertyChangeSupport.removePropertyChangeListener(listener);
+    }
+
+    protected void firePropertyChange(String propertyName, Object oldValue, Object newValue) {
+        propertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+    }
+
+    public void fireInitialProperties() {
+        firePropertyChange(IlastikImportModel.PROPERTY_PATH, null, this.path);
+        firePropertyChange(IlastikImportModel.PROPERTY_DATASET_IDX, null, this.datasetIdx);
+        firePropertyChange(IlastikImportModel.PROPERTY_AXIS_TAGS, null, this.axisTags);
     }
 }
 

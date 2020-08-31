@@ -1,7 +1,6 @@
 package org.ilastik.ilastik4ij.ui;
 
 import ij.IJ;
-import org.apache.commons.lang.StringUtils;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.scijava.log.LogService;
 import org.scijava.ui.UIService;
@@ -15,16 +14,11 @@ import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.File;
-import java.lang.reflect.Array;
-import java.util.ArrayList;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Vector;
 
 
-class IlastikImportDialog extends JDialog implements Observer {
+class IlastikImportDialog extends JDialog implements PropertyChangeListener {
     private final Border VALID_BORDER = new JTextField().getBorder();
     private final Border INVALID_BORDER = new LineBorder(Color.RED, 1);
 
@@ -122,16 +116,6 @@ class IlastikImportDialog extends JDialog implements Observer {
         }
     }
 
-    public void changePath(String path) {
-        try {
-            hdf5Path.setBorder(new JTextField().getBorder());
-            this.model.setPath(path);
-        } catch (Exception e) {
-            logService.error(e);
-            hdf5Path.setBorder(new LineBorder(Color.RED, 1));
-        }
-    }
-
     public void setDatasetNames(Vector<String> names) {
         datasetNameModel.removeAllElements();
         for (String name : names) {
@@ -147,12 +131,12 @@ class IlastikImportDialog extends JDialog implements Observer {
         this.uiService = uiService;
         this.logService = logService;
         this.model = model;
-        this.update(null, null);
 
         setTitle("Import HDF5");
         setLocationRelativeTo(null);
 
         datasetName.setModel(datasetNameModel);
+        this.model.addPropertyChangeListener(this);
 
         cancelBtn.addActionListener(actionEvent -> {
             cancelled = true;
@@ -160,33 +144,33 @@ class IlastikImportDialog extends JDialog implements Observer {
         });
 
         importBtn.addActionListener(actionEvent -> {
-            dispose();
+            if (model.isValid()) {
+                dispose();
+            }
         });
-
 
         hdf5PathBrowse.addActionListener(actionEvent -> {
             File parent = new File(hdf5Path.getText());
             File result = uiService.chooseFile(parent, FileWidget.OPEN_STYLE);
             if (result != null) {
-                this.changePath(result.getAbsolutePath());
+                model.setPath(result.getAbsolutePath());
             }
         });
-
 
         hdf5Path.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
-                changePath(hdf5Path.getText());
+                model.setPath(hdf5Path.getText());
             }
 
             @Override
             public void removeUpdate(DocumentEvent documentEvent) {
-                changePath(hdf5Path.getText());
+                model.setPath(hdf5Path.getText());
             }
 
             @Override
             public void changedUpdate(DocumentEvent documentEvent) {
-                changePath(hdf5Path.getText());
+                model.setPath(hdf5Path.getText());
             }
         });
 
@@ -195,7 +179,6 @@ class IlastikImportDialog extends JDialog implements Observer {
             if (idx != -1) {
                 String axisTags = model.getAxisTagsForDataset(idx);
                 model.setDatasetIdx(idx);
-                //model.setAxisTags(axisTags);
             }
         });
 
@@ -216,27 +199,6 @@ class IlastikImportDialog extends JDialog implements Observer {
             }
         });
 
-        /*
-        importBtn.addActionListener(actionEvent ->{
-            int datasetIdx = datasetName.getSelectedIndex();
-            if (datasetIdx != -1) {
-                HDF5DatasetEntryProvider.DatasetEntry dsEntry = datasetEntries.get(datasetIdx);
-                String tags = axisTags.getText();
-
-                if (isValidAxisOrder(dsEntry.rank, tags)) {
-                    loader.loadDataset(hdf5Path.getText(), datasetEntries.get(datasetIdx).path, tags);
-                    if (applyLut.isSelected()) {
-                        DisplayUtils.applyGlasbeyLUT();
-                    }
-                    dispose();
-                }
-            }
-        });
-        */
-
-        this.model.addObserver(this);
-        //hdf5Path.setText(model.path);
-        //updateDatasets();
         intializeComponentsLayout();
         setResizable(true);
         pack();
@@ -259,36 +221,26 @@ class IlastikImportDialog extends JDialog implements Observer {
     }
 
     @Override
-    public void update(Observable observable, Object o) {
-        if (!this.hdf5Path.getText().equals(this.model.getPath())) {
-            this.hdf5Path.setText(this.model.getPath());
-        }
-        Vector<String> datasets = this.model.getAvailableDatasetNames();
-        this.setDatasetNames(datasets);
-        int idx = datasetName.getSelectedIndex();
-
-        if (idx == -1 && datasets.size() > 0) {
-            String firstName = datasets.get(0);
-            datasetName.setSelectedItem(firstName);
-            String axisTags = model.getAxisTagsForDataset(0);
-            model.setAxisTags(axisTags);
-        } else {
-            logService.info("SET AXIT: " + idx + " ");
-            if (model.getDatasetIdx() != idx) {
-                datasetName.setSelectedIndex(model.getDatasetIdx());
-                String axisTags = model.getAxisTagsForDataset(model.getDatasetIdx());
-                model.setAxisTags(axisTags);
-            } else {
-                String axisTags = model.getAxisTagsForDataset(model.getDatasetIdx());
-                //model.setAxisTags(axisTags);
+    public void propertyChange(PropertyChangeEvent evt) {
+        if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_PATH)) {
+            String newPath = (String) evt.getNewValue();
+            if (!this.hdf5Path.getText().equals(newPath)) {
+                this.hdf5Path.setText(newPath);
             }
-        }
+            Vector<String> datasets = this.model.getAvailableDatasetNames();
+            this.setDatasetNames(datasets);
 
-        if (!this.axisTags.getText().equals(this.model.getAxisTags())) {
-            //String axisTags = model.getAxisTagsForDataset(model.getDatasetIdx());
-            //model.setAxisTags(axisTags);
-            logService.info("SETTING AXIST TAGS TO " + this.model.getAxisTags() + " CURRENTLY " + this.axisTags.getText());
-            this.axisTags.setText(this.model.getAxisTags());
+        } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_DATASET_IDX)) {
+            int newIdx  = (int) evt.getNewValue();
+            datasetName.setSelectedIndex(newIdx);
+            String axisTags = model.getAxisTagsForDataset(newIdx);
+            model.setAxisTags(axisTags);
+
+        } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_AXIS_TAGS)) {
+            String newTags  = (String) evt.getNewValue();
+            if (!this.axisTags.getText().equals(newTags)) {
+                this.axisTags.setText(newTags);
+            }
         }
 
         this.hdf5Path.setBorder(getLineBorder(this.model.isPathValid()));

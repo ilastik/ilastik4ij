@@ -18,12 +18,8 @@ import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
 
-interface DatasetLoader {
-    public <T extends RealType<T> & NativeType<T>> void loadDataset(String hdf5FilePath, String datasetName, String axisOrder);
-}
-
 @Plugin(type = Command.class, menuPath = "Plugins>ilastik>Import HDF5")
-public class IlastikImportCommand implements Command, DatasetLoader  {
+public class IlastikImportCommand implements Command {
     @Parameter
     private LogService logService;
 
@@ -39,7 +35,6 @@ public class IlastikImportCommand implements Command, DatasetLoader  {
         String options = Macro.getOptions();
         IlastikImportModel importModel = new IlastikImportModel();
         importModel.setLogService(logService);
-        importModel.setDatasetLoader(this);
 
         if (options != null) {
             importModel.setPath(Macro.getValue(options, "select", ""));
@@ -49,6 +44,7 @@ public class IlastikImportCommand implements Command, DatasetLoader  {
 
         if (!importModel.isValid()) {
             dialog = new IlastikImportDialog(importModel, logService, uiService);
+            importModel.fireInitialProperties();
             dialog.setVisible(true);
             if (dialog.wasCancelled()) {
                 logService.warn("Cancel loading HDF5 file!");
