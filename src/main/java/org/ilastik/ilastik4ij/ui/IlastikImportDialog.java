@@ -93,20 +93,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         contentPanel.setPreferredSize(new Dimension(600, contentPanel.getPreferredSize().height));
     }
 
-    private void updateDatasets() {
-        try {
-            hdf5Path.setBorder(new JTextField().getBorder());
-            datasetNameModel.removeAllElements();
-            HDF5DatasetEntryProvider infoProvider = new HDF5DatasetEntryProvider(hdf5Path.getText(), logService);
-            datasetEntries = infoProvider.findAvailableDatasets();
-            for (HDF5DatasetEntryProvider.DatasetEntry info : datasetEntries) {
-                datasetNameModel.addElement(info.verboseName);
-            }
-        } catch (Exception e) {
-            hdf5Path.setBorder(new LineBorder(Color.RED, 1));
-        }
-    }
-
     public void setDatasetNames(Vector<String> names) {
         datasetNameModel.removeAllElements();
         for (String name : names) {

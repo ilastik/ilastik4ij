@@ -33,8 +33,7 @@ public class IlastikImportCommand implements Command {
     
     public void run() {
         String options = Macro.getOptions();
-        IlastikImportModel importModel = new IlastikImportModel();
-        importModel.setLogService(logService);
+        IlastikImportModel importModel = new IlastikImportModel(logService);
 
         if (options != null) {
             importModel.setPath(Macro.getValue(options, "select", ""));

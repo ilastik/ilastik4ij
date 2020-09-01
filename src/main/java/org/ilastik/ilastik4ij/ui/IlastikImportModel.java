@@ -20,16 +20,14 @@ class IlastikImportModel {
     private boolean isPathValid = false;
 
     private Vector<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
-    private LogService logService;
+    private final LogService logService;
     private final PropertyChangeSupport propertyChangeSupport;
+    private final HDF5DatasetEntryProvider entryProvider;
 
-    public IlastikImportModel() {
-         propertyChangeSupport = new PropertyChangeSupport(this);
-    }
-
-    public IlastikImportModel setLogService(LogService logService) {
+    public IlastikImportModel(LogService logService) {
         this.logService = logService;
-        return this;
+        propertyChangeSupport = new PropertyChangeSupport(this);
+        entryProvider = new HDF5DatasetEntryProvider(logService);
     }
 
     public int getDatasetIdx() {
@@ -58,8 +56,7 @@ class IlastikImportModel {
         this.path = path;
 
         try {
-            HDF5DatasetEntryProvider infoProvider = new HDF5DatasetEntryProvider(path, logService);
-            availableDatasets = infoProvider.findAvailableDatasets();
+            availableDatasets = entryProvider.findAvailableDatasets(path);
         } catch (Exception e) {
             availableDatasets = new Vector<>();
             this.isPathValid = false;

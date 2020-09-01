@@ -15,16 +15,14 @@ import java.util.stream.Collectors;
 
 public class HDF5DatasetEntryProvider {
     static class InvalidAxisTagsException extends Exception {}
-    private final String path;
     private final LogService logService;
 
-    public HDF5DatasetEntryProvider(String path, LogService logService) {
-        this.path = path;
+    public HDF5DatasetEntryProvider(LogService logService) {
         this.logService = logService;
     }
 
-    public Vector<DatasetEntry> findAvailableDatasets() {
-        return this.findAvailableDatasets("/");
+    public Vector<DatasetEntry> findAvailableDatasets(String path) {
+        return this.findAvailableDatasets(path, "/");
     }
 
     private DatasetEntry getDatasetEntry(String internalPath, IHDF5Reader reader) {
@@ -46,7 +44,7 @@ public class HDF5DatasetEntryProvider {
         return new DatasetEntry(internalPath, dsRank, axisTags, makeVerboseName(internalPath, hdf5DatasetInfo));
     }
 
-    private String makeVerboseName(String internalPath, HDF5DataSetInformation dsInfo) {
+    private static String makeVerboseName(String internalPath, HDF5DataSetInformation dsInfo) {
         String shape = Arrays.stream(dsInfo.getDimensions())
                 .mapToObj(String::valueOf)
                 .collect(Collectors.joining(", "));
@@ -55,7 +53,7 @@ public class HDF5DatasetEntryProvider {
         return String.format("%s: (%s) %s", internalPath, shape, dtype);
     }
 
-    private String defaultAxisOrder(int rank) {
+    private static String defaultAxisOrder(int rank) {
         // Uses ilastik default axis order,
         // see https://github.com/ilastik/ilastik/blob/a1bb868b0a8d43ac3c89e681cc89d43be9591ff7/lazyflow/utility/helpers.py#L107
         switch (rank) {
@@ -70,7 +68,7 @@ public class HDF5DatasetEntryProvider {
         }
     }
 
-    private Vector<DatasetEntry> findAvailableDatasets(String intenalPath) {
+    private Vector<DatasetEntry> findAvailableDatasets(String path, String intenalPath) {
         Vector<DatasetEntry> result = new Vector<>();
         logService.info("Trying to open: " + path);
 

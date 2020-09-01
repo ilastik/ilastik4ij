@@ -22,8 +22,8 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
     }
 
     public void testFindAvailableDatasetsNoAxes() {
-        HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(TEST_H5_RESOURCE, logService);
-        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets();
+        HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
+        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_H5_RESOURCE);
         assertEquals(1, infos.size());
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
@@ -33,8 +33,8 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
     }
 
     public void testFindAvailableDatasetsWithAxes() {
-        HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(TEST_AXES_H5_RESOURCE, logService);
-        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets();
+        HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
+        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_AXES_H5_RESOURCE);
         assertEquals(1, infos.size());
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
