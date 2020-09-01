@@ -60,9 +60,6 @@ where you should select or enter the correct meaning of the different dimensions
 At least `x` and `y` must be present, and the number of characters (`x`,`y`,`z` spatial, `c` channels and `t` time)
 must be equal to the number of dimensions listed in the description above.
 
-If you choose `ApplyLUT`, after loading the `glasbey_inverted` lookup table will be applied for you, which is
-a sensible option for connected component labellings (e.g. a tracking result) or per-object predictions.
-
 #### Batch processing
 
 The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro:

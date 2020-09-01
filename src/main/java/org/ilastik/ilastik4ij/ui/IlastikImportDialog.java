@@ -33,8 +33,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
     private final JButton importBtn = new JButton("Import");
     private final JButton cancelBtn = new JButton("Cancel");
     private final JComboBox<String> datasetName = new JComboBox<>();
-    private final JCheckBox applyLut = new JCheckBox();
-    private final JLabel applyLutLabel = new JLabel("Apply LUT:");
     private final DefaultComboBoxModel<String> datasetNameModel = new DefaultComboBoxModel<>();
     private final LogService logService;
     private final UIService uiService;
@@ -60,7 +58,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
                         .addComponent(hdf5PathLabel)
                         .addComponent(datasetNameLabel)
                         .addComponent(axisTagsLabel)
-                        .addComponent(applyLutLabel)
                 )
                 .addGroup(layout
                         .createParallelGroup(GroupLayout.Alignment.LEADING)
@@ -71,7 +68,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
                         )
                         .addComponent(datasetName)
                         .addComponent(axisTags)
-                        .addComponent(applyLut)
                 )
         );
         layout.setVerticalGroup(layout
@@ -91,11 +87,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
                         layout.createParallelGroup(GroupLayout.Alignment.BASELINE)
                                 .addComponent(axisTagsLabel)
                                 .addComponent(axisTags)
-                )
-                .addGroup(
-                        layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-                                .addComponent(applyLutLabel)
-                                .addComponent(applyLut)
                 )
         );
         layout.linkSize(SwingConstants.VERTICAL, hdf5PathBrowse, hdf5Path, axisTags, datasetName);

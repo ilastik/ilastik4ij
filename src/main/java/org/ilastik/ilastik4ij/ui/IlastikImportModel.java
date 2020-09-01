@@ -19,7 +19,6 @@ class IlastikImportModel {
 
     private boolean isPathValid = false;
 
-    private boolean applyLut = false;
     private Vector<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
     private LogService logService;
     private final PropertyChangeSupport propertyChangeSupport;
