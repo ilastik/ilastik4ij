@@ -46,12 +46,13 @@ public class IlastikImportCommand implements Command {
             importModel.fireInitialProperties();
             dialog.setVisible(true);
             if (dialog.wasCancelled()) {
-                logService.warn("Cancel loading HDF5 file!");
+                logService.info("Cancel loading HDF5 file!");
                 return;
             }
         }
 
         this.loadDataset(importModel.getPath(), importModel.getDatasetPath(), importModel.getAxisTags());
+
         if (Recorder.record) {
             Recorder.recordOption("select", importModel.getPath());
             Recorder.recordOption("datasetname", importModel.getDatasetPath());
