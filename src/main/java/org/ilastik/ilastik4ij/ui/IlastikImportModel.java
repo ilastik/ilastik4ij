@@ -1,6 +1,5 @@
 package org.ilastik.ilastik4ij.ui;
 
-import com.sun.istack.internal.Nullable;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider.DatasetEntry;
 import org.scijava.log.LogService;
@@ -48,16 +47,6 @@ class IlastikImportModel {
 
     public boolean isPathValid() {
         return this.isPathValid;
-    }
-
-    @Nullable
-    private DatasetEntry findDatasetByName(String name) {
-        for (DatasetEntry entry : this.availableDatasets) {
-            if (name.equals(entry.verboseName)) {
-                return entry;
-            }
-        }
-        return null;
     }
 
     public void setPath(String path) {
