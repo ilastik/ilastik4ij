@@ -85,7 +85,7 @@ public class HDF5DatasetEntryProvider {
                         }
                         break;
                     case GROUP:
-                        result.addAll(findAvailableDatasets(linkInfo.getPath()));
+                        result.addAll(findAvailableDatasets(path, linkInfo.getPath()));
                         break;
                 }
             }
