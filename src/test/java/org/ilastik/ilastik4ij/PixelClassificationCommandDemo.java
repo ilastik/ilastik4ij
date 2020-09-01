@@ -40,9 +40,11 @@ public class PixelClassificationCommandDemo {
         command.uiService = ij.ui();
         command.optionsService = ij.options();
         command.ilastikOptions = options;
+        /*
         command.pixelClassificationType = UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES;
         command.inputImage = inputDataset;
         command.projectFileName = new File(ilastikProjectPath);
+         */
         command.run();
     }
 }

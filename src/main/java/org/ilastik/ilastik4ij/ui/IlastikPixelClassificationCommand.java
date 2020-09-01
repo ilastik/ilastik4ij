@@ -1,6 +1,9 @@
 package org.ilastik.ilastik4ij.ui;
 
+import ij.Macro;
+import net.imagej.Data;
 import net.imagej.Dataset;
+import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.executors.PixelClassification;
@@ -32,13 +35,18 @@ public class IlastikPixelClassificationCommand extends DynamicCommand {
     public OptionsService optionsService;
 
     @Parameter
-    public UIService uiService;
+    public DatasetService datasetService;
 
-    @Parameter(label = "Trained ilastik project file")
-    public File projectFileName;
+    @Parameter
+    public UIService uiService;
 
     @Parameter(label = "Raw input image")
     public Dataset inputImage;
+
+    /*
+    @Parameter(label = "Trained ilastik project file")
+    public File projectFileName;
+
 
     @Parameter(label = "Output type", choices = {UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES, UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String pixelClassificationType;
@@ -50,7 +58,10 @@ public class IlastikPixelClassificationCommand extends DynamicCommand {
         useMask = false;
         //resolveInput("useMask"); //this makes the input not be rendered -.-
     }
+    */
 
+
+    /*
     @Parameter(
         label = "Prediction Mask",
         required = false,
@@ -58,39 +69,71 @@ public class IlastikPixelClassificationCommand extends DynamicCommand {
     )
     public Dataset predictionMask;
 
+    */
     @Parameter(type = ItemIO.OUTPUT)
     private ImgPlus<? extends NativeType<?>> predictions;
 
     public IlastikOptions ilastikOptions;
 
-    /**
-     * Run method that calls ilastik
-     */
+    private IlastikPixelClassificationModel createModel() {
+        IlastikPixelClassificationModel model = new IlastikPixelClassificationModel(logService);
+        model.setRawInput(inputImage);
+
+        String macroOptions = Macro.getOptions();
+
+        if (macroOptions != null) {
+            String projectFilePath = Macro.getValue(macroOptions, "projectfilename", "");
+            model.setIlastikProjectFile(new File(projectFilePath));
+            model.setOutputType(Macro.getValue(macroOptions, "pixelclassificationtype", ""));
+
+            String predictionMaskName = Macro.getValue(macroOptions, "predictionmask", "");
+            for (Dataset ds : datasetService.getDatasets()) {
+                if (ds.getName().equals(predictionMaskName)) {
+                    model.setPredictionMask(ds);
+                    break;
+                }
+            }
+        }
+
+        return model;
+    }
+
     @Override
     public void run() {
-
         if (ilastikOptions == null)
             ilastikOptions = optionsService.getOptions(IlastikOptions.class);
 
+        IlastikPixelClassificationModel model = createModel();
+        IlastikPixelClassificationDialog dialog = new IlastikPixelClassificationDialog(logService, uiService, datasetService, model);
+        model.fireInitialProperties();
+        dialog.setVisible(true);
+        if (dialog.wasCancelled()) {
+            return;
+        }
+
         try {
-            runClassification();
+            runClassification(model);
         } catch (IOException e) {
             logService.error("Pixel classification command failed", e);
             throw new RuntimeException(e);
-        }
+       }
     }
 
-    private void runClassification() throws IOException {
+    private void runClassification(IlastikPixelClassificationModel model) throws IOException {
         final PixelClassification pixelClassification = new PixelClassification(ilastikOptions.getExecutableFile(),
-                projectFileName, logService, statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb());
+                model.getIlastikProjectFile(), logService, statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb());
 
-        PixelPredictionType pixelPredictionType = PixelPredictionType.valueOf(pixelClassificationType);
+        PixelPredictionType pixelPredictionType = PixelPredictionType.valueOf(model.getOutputType());
+
+        ImgPlus predMaskImg = null;
+        if (model.getPredictionMask() != null) {
+            predMaskImg = model.getPredictionMask().getImgPlus();
+        }
+
         this.predictions = pixelClassification.classifyPixels(
             inputImage.getImgPlus(),
-            useMask ? predictionMask.getImgPlus() : null,
+            predMaskImg,
             pixelPredictionType
         );
-
-        // DisplayUtils.showOutput(uiService, predictions);
     }
 }
