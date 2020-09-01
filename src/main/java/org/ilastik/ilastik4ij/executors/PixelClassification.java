@@ -26,7 +26,7 @@ public class PixelClassification extends AbstractIlastikExecutor {
 
     @Override
     protected List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType) {
-        List<String> commandLine = new ArrayList<>(this.baseCommand);
+        List<String> commandLine = getBaseCommand();
         if (pixelPredictionType == PixelPredictionType.Segmentation) {
             commandLine.add("--export_source=Simple Segmentation");
         }

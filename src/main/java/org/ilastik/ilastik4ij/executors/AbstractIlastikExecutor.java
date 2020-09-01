@@ -1,5 +1,6 @@
 package org.ilastik.ilastik4ij.executors;
 
+import ij.IJ;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
@@ -11,11 +12,9 @@ import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 public abstract class AbstractIlastikExecutor {
 
@@ -26,10 +25,10 @@ public abstract class AbstractIlastikExecutor {
     private final int numThreads;
     private final int maxRamMb;
 
-    protected final File executableFilePath;
     protected final File projectFileName;
     protected final LogService logService;
     protected final StatusService statusService;
+    private final File executableFile;
 
     public enum PixelPredictionType {
         Segmentation,
@@ -39,16 +38,15 @@ public abstract class AbstractIlastikExecutor {
     protected final List<String> baseCommand;
 
 
-    public AbstractIlastikExecutor(File executableFilePath, File projectFileName, LogService logService,
+    public AbstractIlastikExecutor(File executableFile, File projectFileName, LogService logService,
                                    StatusService statusService, int numThreads, int maxRamMb) {
         this.numThreads = numThreads;
         this.maxRamMb = maxRamMb;
-        this.executableFilePath = executableFilePath;
+        this.executableFile = executableFile;
         this.projectFileName = projectFileName;
         this.logService = logService;
         this.statusService = statusService;
         this.baseCommand = Arrays.asList(
-            executableFilePath.getAbsolutePath(),
             "--headless",
             "--project=" + projectFileName.getAbsolutePath(),
             "--output_format=hdf5",
@@ -62,12 +60,37 @@ public abstract class AbstractIlastikExecutor {
 
     /*
      * implementations of the buildCommandLine method need to call the following lines:
-     *       List<String> commandLine = new ArrayList<>();
-     *       commandLine.add(this.baseCommand);
+     *       List<String> commandLine = getBaseCommand();
      * then add the appropriate workflow arguments with
      *       commandLine.add("...");
      */
     protected abstract List<String> buildCommandLine(Map<String, String> tempFiles, PixelPredictionType pixelPredictionType);
+
+    /*
+     * OS-aware getter for executable file path
+     *
+     * currently adds the internal path to the OSX executable from the .app path.
+     */
+    private String getExecutableFilePath() {
+        Path p = executableFile.toPath().toAbsolutePath().normalize();
+        // Convert macOS app bundle path to executable path.
+        if (IJ.isMacOSX() && p.toString().endsWith(".app")) {
+            p = p.resolve(Paths.get("Contents", "MacOS", "ilastik"));
+        }
+        return p.toString();
+    }
+
+    /*
+     * return a List of command line arguments that are common for all workflows
+     *
+     * intended to be called in respective implementations of buildCommandLine
+     */
+    protected List<String> getBaseCommand(){
+        List<String> baseCMD = new ArrayList<>();
+        baseCMD.add(getExecutableFilePath());
+        baseCMD.addAll(baseCommand);
+        return baseCMD;
+    }
 
     protected <T extends NativeType<T>> ImgPlus<T> executeIlastik(ImgPlus<? extends RealType<?>> rawInputImg,
                                                                   ImgPlus<? extends RealType<?>> secondInputImg,

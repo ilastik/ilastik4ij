@@ -5,6 +5,7 @@ import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Plugin;
+import org.scijava.widget.FileWidget;
 
 import java.io.File;
 
@@ -23,7 +24,7 @@ public class IlastikOptions extends OptionsPlugin {
     private static final String ILASTIK_PATH_LINUX = "/opt/ilastik-1.3.3-Linux/run_ilastik.sh";
     private static final String ILASTIK_PATH_MACOS = "/Applications/ilastik-1.3.3-OSX.app/Contents/MacOS/ilastik";
 
-    @Parameter(label = "Path to ilastik executable")
+    @Parameter(label = "Path to ilastik executable", style = FileWidget.OPEN_STYLE)
     private File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 
     @Parameter(label = "Number of Threads ilastik is allowed to use.\nNegative numbers means no restriction")
@@ -34,7 +35,6 @@ public class IlastikOptions extends OptionsPlugin {
 
 	@Override
 	public void initialize() {
-        final String os = System.getProperty("os.name").toLowerCase();
         String executableLocation = null;
 
         if (IJ.isWindows()) {
@@ -43,13 +43,18 @@ public class IlastikOptions extends OptionsPlugin {
             executableLocation = ILASTIK_PATH_LINUX;
         } else if (IJ.isMacOSX()) {
             executableLocation = ILASTIK_PATH_MACOS;
+            getExecutableFileItem().setWidgetStyle(FileWidget.DIRECTORY_STYLE);
         }
 
         if (executableLocation != null) {
-            final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
-            executableFileItem.setLabel("Path to ilastik executable, e.g. " + executableLocation);
+            getExecutableFileItem().setLabel("Path to ilastik executable, e.g. " + executableLocation);
         }
 	}
+
+	private final MutableModuleItem<File> getExecutableFileItem(){
+        final MutableModuleItem<File> executableFileItem = getInfo().getMutableInput("executableFile", File.class);
+        return executableFileItem;
+    }
 
     public File getExecutableFile() {
         load();
