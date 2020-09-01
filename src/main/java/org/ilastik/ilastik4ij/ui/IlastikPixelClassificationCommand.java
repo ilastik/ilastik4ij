@@ -1,6 +1,7 @@
 package org.ilastik.ilastik4ij.ui;
 
 import ij.Macro;
+import ij.plugin.frame.Recorder;
 import net.imagej.Data;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
@@ -43,33 +44,6 @@ public class IlastikPixelClassificationCommand extends DynamicCommand {
     @Parameter(label = "Raw input image")
     public Dataset inputImage;
 
-    /*
-    @Parameter(label = "Trained ilastik project file")
-    public File projectFileName;
-
-
-    @Parameter(label = "Output type", choices = {UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES, UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
-    public String pixelClassificationType;
-
-    @Parameter(label = "Use Mask?", persist=false, initializer = "initUseMask")
-    public boolean useMask=false;
-
-    protected void initUseMask(){
-        useMask = false;
-        //resolveInput("useMask"); //this makes the input not be rendered -.-
-    }
-    */
-
-
-    /*
-    @Parameter(
-        label = "Prediction Mask",
-        required = false,
-        description = "An image with same dimensions as Raw Data, where the black pixels will be masked out of the predictions"
-    )
-    public Dataset predictionMask;
-
-    */
     @Parameter(type = ItemIO.OUTPUT)
     private ImgPlus<? extends NativeType<?>> predictions;
 
@@ -113,6 +87,13 @@ public class IlastikPixelClassificationCommand extends DynamicCommand {
 
         try {
             runClassification(model);
+            if (Recorder.record) {
+                Recorder.recordOption("projectfilename", model.getIlastikProjectFile().getAbsolutePath());
+                Recorder.recordOption("pixelclassificationtype", model.getOutputType());
+                if (model.getPredictionMask() != null) {
+                    Recorder.recordOption("predictionmask", model.getPredictionMask().getName());
+                }
+            }
         } catch (IOException e) {
             logService.error("Pixel classification command failed", e);
             throw new RuntimeException(e);
