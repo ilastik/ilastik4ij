@@ -2,7 +2,6 @@ package org.ilastik.ilastik4ij.ui;
 
 import ij.Macro;
 import ij.plugin.frame.Recorder;
-import net.imagej.Data;
 import net.imagej.Dataset;
 import net.imagej.DatasetService;
 import net.imagej.ImgPlus;
@@ -11,7 +10,6 @@ import org.ilastik.ilastik4ij.executors.PixelClassification;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
-import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
@@ -24,7 +22,7 @@ import java.io.IOException;
 import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelPredictionType;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public class IlastikPixelClassificationCommand extends DynamicCommand {
+public class IlastikPixelClassificationCommand implements Command {
 
     @Parameter
     public LogService logService;
