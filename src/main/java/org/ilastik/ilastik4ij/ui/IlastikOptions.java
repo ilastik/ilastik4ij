@@ -1,10 +1,10 @@
 package org.ilastik.ilastik4ij.ui;
 
-import ij.IJ;
 import org.scijava.options.OptionsPlugin;
 import org.scijava.plugin.Parameter;
 import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Plugin;
+import org.scijava.util.PlatformUtils;
 import org.scijava.widget.FileWidget;
 
 import java.io.File;
@@ -37,11 +37,11 @@ public class IlastikOptions extends OptionsPlugin {
 	public void initialize() {
         String executableLocation = null;
 
-        if (IJ.isWindows()) {
+        if (PlatformUtils.isWindows()) {
             executableLocation = ILASTIK_PATH_WIN;
-        } else if (IJ.isLinux()) {
+        } else if (PlatformUtils.isLinux()) {
             executableLocation = ILASTIK_PATH_LINUX;
-        } else if (IJ.isMacOSX()) {
+        } else if (PlatformUtils.isMac()) {
             executableLocation = ILASTIK_PATH_MACOS;
             getExecutableFileItem().setWidgetStyle(FileWidget.DIRECTORY_STYLE);
         }
