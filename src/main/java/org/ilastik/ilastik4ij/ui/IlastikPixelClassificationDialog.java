@@ -6,7 +6,10 @@ import org.scijava.log.LogService;
 import org.scijava.ui.UIService;
 import org.scijava.widget.FileWidget;
 
+import javax.print.DocFlavor;
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
@@ -15,6 +18,9 @@ import java.beans.PropertyChangeListener;
 import java.io.File;
 
 public class IlastikPixelClassificationDialog extends JDialog implements PropertyChangeListener {
+    private static final Border VALID_BORDER = new JTextField().getBorder();
+    private static final Border INVALID_BORDER = new LineBorder(Color.RED, 1);
+
     private class DatasetComboboxEntry {
         public final Dataset dataset;
         public final String title;
@@ -58,7 +64,7 @@ public class IlastikPixelClassificationDialog extends JDialog implements Propert
     private final JButton ilpPathBrowse = new JButton("Browse");
     
     private final JLabel outputTypeLabel = new JLabel("Output type:");
-    private final JComboBox<OutputTypeComboboxEntry>  outputType = new JComboBox<>();
+    private final JComboBox<String>  outputType = new JComboBox<>();
 
     private final JLabel predictionMaskLabel = new JLabel("Prediction Mask:");
     private final JComboBox<DatasetComboboxEntry>  predictionMask = new JComboBox<>();
@@ -149,12 +155,12 @@ public class IlastikPixelClassificationDialog extends JDialog implements Propert
     }
 
     private void initOutputTypeControl() {
-        outputType.addItem(new OutputTypeComboboxEntry("Probabilities", UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES));
-        outputType.addItem(new OutputTypeComboboxEntry("Segmentation", UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION));
+        outputType.addItem(UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES);
+        outputType.addItem(UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION);
         outputType.addActionListener(evt -> {
-            OutputTypeComboboxEntry entry = (OutputTypeComboboxEntry)outputType.getSelectedItem();
+            String entry = (String)outputType.getSelectedItem();
             if (entry != null) {
-                model.setOutputType(entry.type);
+                model.setOutputType(entry);
             }
         });
     }
@@ -192,11 +198,21 @@ public class IlastikPixelClassificationDialog extends JDialog implements Propert
             this.dispose();
         });
         this.predictBtn.addActionListener(evt -> {
-            cancelled = false;
-            this.dispose();
+            if (model.isValid()) {
+                cancelled = false;
+                this.dispose();
+            }
         });
 
         this.initializeComponentLayout();
+    }
+
+    private static Border getLineBorder(boolean valid) {
+        if (valid) {
+            return VALID_BORDER;
+        } else {
+            return INVALID_BORDER;
+        }
     }
 
     @Override
@@ -207,12 +223,13 @@ public class IlastikPixelClassificationDialog extends JDialog implements Propert
                 this.ilpPath.setText(newProjectFile.getAbsolutePath());
             }
 
+            ilpPath.setBorder(getLineBorder(model.isValidIlastikProjectFile()));
         } else if (evt.getPropertyName().equals(IlastikPixelClassificationModel.PROPERTY_OUTPUT_TYPE)) {
             String newType = (String) evt.getNewValue();
             int selectedIdx = outputType.getSelectedIndex();
             for (int i = 0; i < outputType.getItemCount(); i++) {
-                OutputTypeComboboxEntry entry = outputType.getItemAt(i);
-                if (entry.type.equals(newType) && selectedIdx != i) {
+                String entry = outputType.getItemAt(i);
+                if (entry.equals(newType) && selectedIdx != i) {
                     outputType.setSelectedIndex(i);
                 }
             }

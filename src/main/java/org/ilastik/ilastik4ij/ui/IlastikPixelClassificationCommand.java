@@ -76,11 +76,13 @@ public class IlastikPixelClassificationCommand implements Command {
             ilastikOptions = optionsService.getOptions(IlastikOptions.class);
 
         IlastikPixelClassificationModel model = createModel();
-        IlastikPixelClassificationDialog dialog = new IlastikPixelClassificationDialog(logService, uiService, datasetService, model);
-        model.fireInitialProperties();
-        dialog.setVisible(true);
-        if (dialog.wasCancelled()) {
-            return;
+        if (!model.isValid()) {
+            IlastikPixelClassificationDialog dialog = new IlastikPixelClassificationDialog(logService, uiService, datasetService, model);
+            model.fireInitialProperties();
+            dialog.setVisible(true);
+            if (dialog.wasCancelled()) {
+                return;
+            }
         }
 
         try {

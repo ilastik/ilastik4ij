@@ -40,6 +40,10 @@ public class IlastikPixelClassificationModel {
         this.ilastikProjectFile = path;
         firePropertyChange(PROPERTY_ILASTIK_PROJECT_FILE, oldValue, path);
     }
+
+    public boolean isValidIlastikProjectFile() {
+        return this.ilastikProjectFile != null && this.ilastikProjectFile.exists();
+    }
     
     public void setRawInput(Dataset dataset) {
         Dataset oldValue = this.rawInput;
@@ -49,6 +53,10 @@ public class IlastikPixelClassificationModel {
     
     public Dataset getRawInput() {
         return this.rawInput;
+    }
+
+    public boolean isValidRawInput() {
+        return this.ilastikProjectFile != null;
     }
 
     public void setPredictionMask(Dataset dataset) {
@@ -61,6 +69,10 @@ public class IlastikPixelClassificationModel {
         return this.predictionMask;
     }
 
+    public boolean isValidPredictionMask() {
+        return true;
+    }
+
     public void setOutputType(String type) {
         String oldValue = this.outputType;
         this.outputType = type;
@@ -69,6 +81,14 @@ public class IlastikPixelClassificationModel {
 
     public String getOutputType() {
         return this.outputType;
+    }
+
+    public boolean isValidOutputType() {
+        return true;
+    }
+
+    public boolean isValid() {
+        return isValidIlastikProjectFile() && isValidOutputType() && isValidPredictionMask() && isValidRawInput();
     }
 
     public void fireInitialProperties() {
