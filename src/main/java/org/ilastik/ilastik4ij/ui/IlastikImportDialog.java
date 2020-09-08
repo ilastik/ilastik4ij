@@ -116,12 +116,12 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         this.model.addPropertyChangeListener(this);
 
         cancelBtn.addActionListener(actionEvent -> {
-            cancelled = true;
             dispose();
         });
 
         importBtn.addActionListener(actionEvent -> {
             if (model.isValid()) {
+                cancelled = false;
                 dispose();
             }
         });
