@@ -7,8 +7,8 @@ import org.scijava.log.LogService;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 import java.util.stream.Collectors;
 
 class IlastikImportModel {
@@ -22,7 +22,7 @@ class IlastikImportModel {
 
     private boolean isPathValid = false;
 
-    private List<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
+    private List<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new ArrayList<>();
     private final LogService logService;
     private final PropertyChangeSupport propertyChangeSupport;
     private final HDF5DatasetEntryProvider entryProvider;
@@ -61,7 +61,7 @@ class IlastikImportModel {
         try {
             availableDatasets = entryProvider.findAvailableDatasets(path);
         } catch (HDF5Exception e) {
-            availableDatasets = new Vector<>();
+            availableDatasets = new ArrayList<>();
             isPathValid = false;
             setDatasetIdx(-1);
         }
