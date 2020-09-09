@@ -30,8 +30,6 @@ public class IlastikImportCommand implements Command {
     @Parameter
     private UIService uiService;
 
-    private static IlastikImportDialog dialog = null;
-    
     public void run() {
         IlastikImportModel importModel = new IlastikImportModel(logService);
         IlastikImportMacroOptionsParser.ParseResult options = IlastikImportMacroOptionsParser.parseOptions(Macro.getOptions());
@@ -41,7 +39,7 @@ public class IlastikImportCommand implements Command {
         importModel.setAxisTags(options.axisOrder);
 
         if (!importModel.isValid()) {
-            dialog = new IlastikImportDialog(importModel, logService, uiService);
+            IlastikImportDialog dialog = new IlastikImportDialog(importModel, logService, uiService);
             importModel.fireInitialProperties();
             dialog.setVisible(true);
             if (dialog.wasCancelled()) {
