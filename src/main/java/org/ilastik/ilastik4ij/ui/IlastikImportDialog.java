@@ -182,14 +182,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         pack();
     }
 
-    private boolean isValidAxisOrder(int rank, String axisTags) {
-        if (axisTags.length() != rank) {
-            IJ.error(String.format("Incorrect axis order '%s' for dataset of rank %s", axisTags, rank));
-            return false;
-        }
-        return true;
-    }
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         switch (evt.getPropertyName()) {
