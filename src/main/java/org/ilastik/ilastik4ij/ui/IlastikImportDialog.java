@@ -192,24 +192,31 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
-        if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_PATH)) {
-            String newPath = (String) evt.getNewValue();
-            if (!hdf5Path.getText().equals(newPath)) {
-                hdf5Path.setText(newPath);
+        switch (evt.getPropertyName()) {
+            case IlastikImportModel.PROPERTY_PATH: {
+                String newPath = (String) evt.getNewValue();
+                if (!hdf5Path.getText().equals(newPath)) {
+                    hdf5Path.setText(newPath);
+                }
+                List<String> datasets = model.getAvailableDatasetNames();
+                setDatasetNames(datasets);
+                break;
             }
-            List<String> datasets = model.getAvailableDatasetNames();
-            setDatasetNames(datasets);
 
-        } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_DATASET_IDX)) {
-            int newIdx  = (int) evt.getNewValue();
-            datasetName.setSelectedIndex(newIdx);
-            String axisTags = model.getAxisTagsForDataset(newIdx);
-            model.setAxisTags(axisTags);
+            case IlastikImportModel.PROPERTY_DATASET_IDX: {
+                int newIdx  = (int) evt.getNewValue();
+                datasetName.setSelectedIndex(newIdx);
+                String axisTags = model.getAxisTagsForDataset(newIdx);
+                model.setAxisTags(axisTags);
+                break;
+            }
 
-        } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_AXIS_TAGS)) {
-            String newTags  = (String) evt.getNewValue();
-            if (!axisTags.getText().equals(newTags)) {
-                axisTags.setText(newTags);
+            case IlastikImportModel.PROPERTY_AXIS_TAGS: {
+                String newTags  = (String) evt.getNewValue();
+                if (!axisTags.getText().equals(newTags)) {
+                    axisTags.setText(newTags);
+                }
+                break;
             }
         }
 
