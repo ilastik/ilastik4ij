@@ -2,6 +2,7 @@ package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.*;
 import ncsa.hdf.hdf5lib.exceptions.HDF5AttributeException;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,16 +15,21 @@ import java.util.List;
 import java.util.Vector;
 import java.util.stream.Collectors;
 
-public class HDF5DatasetEntryProvider {
-    static class InvalidAxisTagsException extends Exception {}
+public class HDF5DatasetEntryProvider implements DatasetEntryProvider {
     private final LogService logService;
+    static class InvalidAxisTagsException extends RuntimeException {}
 
     public HDF5DatasetEntryProvider(LogService logService) {
         this.logService = logService;
     }
 
+    @Override
     public List<DatasetEntry> findAvailableDatasets(String path) {
-        return this.findAvailableDatasets(path, "/");
+        try {
+            return this.findAvailableDatasets(path, "/");
+        } catch (HDF5Exception e) {
+            throw new ReadException(e.getMessage(), e);
+        }
     }
 
     private DatasetEntry getDatasetEntry(String internalPath, IHDF5Reader reader) {
@@ -38,7 +44,7 @@ public class HDF5DatasetEntryProvider {
             logService.debug("Detected axistags " + axisTags + " in dataset " + internalPath);
         } catch (HDF5AttributeException e) {
             logService.debug("No axistags attribute in dataset");
-        } catch (HDF5DatasetEntryProvider.InvalidAxisTagsException e) {
+        } catch (InvalidAxisTagsException e) {
             logService.debug("Invalid axistags attribute in dataset");
         }
 
@@ -95,7 +101,7 @@ public class HDF5DatasetEntryProvider {
         return result;
     }
 
-    private static String parseAxisTags(String jsonString) throws HDF5DatasetEntryProvider.InvalidAxisTagsException {
+    private static String parseAxisTags(String jsonString) throws InvalidAxisTagsException {
         try {
             JSONObject axisObject = new JSONObject(jsonString);
             JSONArray axesArray = axisObject.getJSONArray("axes");
@@ -110,22 +116,8 @@ public class HDF5DatasetEntryProvider {
 
             return axisTags.toString();
         } catch (JSONException e) {
-            throw new HDF5DatasetEntryProvider.InvalidAxisTagsException();
+            throw new InvalidAxisTagsException();
         }
     }
 
-    public static class DatasetEntry {
-        public final String path;
-        public final String axisTags;
-        public final String verboseName;
-        public final int rank;
-
-        public DatasetEntry(String path, int rank, String axisTags, String verboseName) {
-            this.path = path;
-            this.rank = rank;
-            this.axisTags = axisTags;
-            this.verboseName = verboseName;
-        }
-
-    }
 }
