@@ -101,11 +101,11 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         }
     }
     public boolean wasCancelled() {
-        return this.cancelled;
+        return cancelled;
     }
 
     public IlastikImportDialog(IlastikImportModel model, LogService logService, UIService uiService) {
-        this.setModalityType(ModalityType.APPLICATION_MODAL);  // Block until dialog is closed
+        setModalityType(ModalityType.APPLICATION_MODAL);  // Block until dialog is closed
         this.uiService = uiService;
         this.logService = logService;
         this.model = model;
@@ -194,11 +194,11 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_PATH)) {
             String newPath = (String) evt.getNewValue();
-            if (!this.hdf5Path.getText().equals(newPath)) {
-                this.hdf5Path.setText(newPath);
+            if (!hdf5Path.getText().equals(newPath)) {
+                hdf5Path.setText(newPath);
             }
-            List<String> datasets = this.model.getAvailableDatasetNames();
-            this.setDatasetNames(datasets);
+            List<String> datasets = model.getAvailableDatasetNames();
+            setDatasetNames(datasets);
 
         } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_DATASET_IDX)) {
             int newIdx  = (int) evt.getNewValue();
@@ -208,12 +208,12 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
 
         } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_AXIS_TAGS)) {
             String newTags  = (String) evt.getNewValue();
-            if (!this.axisTags.getText().equals(newTags)) {
-                this.axisTags.setText(newTags);
+            if (!axisTags.getText().equals(newTags)) {
+                axisTags.setText(newTags);
             }
         }
 
-        this.hdf5Path.setBorder(this.model.isPathValid() ? VALID_BORDER : INVALID_BORDER);
-        this.axisTags.setBorder(this.model.isAxisTagsValid() ? VALID_BORDER : INVALID_BORDER);
+        hdf5Path.setBorder(model.isPathValid() ? VALID_BORDER : INVALID_BORDER);
+        axisTags.setBorder(model.isAxisTagsValid() ? VALID_BORDER : INVALID_BORDER);
     }
 }

@@ -48,7 +48,7 @@ public class IlastikImportCommand implements Command {
             }
         }
 
-        this.loadDataset(importModel.getPath(), importModel.getDatasetPath(), importModel.getAxisTags());
+        loadDataset(importModel.getPath(), importModel.getDatasetPath(), importModel.getAxisTags());
 
         if (Recorder.record) {
             Recorder.recordOption("select", importModel.getPath());

@@ -38,7 +38,7 @@ class IlastikImportModel {
     }
 
     public boolean isValid() {
-        return this.isPathValid && this.isDatasetIdxValid() && this.isAxisTagsValid();
+        return isPathValid && isDatasetIdxValid() && isAxisTagsValid();
     }
 
     public String getPath() {
@@ -46,7 +46,7 @@ class IlastikImportModel {
     }
 
     public boolean isPathValid() {
-        return this.isPathValid;
+        return isPathValid;
     }
 
     public void setPath(String path) {
@@ -54,7 +54,7 @@ class IlastikImportModel {
             return;
         }
 
-        this.isPathValid = true;
+        isPathValid = true;
         String oldPath = this.path;
         this.path = path;
 
@@ -62,22 +62,22 @@ class IlastikImportModel {
             availableDatasets = entryProvider.findAvailableDatasets(path);
         } catch (HDF5Exception e) {
             availableDatasets = new Vector<>();
-            this.isPathValid = false;
-            this.setDatasetIdx(-1);
+            isPathValid = false;
+            setDatasetIdx(-1);
         }
 
         firePropertyChange(PROPERTY_PATH, oldPath, path);
     }
 
     public void setDatasetPath(String path) {
-        if (!this.isPathValid || availableDatasets.isEmpty()) {
+        if (!isPathValid || availableDatasets.isEmpty()) {
             return;
         }
 
         int idx = 0;
         for (DatasetEntry entry : availableDatasets) {
             if (entry.path.equals(path)) {
-                this.datasetIdx = idx;
+                datasetIdx = idx;
             }
             idx++;
         }
@@ -85,29 +85,29 @@ class IlastikImportModel {
 
     public String getDatasetPath() {
         if (isDatasetIdxValid()) {
-            return this.availableDatasets.get(this.datasetIdx).path;
+            return availableDatasets.get(datasetIdx).path;
         } else {
             return "";
         }
     }
 
     public void setDatasetIdx(int idx) {
-        if (this.datasetIdx == idx) {
+        if (datasetIdx == idx) {
             return;
         }
-        int oldIdx = this.datasetIdx;
-        this.datasetIdx = idx;
+        int oldIdx = datasetIdx;
+        datasetIdx = idx;
 
         firePropertyChange(PROPERTY_DATASET_IDX, oldIdx, idx);
     }
 
     public boolean isDatasetIdxValid() {
-        return this.datasetIdx >= 0 && this.datasetIdx < this.availableDatasets.size();
+        return datasetIdx >= 0 && datasetIdx < availableDatasets.size();
     }
 
     public String getAxisTagsForDataset(int idx) {
-        if (idx >= 0 && idx < this.availableDatasets.size()) {
-            return this.availableDatasets.get(idx).axisTags;
+        if (idx >= 0 && idx < availableDatasets.size()) {
+            return availableDatasets.get(idx).axisTags;
         } else {
             return "";
         }
@@ -133,7 +133,7 @@ class IlastikImportModel {
 
     public boolean isAxisTagsValid() {
         if (isDatasetIdxValid()) {
-            return this.availableDatasets.get(this.datasetIdx).rank == axisTags.length();
+            return availableDatasets.get(datasetIdx).rank == axisTags.length();
         } else {
             return false;
         }
@@ -152,9 +152,9 @@ class IlastikImportModel {
     }
 
     public void fireInitialProperties() {
-        firePropertyChange(IlastikImportModel.PROPERTY_PATH, null, this.path);
-        firePropertyChange(IlastikImportModel.PROPERTY_DATASET_IDX, null, this.datasetIdx);
-        firePropertyChange(IlastikImportModel.PROPERTY_AXIS_TAGS, null, this.axisTags);
+        firePropertyChange(IlastikImportModel.PROPERTY_PATH, null, path);
+        firePropertyChange(IlastikImportModel.PROPERTY_DATASET_IDX, null, datasetIdx);
+        firePropertyChange(IlastikImportModel.PROPERTY_AXIS_TAGS, null, axisTags);
     }
 }
 
