@@ -18,7 +18,7 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        context = new ImageJ().getContext();
+        context = new Context();
         logService = context.getService(LogService.class);
     }
 
