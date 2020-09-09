@@ -2,8 +2,6 @@ package org.ilastik.ilastik4ij.ui;
 
 import ij.Macro;
 
-import javax.crypto.Mac;
-
 public class IlastikImportMacroOptionsParser {
     static class ParseResult {
         public final String path;
