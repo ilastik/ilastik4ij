@@ -7,7 +7,9 @@ import org.scijava.log.LogService;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
+import java.util.List;
 import java.util.Vector;
+import java.util.stream.Collectors;
 
 class IlastikImportModel {
     public static final String PROPERTY_PATH = "path";
@@ -68,7 +70,7 @@ class IlastikImportModel {
     }
 
     public void setDatasetPath(String path) {
-        if (!this.isPathValid || availableDatasets.size() == 0) {
+        if (!this.isPathValid || availableDatasets.isEmpty()) {
             return;
         }
 
@@ -111,14 +113,8 @@ class IlastikImportModel {
         }
     }
 
-    public Vector<String> getAvailableDatasetNames() {
-        Vector<String> result = new Vector<>();
-
-        for (DatasetEntry entry : this.availableDatasets) {
-            result.add(entry.verboseName);
-        }
-
-        return result;
+    public List<String> getAvailableDatasetNames() {
+        return availableDatasets.stream().map(e -> e.verboseName).collect(Collectors.toList());
     }
 
     public String getAxisTags() {

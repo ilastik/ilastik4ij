@@ -12,6 +12,7 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.util.List;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
@@ -93,7 +94,7 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         contentPanel.setPreferredSize(new Dimension(600, contentPanel.getPreferredSize().height));
     }
 
-    public void setDatasetNames(Vector<String> names) {
+    public void setDatasetNames(List<String> names) {
         datasetNameModel.removeAllElements();
         for (String name : names) {
             datasetNameModel.addElement(name);
@@ -196,7 +197,7 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
             if (!this.hdf5Path.getText().equals(newPath)) {
                 this.hdf5Path.setText(newPath);
             }
-            Vector<String> datasets = this.model.getAvailableDatasetNames();
+            List<String> datasets = this.model.getAvailableDatasetNames();
             this.setDatasetNames(datasets);
 
         } else if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_DATASET_IDX)) {
