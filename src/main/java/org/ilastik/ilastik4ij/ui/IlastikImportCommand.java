@@ -17,6 +17,7 @@ import org.scijava.ui.UIService;
 import javax.swing.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Objects;
 
 @Plugin(type = Command.class, menuPath = "Plugins>ilastik>Import HDF5")
 public class IlastikImportCommand implements Command {
@@ -59,10 +60,10 @@ public class IlastikImportCommand implements Command {
 
     }
 
-    public <T extends RealType<T> & NativeType<T>> void loadDataset(String hdf5FilePath, String datasetName, String axisOrder) {
-        assert hdf5FilePath != null;
-        assert datasetName != null;
-        assert axisOrder != null;
+    private <T extends RealType<T> & NativeType<T>> void loadDataset(String hdf5FilePath, String datasetName, String axisOrder) {
+        Objects.requireNonNull(hdf5FilePath);
+        Objects.requireNonNull(datasetName);
+        Objects.requireNonNull(axisOrder);
         axisOrder = axisOrder.toLowerCase();
 
         Instant start = Instant.now();
