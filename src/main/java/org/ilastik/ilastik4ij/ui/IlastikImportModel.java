@@ -1,5 +1,6 @@
 package org.ilastik.ilastik4ij.ui;
 
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider.DatasetEntry;
 import org.scijava.log.LogService;
@@ -31,7 +32,7 @@ class IlastikImportModel {
     }
 
     public int getDatasetIdx() {
-        return this.datasetIdx;
+        return datasetIdx;
     }
 
     public boolean isValid() {
@@ -57,7 +58,7 @@ class IlastikImportModel {
 
         try {
             availableDatasets = entryProvider.findAvailableDatasets(path);
-        } catch (Exception e) {
+        } catch (HDF5Exception e) {
             availableDatasets = new Vector<>();
             this.isPathValid = false;
             this.setDatasetIdx(-1);
