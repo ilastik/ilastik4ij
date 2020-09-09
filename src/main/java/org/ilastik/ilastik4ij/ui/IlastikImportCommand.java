@@ -32,14 +32,12 @@ public class IlastikImportCommand implements Command {
     private static IlastikImportDialog dialog = null;
     
     public void run() {
-        String options = Macro.getOptions();
         IlastikImportModel importModel = new IlastikImportModel(logService);
+        IlastikImportMacroOptionsParser.ParseResult options = IlastikImportMacroOptionsParser.parseOptions(Macro.getOptions());
 
-        if (options != null) {
-            importModel.setPath(Macro.getValue(options, "select", ""));
-            importModel.setDatasetPath(Macro.getValue(options, "datasetname", ""));
-            importModel.setAxisTags(Macro.getValue(options, "axisorder", ""));
-        }
+        importModel.setPath(options.path);
+        importModel.setDatasetPath(options.datasetName);
+        importModel.setAxisTags(options.axisOrder);
 
         if (!importModel.isValid()) {
             dialog = new IlastikImportDialog(importModel, logService, uiService);
