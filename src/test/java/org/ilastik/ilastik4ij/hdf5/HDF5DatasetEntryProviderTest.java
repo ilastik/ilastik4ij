@@ -32,14 +32,19 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
         assertEquals("tzyxc", info.axisTags);
     }
 
-    public void testFindAvailableDatasetsWithAxes() {
+    public void testFindAvailableDatasets() {
         HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
         Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_AXES_H5_RESOURCE);
-        assertEquals(1, infos.size());
+        assertEquals(2, infos.size());
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
-        assertEquals("/exported_data", info.path);
-        assertEquals("/exported_data: (256, 256, 256, 1) float32", info.verboseName);
-        assertEquals("zyxc", info.axisTags);
+        assertEquals("/dataset_without_axes", info.path);
+        assertEquals("/dataset_without_axes: (64, 64) int64", info.verboseName);
+        assertEquals("yx", info.axisTags);
+
+        HDF5DatasetEntryProvider.DatasetEntry info2 = infos.get(1);
+        assertEquals("/exported_data", info2.path);
+        assertEquals("/exported_data: (256, 256, 256, 1) float32", info2.verboseName);
+        assertEquals("zyxc", info2.axisTags);
     }
 }
