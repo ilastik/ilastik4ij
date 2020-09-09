@@ -6,6 +6,8 @@ import net.imagej.ImgPlus;
 import net.imglib2.img.display.imagej.ImageJFunctions;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
+import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider;
+import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
@@ -31,7 +33,8 @@ public class IlastikImportCommand implements Command {
     private UIService uiService;
 
     public void run() {
-        IlastikImportModel importModel = new IlastikImportModel(logService);
+        DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
+        IlastikImportModel importModel = new IlastikImportModel(logService, provider);
         IlastikImportMacroOptionsParser.ParseResult options = IlastikImportMacroOptionsParser.parseOptions(Macro.getOptions());
 
         importModel.setPath(options.path);

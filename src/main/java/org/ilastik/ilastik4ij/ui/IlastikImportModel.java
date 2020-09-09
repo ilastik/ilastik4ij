@@ -1,17 +1,17 @@
 package org.ilastik.ilastik4ij.ui;
 
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
-import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider.DatasetEntry;
+import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider;
+import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider.DatasetEntry;
 import org.scijava.log.LogService;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 class IlastikImportModel {
+    public static final char[] VALID_SORTED_AXIS_TAGS = {'c', 't', 'x', 'y', 'z'};
     public static final String PROPERTY_PATH = "path";
     public static final String PROPERTY_DATASET_IDX = "datasetIdx";
     public static final String PROPERTY_AXIS_TAGS = "axisTags";
@@ -22,15 +22,15 @@ class IlastikImportModel {
 
     private boolean isPathValid = false;
 
-    private List<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new ArrayList<>();
+    private List<DatasetEntry> availableDatasets = new ArrayList<>();
     private final LogService logService;
     private final PropertyChangeSupport propertyChangeSupport;
-    private final HDF5DatasetEntryProvider entryProvider;
+    private final DatasetEntryProvider entryProvider;
 
-    public IlastikImportModel(LogService logService) {
+    public IlastikImportModel(LogService logService, DatasetEntryProvider provider) {
         this.logService = logService;
         propertyChangeSupport = new PropertyChangeSupport(this);
-        entryProvider = new HDF5DatasetEntryProvider(logService);
+        entryProvider = provider;
     }
 
     public int getDatasetIdx() {
@@ -60,7 +60,7 @@ class IlastikImportModel {
 
         try {
             availableDatasets = entryProvider.findAvailableDatasets(path);
-        } catch (HDF5Exception e) {
+        } catch (DatasetEntryProvider.ReadException e) {
             availableDatasets = new ArrayList<>();
             isPathValid = false;
             setDatasetIdx(-1);
@@ -74,13 +74,17 @@ class IlastikImportModel {
             return;
         }
 
-        int idx = 0;
+        int cur = 0;
+        int foundIdx = -1;
+
         for (DatasetEntry entry : availableDatasets) {
             if (entry.path.equals(path)) {
-                datasetIdx = idx;
+                foundIdx = cur;
             }
-            idx++;
+            cur++;
         }
+
+        datasetIdx = foundIdx;
     }
 
     public String getDatasetPath() {
@@ -133,7 +137,27 @@ class IlastikImportModel {
 
     public boolean isAxisTagsValid() {
         if (isDatasetIdxValid()) {
-            return availableDatasets.get(datasetIdx).rank == axisTags.length();
+            if (axisTags.length() > 5) {
+                return false;
+            };
+
+            char[] normalizedTags = axisTags.toLowerCase().toCharArray();
+            Arrays.sort(normalizedTags);
+            int count = 0;
+            int cur = 0;
+
+            for (char c : normalizedTags) {
+                while (cur < VALID_SORTED_AXIS_TAGS.length) {
+                    char check = VALID_SORTED_AXIS_TAGS[cur];
+                    cur++;
+                    if (c == check) {
+                        count++;
+                        break;
+                    }
+                }
+            }
+
+            return availableDatasets.get(datasetIdx).rank == count;
         } else {
             return false;
         }

@@ -39,7 +39,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
     private final UIService uiService;
     private final IlastikImportModel model;
     private boolean cancelled = true;
-    private Vector<HDF5DatasetEntryProvider.DatasetEntry> datasetEntries = new Vector<>();
 
     private void intializeComponentsLayout() {
         getContentPane().setLayout(new BorderLayout());
