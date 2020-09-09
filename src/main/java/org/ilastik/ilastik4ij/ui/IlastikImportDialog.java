@@ -189,14 +189,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         return true;
     }
 
-    private Border getLineBorder(boolean valid) {
-        if (valid) {
-            return VALID_BORDER;
-        } else {
-            return INVALID_BORDER;
-        }
-    }
-
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
         if (evt.getPropertyName().equals(IlastikImportModel.PROPERTY_PATH)) {
@@ -220,7 +212,7 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
             }
         }
 
-        this.hdf5Path.setBorder(getLineBorder(this.model.isPathValid()));
-        this.axisTags.setBorder(getLineBorder(this.model.isAxisTagsValid()));
+        this.hdf5Path.setBorder(this.model.isPathValid() ? VALID_BORDER : INVALID_BORDER);
+        this.axisTags.setBorder(this.model.isAxisTagsValid() ? VALID_BORDER : INVALID_BORDER);
     }
 }
