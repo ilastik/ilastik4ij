@@ -5,6 +5,7 @@ import net.imagej.ImageJ;
 import org.scijava.Context;
 import org.scijava.log.LogService;
 
+import java.util.List;
 import java.util.Vector;
 
 public class HDF5DatasetEntryProviderTest extends TestCase {
@@ -23,7 +24,7 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
 
     public void testFindAvailableDatasetsNoAxes() {
         HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
-        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_H5_RESOURCE);
+        List<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_H5_RESOURCE);
         assertEquals(1, infos.size());
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);
@@ -34,7 +35,7 @@ public class HDF5DatasetEntryProviderTest extends TestCase {
 
     public void testFindAvailableDatasets() {
         HDF5DatasetEntryProvider provider = new HDF5DatasetEntryProvider(logService);
-        Vector<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_AXES_H5_RESOURCE);
+        List<HDF5DatasetEntryProvider.DatasetEntry> infos = provider.findAvailableDatasets(TEST_AXES_H5_RESOURCE);
         assertEquals(2, infos.size());
 
         HDF5DatasetEntryProvider.DatasetEntry info = infos.get(0);

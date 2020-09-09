@@ -22,7 +22,7 @@ class IlastikImportModel {
 
     private boolean isPathValid = false;
 
-    private Vector<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
+    private List<HDF5DatasetEntryProvider.DatasetEntry> availableDatasets = new Vector<>();
     private final LogService logService;
     private final PropertyChangeSupport propertyChangeSupport;
     private final HDF5DatasetEntryProvider entryProvider;

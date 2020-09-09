@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.scijava.log.LogService;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Vector;
@@ -21,7 +22,7 @@ public class HDF5DatasetEntryProvider {
         this.logService = logService;
     }
 
-    public Vector<DatasetEntry> findAvailableDatasets(String path) {
+    public List<DatasetEntry> findAvailableDatasets(String path) {
         return this.findAvailableDatasets(path, "/");
     }
 
@@ -68,8 +69,8 @@ public class HDF5DatasetEntryProvider {
         }
     }
 
-    private Vector<DatasetEntry> findAvailableDatasets(String path, String intenalPath) {
-        Vector<DatasetEntry> result = new Vector<>();
+    private List<DatasetEntry> findAvailableDatasets(String path, String intenalPath) {
+        List<DatasetEntry> result = new ArrayList<>();
         logService.info("Trying to open: " + path);
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(path)) {
