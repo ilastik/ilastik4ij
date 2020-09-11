@@ -80,19 +80,6 @@ public class Hdf5Utils {
         return result;
     }
 
-    public static String dropdownName(String path, HDF5DataSetInformation dsInfo) {
-        String shape = Arrays.stream(dsInfo.getDimensions())
-                .mapToObj(String::valueOf)
-                .collect(Collectors.joining(", "));
-
-        String dtype = getTypeInfo(dsInfo);
-        return String.format("%s: (%s) %s", path, shape, dtype);
-    }
-
-    public static String parseDataset(String dropdownName) {
-        return dropdownName.split(":")[0].trim();
-    }
-
     public static String getTypeInfo(HDF5DataSetInformation dsInfo) {
         HDF5DataTypeInformation dsType = dsInfo.getTypeInformation();
         int bitdepth = 8 * dsType.getElementSize();
