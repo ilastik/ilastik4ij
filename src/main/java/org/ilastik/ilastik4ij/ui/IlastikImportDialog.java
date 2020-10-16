@@ -1,7 +1,5 @@
 package org.ilastik.ilastik4ij.ui;
 
-import ij.IJ;
-import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
 import org.scijava.log.LogService;
 import org.scijava.ui.UIService;
 import org.scijava.widget.FileWidget;
@@ -12,11 +10,13 @@ import javax.swing.border.LineBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.List;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.io.File;
-import java.util.Vector;
 
 
 class IlastikImportDialog extends JDialog implements PropertyChangeListener {
@@ -39,6 +39,39 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
     private final UIService uiService;
     private final IlastikImportModel model;
     private boolean cancelled = true;
+
+    private class TransferHandlerDecorator extends TransferHandler {
+        private TransferHandler original;
+
+        public TransferHandlerDecorator(TransferHandler original) {
+            this.original = original;
+        }
+
+        @Override
+        public boolean importData(TransferSupport transferSupport) {
+            try {
+                if (transferSupport.isDataFlavorSupported(DataFlavor.javaFileListFlavor)) {
+                    List<File> files = (List<File>)transferSupport.getTransferable().getTransferData(DataFlavor.javaFileListFlavor);
+                    for (File file : files) {
+                        model.setPath(file.getAbsolutePath());
+                        return true;
+                    }
+                }
+            } catch (IOException | UnsupportedFlavorException e) {
+                e.printStackTrace();
+                return false;
+            }
+
+            return original != null && original.importData(transferSupport);
+        }
+
+        @Override
+        public boolean canImport(TransferSupport transferSupport) {
+            return transferSupport.isDataFlavorSupported(DataFlavor.javaFileListFlavor)
+                    || transferSupport.isDataFlavorSupported(DataFlavor.stringFlavor)
+                    || original != null && original.canImport(transferSupport);
+        }
+    };
 
     private void intializeComponentsLayout() {
         getContentPane().setLayout(new BorderLayout());
@@ -115,9 +148,7 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
         datasetName.setModel(datasetNameModel);
         this.model.addPropertyChangeListener(this);
 
-        cancelBtn.addActionListener(actionEvent -> {
-            dispose();
-        });
+        cancelBtn.addActionListener(actionEvent -> dispose());
 
         importBtn.addActionListener(actionEvent -> {
             if (model.isValid()) {
@@ -133,7 +164,6 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
                 model.setPath(result.getAbsolutePath());
             }
         });
-
         hdf5Path.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent documentEvent) {
@@ -175,6 +205,10 @@ class IlastikImportDialog extends JDialog implements PropertyChangeListener {
                 model.setAxisTags(axisTags.getText());
             }
         });
+
+        getRootPane().setTransferHandler(new TransferHandlerDecorator(getRootPane().getTransferHandler()));
+        hdf5Path.setTransferHandler(new TransferHandlerDecorator(hdf5Path.getTransferHandler()));
+        axisTags.setTransferHandler(new TransferHandlerDecorator(axisTags.getTransferHandler()));
 
         intializeComponentsLayout();
         setResizable(true);
