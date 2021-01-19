@@ -52,7 +52,7 @@ public abstract class AbstractIlastikExecutor {
             "--output_format=hdf5",
             "--output_axis_order=tzyxc",
             "--input_axes=tzyxc",
-            "--readonly",
+            "--readonly=1",
             "--output_internal_path=exported_data",
             "--input_axes=tzyxc"
         );
