@@ -33,6 +33,8 @@ Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and 
 
 **Note**: The plugins need Java 1.8, if you see error messages popping up that might be caused by an older Java version.
 
+**Compatibility note:**: We try to keep the plugin backwards compatible. Some versions of ilastik are _not_ compatible with the current plugin: `1.3.3b2`,  `1.3.3rc2`, `1.3.3`, `1.3.3post1`, `1.3.3post2`. _We recommend to update to the latest stable version!. If you need to stick with `1.3.3x` for some reason, please use `1.3.3post3`._
+
 ## User documentation
 
 The ilastik workflow wrappers, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`, 
