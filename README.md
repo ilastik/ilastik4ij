@@ -8,7 +8,7 @@ This repository contains ImageJ2 plugins that wrap ilastik workflows for usage i
 and [KNIME](https://www.knime.com). Data transfer is managed through temporary HDF5 file export/import, which can also be performed individually.
 The ilastik workflows are invoked by running the ilastik headless mode from the command line.
 
-Currently, three workflows are wrapped: Pixel classification, Object classification and tracking. 
+Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification and tracking. 
 There is one additional setting showing up in the ImageJ menu, which configures the location of the ilastik binary.
 
 ## Contents
@@ -20,7 +20,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [Export](#export)
     - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
     - [ilastik configuration for the workflow wrappers](#configuration)
-    - [Pixel Classification](#pixel-classification)
+    - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
     - [Object Classification](#object-classification)
     - [Tracking](#tracking)
     - [Usage in KNIME](#usage-in-knime)
@@ -111,8 +111,11 @@ Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 * Number of threads to use (-1 for no limit)
 * Specify an upper bound of RAM that ilastik is allowed to use
 
-### Pixel Classification
-Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
+### Pixel Classification and Autocontext
+
+Pixel Classification and Autocontext workflow have similar input settings.
+
+The Pixel Classification Workflow can be found at `Plugins -> ilastik -> Run Pixel Classification Prediction`, the Autocontext Workflow at `Plugins -> ilastik -> Run Autocontext Prediction`.
 
 ![Pixel Classification Dialog](./doc/screenshots/IJ-PC-dialog.png)
 
@@ -127,8 +130,9 @@ Found at `Plugins -> ilastik -> Run Pixel Classification Prediction`.
 
 * if _Probabilities_ was selected: a multi-channel float image that you can _e.g._ threshold to obtain a 
   segmentation ![Pixel Classification Output: Probabilities](./doc/screenshots/IJ-PC-predictions.png)
-* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_. 
-  ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png)
+* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_.
+It is recommended to apply a LUT (e.g. `Image -> Lookup Tables -> glasbey`) to the result in order to see the _segmentation_ output. 
+  ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png).
   
 #### Batch processing
 The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
