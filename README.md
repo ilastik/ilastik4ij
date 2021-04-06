@@ -8,7 +8,7 @@ This repository contains ImageJ2 plugins that wrap ilastik workflows for usage i
 and [KNIME](https://www.knime.com). Data transfer is managed through temporary HDF5 file export/import, which can also be performed individually.
 The ilastik workflows are invoked by running the ilastik headless mode from the command line.
 
-Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification and tracking. 
+Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and tracking.
 There is one additional setting showing up in the ImageJ menu, which configures the location of the ilastik binary.
 
 ## Contents
@@ -22,6 +22,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [ilastik configuration for the workflow wrappers](#configuration)
     - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
     - [Object Classification](#object-classification)
+    - [Boundary-based Segmentation with Multicut](#boundary-based-segmentation-with-multicut)
     - [Tracking](#tracking)
     - [Usage in KNIME](#usage-in-knime)
 * [Developer documentation](#developer-documentation)
@@ -187,6 +188,28 @@ Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 * a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object. 
   ![Object Classification Output](./doc/screenshots/IJ-OC-output.png)
+
+
+### Boundary-based Segmentation with Multicut
+Found at `Plugins -> ilastik -> Run Multicut`.
+
+![Multicut Dialog](./doc/screenshots/multicut-dialog.png)
+
+**Inputs:**
+
+* a project file
+* one raw image (select the appropriate one in the dropdown box as shown above)
+* one additional image that contains boundary probabilities. Those can be generated, e.g. in Pixel Classification or with a pre-trained Neural Network.
+
+**Output:**
+
+* a new integer value image (label image) where the pixels belonging to the same object have the same value.
+  The example image below shows (left to right) raw data, boundary probability map, and multicut segmentation result (with applied LUT).
+  ![Multicut Output](./doc/screenshots/MC-output.png)
+
+
+
+
 
 ### Tracking
 Found at `Plugins -> ilastik -> Run Tracking`.

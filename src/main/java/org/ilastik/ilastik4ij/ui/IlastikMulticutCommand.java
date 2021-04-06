@@ -55,14 +55,14 @@ public class IlastikMulticutCommand implements Command {
             ilastikOptions = optionsService.getOptions(IlastikOptions.class);
 
         try {
-            runClassification();
+            runMulticut();
         } catch (IOException e) {
             logService.error("Multicut command failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    private void runClassification() throws IOException {
+    private void runMulticut() throws IOException {
         final Multicut multicut = new Multicut(ilastikOptions.getExecutableFile(), projectFileName, logService, statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb());
 
         this.predictions = multicut.runMulticut(inputImage.getImgPlus(), boundaryPredictionImage.getImgPlus());
