@@ -84,8 +84,9 @@ Found at `Plugins -> ilastik -> Export HDF5`.
 
 If you want to save the currently opened image to a HDF5 file that can be immediately opened in ilastik,
 use this export option. Additionally to the location where the file should be saved, you could specify the output
-data set name as well as how much the dataset should be compressed. 
+data set name as well as how much the dataset should be compressed.
 Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, where many pixel values are equal.
+The plugin uses (lossless) gzip compression.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
 
