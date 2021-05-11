@@ -195,6 +195,10 @@
             <groupId>cisd</groupId>
             <artifactId>jhdf5</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.opencsv</groupId>
+            <artifactId>opencsv</artifactId>
+        </dependency>
         <!-- test dependencies -->
         <dependency>
             <groupId>net.imagej</groupId>

@@ -99,6 +99,8 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
                 "tzyxc",
                 logService,
                 statusService).read();
+
+        workflowDidRun(tempDir);
     }
 
     @SuppressWarnings("unchecked")
@@ -113,4 +115,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     }
 
     public abstract List<String> workflowArgs(Path tempDir);
+
+    public void workflowDidRun(Path tempDir) throws Exception {
+    }
 }
