@@ -5,7 +5,7 @@ import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
 import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
-import org.ilastik.ilastik4ij.ui.IlastikOptions;
+import org.ilastik.ilastik4ij.ui.OptionsIlastik;
 import org.ilastik.ilastik4ij.util.Subprocesses;
 import org.ilastik.ilastik4ij.util.TempDirCloseable;
 import org.scijava.ItemIO;
@@ -56,7 +56,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     }
 
     private void runWithTempDir(Path tempDir) throws Exception {
-        IlastikOptions options = optionsService.getOptions(IlastikOptions.class);
+        OptionsIlastik options = optionsService.getOptions(OptionsIlastik.class);
 
         // On MacOS user can select an app bundle, but we need the actual executable.
         Path executablePath = options.getExecutableFile().toPath();
