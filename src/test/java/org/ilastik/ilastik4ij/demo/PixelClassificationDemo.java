@@ -31,9 +31,9 @@ public final class PixelClassificationDemo extends WorkflowDemo {
         // Configure and run the command.
         PixelClassificationCommand<?> cmd = new PixelClassificationCommand<>();
         cmd.setContext(ij.context());
-        cmd.project = project;
-        cmd.rawData = rawData;
-        cmd.outputType = PixelClassificationCommand.PROBABILITIES;
+        cmd.projectFileName = project;
+        cmd.inputImage = rawData;
+        cmd.pixelClassificationType = PixelClassificationCommand.PROBABILITIES;
         cmd.run();
         ij.ui().show("Predictions", cmd.predictions);
     }

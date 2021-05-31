@@ -37,10 +37,10 @@ public final class ObjectClassificationDemo extends WorkflowDemo {
         // Configure and run the command.
         ObjectClassificationCommand<?> cmd = new ObjectClassificationCommand<>();
         cmd.setContext(ij.context());
-        cmd.project = project;
-        cmd.rawData = rawData;
-        cmd.input2 = probabilityMap;
-        cmd.input2Type = ObjectClassificationCommand.PROBABILITIES;
+        cmd.projectFileName = project;
+        cmd.inputImage = rawData;
+        cmd.inputProbOrSegImage = probabilityMap;
+        cmd.secondInputType = ObjectClassificationCommand.PROBABILITIES;
         cmd.run();
         ij.ui().show("Predictions", cmd.predictions);
     }
