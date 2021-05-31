@@ -4,6 +4,7 @@ import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
 import org.ilastik.ilastik4ij.util.CsvTables;
 import org.scijava.ItemIO;
+import org.scijava.ItemVisibility;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -28,6 +29,19 @@ public final class ObjectClassificationCommand<T extends NativeType<T>> extends 
 
     @Parameter(label = "Open object features table")
     public boolean needTable = false;
+
+    @SuppressWarnings("unused")
+    @Parameter(visibility = ItemVisibility.MESSAGE)
+    private final String tableHelp = "<html>" +
+            "Object features table requires a special project configuration:" +
+            "<ol>" +
+            "<li>In the ilastik application, go to the <em>Object Information Export</em> applet</li>" +
+            "<li>Click the <em>Configure Feature Table Export</em> button</li>" +
+            "<li>In the <em>General</em> tab, choose <em>CSV</em> format</li>" +
+            "<li>In the <em>Features</em> tab, choose features to export</li>" +
+            "<li>Click <em>OK</em> to close the dialog, and save the project</li>" +
+            "</ol>" +
+            "</html>";
 
     @Parameter(type = ItemIO.OUTPUT)
     public GenericTable objectFeatures;
