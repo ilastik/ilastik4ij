@@ -35,10 +35,10 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     public OptionsService optionsService;
 
     @Parameter(label = "Trained ilastik project file")
-    public File project;
+    public File projectFileName;
 
     @Parameter(label = "Raw input image")
-    public Dataset rawData;
+    public Dataset inputImage;
 
     @Parameter(type = ItemIO.OUTPUT)
     public ImgPlus<T> predictions;
@@ -64,17 +64,17 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
             executablePath = executablePath.resolve(Paths.get("Contents", "MacOS", "ilastik"));
         }
 
-        Path rawDataPath = tempDir.resolve("rawData.h5");
-        writeHdf5(rawDataPath, rawData);
+        Path inputImagePath = tempDir.resolve("inputImage.h5");
+        writeHdf5(inputImagePath, inputImage);
 
         Path predictionsPath = tempDir.resolve("predictions.h5");
 
         ArrayList<String> cmd = new ArrayList<>(Arrays.asList(
                 executablePath.toString(),
-                "--project=" + project,
+                "--project=" + projectFileName,
                 "--headless",
                 "--readonly=1",
-                "--raw_data=" + rawDataPath,
+                "--raw_data=" + inputImagePath,
                 "--input_axes=tzyxc",
                 "--output_filename_format=" + predictionsPath,
                 "--output_axis_order=tzyxc",
