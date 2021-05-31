@@ -13,29 +13,29 @@ import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Tracking")
 public final class TrackingCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
-    @Parameter(label = "Pixel probability or segmentation image")
-    public Dataset input2;
+    @Parameter(label = "Pixel Probability or Segmentation image")
+    public Dataset inputProbOrSegImage;
 
     @Parameter(
-            label = "Second input type",
+            label = "Second Input Type",
             choices = {PROBABILITIES, SEGMENTATION},
             style = ChoiceWidget.RADIO_BUTTON_HORIZONTAL_STYLE)
-    public String input2Type = PROBABILITIES;
+    public String secondInputType = PROBABILITIES;
 
     @Override
     public List<String> workflowArgs(Path tempDir) {
-        Path input2Path = tempDir.resolve("input2.h5");
-        writeHdf5(input2Path, input2);
+        Path inputProbOrSegImagePath = tempDir.resolve("inputProbOrSegImage.h5");
+        writeHdf5(inputProbOrSegImagePath, inputProbOrSegImage);
 
         List<String> args = new ArrayList<>();
         args.add("--export_source=Tracking-Result");
 
-        switch (input2Type) {
+        switch (secondInputType) {
             case PROBABILITIES:
-                args.add("--prediction_maps=" + input2Path);
+                args.add("--prediction_maps=" + inputProbOrSegImagePath);
                 break;
             case SEGMENTATION:
-                args.add("--binary_image=" + input2Path);
+                args.add("--binary_image=" + inputProbOrSegImagePath);
                 break;
             default:
                 throw new RuntimeException();

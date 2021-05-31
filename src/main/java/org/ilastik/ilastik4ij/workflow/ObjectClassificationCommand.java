@@ -17,34 +17,34 @@ import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
 public final class ObjectClassificationCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
-    @Parameter(label = "Pixel probability or segmentation image")
-    public Dataset input2;
+    @Parameter(label = "Pixel Probability or Segmentation image")
+    public Dataset inputProbOrSegImage;
+
+    @Parameter(
+            label = "Second Input Type",
+            choices = {PROBABILITIES, SEGMENTATION},
+            style = ChoiceWidget.RADIO_BUTTON_HORIZONTAL_STYLE)
+    public String secondInputType = PROBABILITIES;
 
     @Parameter(label = "Open object features table")
     public boolean needTable = false;
-
-    @Parameter(
-            label = "Second input type",
-            choices = {PROBABILITIES, SEGMENTATION},
-            style = ChoiceWidget.RADIO_BUTTON_HORIZONTAL_STYLE)
-    public String input2Type = PROBABILITIES;
 
     @Parameter(type = ItemIO.OUTPUT)
     public GenericTable objectFeatures;
 
     @Override
     public List<String> workflowArgs(Path tempDir) {
-        Path input2Path = tempDir.resolve("input2.h5");
-        writeHdf5(input2Path, input2);
+        Path inputProbOrSegImagePath = tempDir.resolve("inputProbOrSegImage.h5");
+        writeHdf5(inputProbOrSegImagePath, inputProbOrSegImage);
 
         List<String> args = new ArrayList<>();
 
-        switch (input2Type) {
+        switch (secondInputType) {
             case PROBABILITIES:
-                args.add("--prediction_maps=" + input2Path);
+                args.add("--prediction_maps=" + inputProbOrSegImagePath);
                 break;
             case SEGMENTATION:
-                args.add("--segmentation_image=" + input2Path);
+                args.add("--segmentation_image=" + inputProbOrSegImagePath);
                 break;
             default:
                 throw new RuntimeException();

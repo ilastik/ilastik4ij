@@ -16,11 +16,11 @@ public final class PixelClassificationCommand<T extends NativeType<T>> extends W
             label = "Output type",
             choices = {PROBABILITIES, SEGMENTATION},
             style = ChoiceWidget.RADIO_BUTTON_HORIZONTAL_STYLE)
-    public String outputType = PROBABILITIES;
+    public String pixelClassificationType = PROBABILITIES;
 
     @Override
     public List<String> workflowArgs(Path tempDir) {
-        switch (outputType) {
+        switch (pixelClassificationType) {
             case PROBABILITIES:
                 return Collections.singletonList("--export_source=Probabilities");
             case SEGMENTATION:

@@ -16,11 +16,11 @@ public final class AutocontextCommand<T extends NativeType<T>> extends WorkflowC
             label = "Output type",
             choices = {PROBABILITIES, SEGMENTATION},
             style = ChoiceWidget.RADIO_BUTTON_HORIZONTAL_STYLE)
-    public String outputType = PROBABILITIES;
+    public String AutocontextPredictionType = PROBABILITIES;
 
     @Override
     public List<String> workflowArgs(Path tempDir) {
-        switch (outputType) {
+        switch (AutocontextPredictionType) {
             case PROBABILITIES:
                 return Collections.singletonList("--export_source=Probabilities Stage 2");
             case SEGMENTATION:

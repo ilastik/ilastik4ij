@@ -12,16 +12,16 @@ import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Multicut")
 public final class MulticutCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
-    @Parameter(label = "Boundary prediction image")
-    public Dataset input2;
+    @Parameter(label = "Boundary Prediction Image")
+    public Dataset boundaryPredictionImage;
 
     @Override
     public List<String> workflowArgs(Path tempDir) {
-        Path input2Path = tempDir.resolve("input2.h5");
-        writeHdf5(input2Path, input2);
+        Path boundaryPredictionImagePath = tempDir.resolve("boundaryPredictionImage.h5");
+        writeHdf5(boundaryPredictionImagePath, boundaryPredictionImage);
 
         return Arrays.asList(
                 "--export_source=Multicut Segmentation",
-                "--probabilities=" + input2Path);
+                "--probabilities=" + boundaryPredictionImagePath);
     }
 }
