@@ -7,6 +7,7 @@ import org.ilastik.ilastik4ij.executors.PixelClassification;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
+import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
@@ -19,7 +20,7 @@ import java.io.IOException;
 import static org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelPredictionType;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public class IlastikPixelClassificationCommand implements Command {
+public class IlastikPixelClassificationCommand extends DynamicCommand {
 
     @Parameter
     public LogService logService;
@@ -41,6 +42,21 @@ public class IlastikPixelClassificationCommand implements Command {
 
     @Parameter(label = "Output type", choices = {UiConstants.PIXEL_PREDICTION_TYPE_PROBABILITIES, UiConstants.PIXEL_PREDICTION_TYPE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String pixelClassificationType;
+
+    @Parameter(label = "Use Mask?", persist=false, initializer = "initUseMask")
+    public boolean useMask=false;
+
+    protected void initUseMask(){
+        useMask = false;
+        //resolveInput("useMask"); //this makes the input not be rendered -.-
+    }
+
+    @Parameter(
+        label = "Prediction Mask",
+        required = false,
+        description = "An image with same dimensions as Raw Data, where the black pixels will be masked out of the predictions"
+    )
+    public Dataset predictionMask;
 
     @Parameter(type = ItemIO.OUTPUT)
     private ImgPlus<? extends NativeType<?>> predictions;
@@ -69,7 +85,11 @@ public class IlastikPixelClassificationCommand implements Command {
                 projectFileName, logService, statusService, ilastikOptions.getNumThreads(), ilastikOptions.getMaxRamMb());
 
         PixelPredictionType pixelPredictionType = PixelPredictionType.valueOf(pixelClassificationType);
-        this.predictions = pixelClassification.classifyPixels(inputImage.getImgPlus(), pixelPredictionType);
+        this.predictions = pixelClassification.classifyPixels(
+            inputImage.getImgPlus(),
+            useMask ? predictionMask.getImgPlus() : null,
+            pixelPredictionType
+        );
 
         // DisplayUtils.showOutput(uiService, predictions);
     }
