@@ -138,6 +138,12 @@
                                             <resource>META-INF/json/org.scijava.plugin.Plugin</resource>
                                         </transformer>
                                     </transformers>
+                                    <artifactSet>
+                                        <excludes>
+                                            <exclude>net.imagej:*</exclude>
+                                            <exclude>net.imglib2:*</exclude>
+                                        </excludes>
+                                    </artifactSet>
                                     <filters>
                                         <filter>
                                             <!--
@@ -195,6 +201,12 @@
             <groupId>cisd</groupId>
             <artifactId>jhdf5</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20190722</version>
+        </dependency>
+
         <!-- test dependencies -->
         <dependency>
             <groupId>net.imagej</groupId>
