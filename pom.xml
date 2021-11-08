@@ -56,7 +56,7 @@
     </mailingLists>
 
     <scm>
-        <connection>scm:git:git://github.com/ilastik/ilastik4ij</connection>
+        <connection>scm:git:https://github.com/ilastik/ilastik4ij</connection>
         <developerConnection>scm:git:git@github.com:ilastik/ilastik4ij</developerConnection>
         <tag>HEAD</tag>
         <url>https://github.com/ilastik/ilastik4ij</url>
