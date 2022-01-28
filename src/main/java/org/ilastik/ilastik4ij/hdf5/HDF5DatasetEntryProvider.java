@@ -1,8 +1,8 @@
 package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.*;
-import ncsa.hdf.hdf5lib.exceptions.HDF5AttributeException;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5AttributeException;
+import hdf.hdf5lib.exceptions.HDF5Exception;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.json.JSONArray;
 import org.json.JSONException;

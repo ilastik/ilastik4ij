@@ -80,6 +80,7 @@
         <uberjar-classifier>all</uberjar-classifier>
         <!-- Maven plugin for making the uber-jar -->
         <maven-shade-plugin.version>3.2.1</maven-shade-plugin.version>
+        <cisd.jhdf5.version>19.04.0</cisd.jhdf5.version>
     </properties>
 
     <repositories>
@@ -194,6 +195,7 @@
         <dependency>
             <groupId>cisd</groupId>
             <artifactId>jhdf5</artifactId>
+            <version>${cisd.jhdf5.version}</version>
         </dependency>
         <!-- test dependencies -->
         <dependency>

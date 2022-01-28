@@ -1,6 +1,6 @@
 package org.ilastik.ilastik4ij.hdf5;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5Exception;
 
 import java.util.List;
 

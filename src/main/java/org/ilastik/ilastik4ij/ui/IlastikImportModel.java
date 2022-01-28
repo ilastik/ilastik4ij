@@ -1,6 +1,6 @@
 package org.ilastik.ilastik4ij.ui;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5Exception;
 import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider.DatasetEntry;
 import org.scijava.log.LogService;
