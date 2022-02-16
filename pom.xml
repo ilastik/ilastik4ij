@@ -66,8 +66,8 @@
         <url>http://github.com/ilastik/ilastik4ij/issues</url>
     </issueManagement>
     <ciManagement>
-        <system>Travis CI</system>
-        <url>https://travis-ci.org/ilastik/ilastik4ij</url>
+        <system>GitHub Actions</system>
+        <url>https://github.com/ilastik/ilastik4ij/actions</url>
     </ciManagement>
 
     <properties>
