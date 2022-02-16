@@ -1,6 +1,6 @@
 # ilastik ImageJ modules
 
-[![Build Status](https://travis-ci.org/ilastik/ilastik4ij.svg?branch=master)](https://travis-ci.org/ilastik/ilastik4ij)
+[![Build Status](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml/badge.svg)](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml)
 
 _(c) Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
 
