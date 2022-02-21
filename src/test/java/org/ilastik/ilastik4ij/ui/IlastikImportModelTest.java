@@ -1,6 +1,7 @@
 package org.ilastik.ilastik4ij.ui;
 
 import junit.framework.TestCase;
+import net.imagej.patcher.LegacyInjector;
 import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider.DatasetEntry;
 import org.scijava.Context;
@@ -10,6 +11,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class IlastikImportModelTest extends TestCase {
+    static {
+        LegacyInjector.preinit();
+    }
+
     private IlastikImportModel model;
 
     class StubEntryProvider implements DatasetEntryProvider {
