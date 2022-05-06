@@ -17,8 +17,8 @@ public class IlastikImportModelTest extends TestCase {
         @Override
         public List<DatasetEntry> findAvailableDatasets(String path) {
             List<DatasetEntry> result = new ArrayList<>();
-            result.add(new DatasetEntry("/firstDataset", 3, "xyc", "/firstDataset"));
-            result.add(new DatasetEntry("/secondDataset", 4, "xyzc", "/secondDataset"));
+            result.add(new DatasetEntry("/firstDataset", new long[]{100, 200, 3}, "float32", "xyc"));
+            result.add(new DatasetEntry("/secondDataset", new long[]{100, 200, 50, 3}, "uint8", "xyzc"));
             return result;
         }
     }

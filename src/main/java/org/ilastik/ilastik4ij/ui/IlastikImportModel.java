@@ -118,7 +118,7 @@ class IlastikImportModel {
     }
 
     public List<String> getAvailableDatasetNames() {
-        return availableDatasets.stream().map(e -> e.verboseName).collect(Collectors.toList());
+        return availableDatasets.stream().map(Object::toString).collect(Collectors.toList());
     }
 
     public String getAxisTags() {
@@ -157,7 +157,7 @@ class IlastikImportModel {
                 }
             }
 
-            return availableDatasets.get(datasetIdx).rank == count;
+            return availableDatasets.get(datasetIdx).shape.length == count;
         } else {
             return false;
         }

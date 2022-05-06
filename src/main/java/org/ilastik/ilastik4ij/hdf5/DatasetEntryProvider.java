@@ -2,7 +2,9 @@ package org.ilastik.ilastik4ij.hdf5;
 
 import hdf.hdf5lib.exceptions.HDF5Exception;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public interface DatasetEntryProvider {
     List<DatasetEntry> findAvailableDatasets(String path);
@@ -15,16 +17,23 @@ public interface DatasetEntryProvider {
 
     class DatasetEntry {
         public final String path;
+        public final long[] shape;
+        public final String dtype;
         public final String axisTags;
-        public final String verboseName;
-        public final int rank;
 
-        public DatasetEntry(String path, int rank, String axisTags, String verboseName) {
+        public DatasetEntry(String path, long[] shape, String dtype, String axisTags) {
             this.path = path;
-            this.rank = rank;
+            this.shape = shape;
+            this.dtype = dtype;
             this.axisTags = axisTags;
-            this.verboseName = verboseName;
         }
 
+        @Override
+        public String toString() {
+            String shapeString = Arrays.stream(shape)
+                    .mapToObj(String::valueOf)
+                    .collect(Collectors.joining(", "));
+            return String.format("%s (%s) %s", path, shapeString, dtype);
+        }
     }
 }

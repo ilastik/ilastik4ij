@@ -48,16 +48,7 @@ public class HDF5DatasetEntryProvider implements DatasetEntryProvider {
             logService.debug("Invalid axistags attribute in dataset");
         }
 
-        return new DatasetEntry(internalPath, dsRank, axisTags, makeVerboseName(internalPath, hdf5DatasetInfo));
-    }
-
-    private static String makeVerboseName(String internalPath, HDF5DataSetInformation dsInfo) {
-        String shape = Arrays.stream(dsInfo.getDimensions())
-                .mapToObj(String::valueOf)
-                .collect(Collectors.joining(", "));
-
-        String dtype = Hdf5Utils.getTypeInfo(dsInfo);
-        return String.format("%s: (%s) %s", internalPath, shape, dtype);
+        return new DatasetEntry(internalPath, hdf5DatasetInfo.getDimensions(), Hdf5Utils.getTypeInfo(hdf5DatasetInfo), axisTags);
     }
 
     private static String defaultAxisOrder(int rank) {
@@ -87,7 +78,7 @@ public class HDF5DatasetEntryProvider implements DatasetEntryProvider {
                 switch (linkInfo.getType()) {
                     case DATASET:
                         DatasetEntry datasetEntry = getDatasetEntry(linkInfo.getPath(), reader);
-                        if (datasetEntry.rank >= 2) {
+                        if (datasetEntry.shape.length >= 2) {
                             result.add(datasetEntry);
                         }
                         break;
