@@ -1,7 +1,5 @@
 package org.ilastik.ilastik4ij;
 
-import io.scif.io.ByteArrayHandle;
-import io.scif.io.IRandomAccess;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
@@ -10,6 +8,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.ObjectClassification;
 import org.ilastik.ilastik4ij.util.IOUtils;
+import org.scijava.io.location.BytesLocation;
 
 import java.io.File;
 import java.io.IOException;
@@ -41,9 +40,8 @@ public class ObjectClassificationDemo {
         while (inputFileStream.available() > 0) {
             bb1.put((byte) inputFileStream.read());
         }
-        final IRandomAccess ira1 = new ByteArrayHandle(bb1);
-        ij.scifio().location().mapFile("rawInputFile", ira1);
-        final Dataset inputDataset = ij.scifio().datasetIO().open("rawInputFile");
+        final Dataset inputDataset = ij.scifio().datasetIO().open(
+                new BytesLocation(bb1.array(), "rawInputFile"));
 
         // Open pmaps image
         //
@@ -52,9 +50,8 @@ public class ObjectClassificationDemo {
         while (pmapsFileStream.available() > 0) {
             bb2.put((byte) pmapsFileStream.read());
         }
-        final IRandomAccess ira2 = new ByteArrayHandle(bb2);
-        ij.scifio().location().mapFile("pmapsFile", ira2);
-        final Dataset pmapsDataset = ij.scifio().datasetIO().open("pmapsFile");
+        final Dataset pmapsDataset = ij.scifio().datasetIO().open(
+                new BytesLocation(bb2.array(), "pmapsFile"));
 
         ij.ui().show(inputDataset);
 
