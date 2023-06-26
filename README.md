@@ -254,6 +254,34 @@ RandomAccessibleInterval`.
 **Testing:** no real tests are included right now, but you can run the `main` method in
 `WorkflowTests.java` which fires up an ImageJ instance for each of the three plugins.
 
+### Manually test in a local Fiji installation
+
+If you have [Fiji][fiji] installed locally somewhere in your system, it is
+possible to automatically copy the plugin into the Fiji's plugins directory.
+You need to specify path to your Fiji installation in local `.m2/settings.xml`:
+
+```xml
+<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
+    <profiles>
+        <profile>
+            <id>local-install-to-fiji</id>
+            <properties>
+                <fiji.home>/Applications/Fiji.app</fiji.home>
+            </properties>
+        </profile>
+    </profiles>
+</settings>
+```
+
+POM of this project has a build profile that will be automatically activated
+when the property `fiji.home` is defined, so you can run  `mvn install`
+or `mvn install -DskipTests` to put a fresh build of the plugin into Fiji.
+
+Make sure that the released plugin version is not installed in Fiji, and that
+`local-install-to-fiji` profile is not disabled.
+
 ### Deployment
 
 We follow the setup of other `scijava` modules and use their Travis setup that allows us to
@@ -262,3 +290,5 @@ The project configuration, including dependencies, is contained in the `pom.xml`
 new release, use the `release-version.sh` script from https://github.com/scijava/scijava-scripts,
 which goes a long way of ensuring that the project is ready to be published. Once it is released,
 the nightly build of KNIME Image Processing (KNIP) will pick it up and wrap it as well.
+
+[fiji]: https://fiji.sc/

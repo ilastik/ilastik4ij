@@ -1,7 +1,5 @@
 package org.ilastik.ilastik4ij;
 
-import io.scif.io.ByteArrayHandle;
-import io.scif.io.IRandomAccess;
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
 import net.imagej.ImgPlus;
@@ -11,6 +9,7 @@ import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.executors.AbstractIlastikExecutor.PixelPredictionType;
 import org.ilastik.ilastik4ij.executors.PixelClassification;
 import org.ilastik.ilastik4ij.util.IOUtils;
+import org.scijava.io.location.BytesLocation;
 
 import java.io.File;
 import java.io.IOException;
@@ -39,9 +38,8 @@ public class PixelClassificationDemo {
         while (inputFileStream.available() > 0) {
             byteBuffer.put((byte) inputFileStream.read());
         }
-        IRandomAccess ira = new ByteArrayHandle(byteBuffer);
-        ij.scifio().location().mapFile("rawInputFile", ira);
-        final Dataset inputDataset = ij.scifio().datasetIO().open("rawInputFile");
+        final Dataset inputDataset = ij.scifio().datasetIO().open(
+                new BytesLocation(byteBuffer.array(), "rawInputFile"));
 
         ij.ui().show(inputDataset);
 
