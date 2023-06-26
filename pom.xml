@@ -23,7 +23,7 @@
     </organization>
     <licenses>
         <license>
-            <name>BSD</name>
+            <name>mit</name>
             <url />
             <distribution>repo</distribution>
         </license>
@@ -72,7 +72,7 @@
 
     <properties>
         <main-class>IlastikPixelClassificationPrediction</main-class>
-        <license.licenseName>BSD</license.licenseName>
+        <license.licenseName>mit</license.licenseName>
         <license.copyrightOwners>N/A</license.copyrightOwners>
         <license.projectName>ilastik</license.projectName>
         <releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
