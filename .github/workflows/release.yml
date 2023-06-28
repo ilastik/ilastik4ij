@@ -1,0 +1,33 @@
+name: Release to Update Site
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Plugin version
+        required: true
+        type: string
+
+jobs:
+  build_release:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: release
+      url: https://sites.imagej.net/Ilastik/plugins/
+
+    steps:
+      - name: Install ImageJ/Fiji
+        run: |
+          curl --silent --remote-name https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
+          unzip fiji-linux64.zip
+          ./Fiji.app/ImageJ-linux64 --headless --update edit-update-site ilastik https://sites.imagej.net/Ilastik/ "webdav:ilastik-ci:${{ secrets.UPDATE_PASS }}" .
+
+      - name: Download plugin JAR into ImageJ/Fiji
+        run: curl \
+          --silent \
+          --remote-name https://maven.scijava.org/content/repositories/releases/org/ilastik/ilastik4ij/${{ inputs.version }}/ilastik4ij-${{ inputs.version }}.jar \
+          --output-dir ./Fiji.app/jars
+
+      - name: Release to ImageJ update site
+        run: ./Fiji.app/ImageJ-linux64 --headless --update upload-complete-site --force ilastik
