@@ -12,18 +12,16 @@ jobs:
   build_release:
     runs-on: ubuntu-latest
 
-    env:
-      IJ_DOWNLOAD_URL: https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
-      WIKI_USER: YOUR_USER_NAME
-      UPDATE_PASS: $
-      UPDATE_SITE: Ilastik
+    environment:
+      name: release
+      url: https://sites.imagej.net/Ilastik/plugins/
 
     steps:
       - name: Install ImageJ/Fiji
         run: |
-          curl --silent --remote-name ${IJ_DOWNLOAD_URL}
+          curl --silent --remote-name https://downloads.imagej.net/fiji/latest/fiji-linux64.zip
           unzip fiji-linux64.zip
-          ./Fiji.app/ImageJ-linux64 --headless --update edit-update-site ${UPDATE_SITE} https://sites.imagej.net/${UPDATE_SITE}/ "webdav:${WIKI_USER}:${UPDATE_PASS}" .
+          ./Fiji.app/ImageJ-linux64 --headless --update edit-update-site ilastik https://sites.imagej.net/Ilastik/ "webdav:ilastik-ci:${{ secrets.UPDATE_PASS }}" .
 
       - name: Download plugin JAR into ImageJ/Fiji
         run: curl \
@@ -32,4 +30,4 @@ jobs:
           --output-dir ./Fiji.app/jars
 
       - name: Release to ImageJ update site
-        run: ./Fiji.app/ImageJ-linux64 --headless --update upload-complete-site --force ${UPDATE_SITE}
+        run: ./Fiji.app/ImageJ-linux64 --headless --update upload-complete-site --force ilastik
