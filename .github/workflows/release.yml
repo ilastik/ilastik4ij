@@ -24,10 +24,7 @@ jobs:
           ./Fiji.app/ImageJ-linux64 --headless --update edit-update-site ilastik https://sites.imagej.net/Ilastik/ "webdav:ilastik-ci:${{ secrets.UPDATE_PASS }}" .
 
       - name: Download plugin JAR into ImageJ/Fiji
-        run: curl \
-          --silent \
-          --remote-name https://maven.scijava.org/content/repositories/releases/org/ilastik/ilastik4ij/${{ inputs.version }}/ilastik4ij-${{ inputs.version }}.jar \
-          --output-dir ./Fiji.app/jars
+        run: curl --silent --create-dirs --output-dir ./Fiji.app/jars --remote-name https://maven.scijava.org/content/repositories/releases/org/ilastik/ilastik4ij/${{ inputs.version }}/ilastik4ij-${{ inputs.version }}.jar
 
       - name: Release to ImageJ update site
         run: ./Fiji.app/ImageJ-linux64 --headless --update upload-complete-site --force ilastik
