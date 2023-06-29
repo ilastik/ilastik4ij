@@ -60,7 +60,7 @@ public class PixelClassificationDemo {
                 1024
         );
 
-        final ImgPlus<T> classifiedPixels = prediction.classifyPixels(inputDataset.getImgPlus(), PixelPredictionType.Probabilities);
+        final ImgPlus<T> classifiedPixels = prediction.classifyPixels(inputDataset.getImgPlus(), null, PixelPredictionType.Probabilities);
 
         ImageJFunctions.show(classifiedPixels, "Probability maps");
     }

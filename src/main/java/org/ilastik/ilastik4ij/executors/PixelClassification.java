@@ -20,8 +20,9 @@ public class PixelClassification extends AbstractIlastikExecutor {
     }
 
     public <T extends NativeType<T>> ImgPlus<T> classifyPixels(ImgPlus<? extends RealType<?>> rawInputImg,
+                                                               ImgPlus<? extends RealType<?>> predictionMask,
                                                                PixelPredictionType pixelPredictionType) throws IOException {
-        return executeIlastik(rawInputImg, null, pixelPredictionType);
+        return executeIlastik(rawInputImg, predictionMask, pixelPredictionType);
     }
 
     @Override
@@ -35,6 +36,10 @@ public class PixelClassification extends AbstractIlastikExecutor {
         }
         commandLine.add("--raw_data=" + tempFiles.get(rawInputTempFile));
         commandLine.add("--output_filename_format=" + tempFiles.get(outputTempFile));
+
+        if(tempFiles.containsKey(secondInputTempFile)){
+            commandLine.add("--prediction_mask=" + tempFiles.get(secondInputTempFile));
+        }
 
         return commandLine;
     }
