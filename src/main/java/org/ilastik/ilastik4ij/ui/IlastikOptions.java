@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.cmd;
+package org.ilastik.ilastik4ij.ui;
 
 import org.scijava.module.MutableModuleItem;
 import org.scijava.options.OptionsPlugin;
@@ -10,7 +10,7 @@ import org.scijava.widget.FileWidget;
 import java.io.File;
 
 @Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
-public final class Options extends OptionsPlugin {
+public final class IlastikOptions extends OptionsPlugin {
     @Parameter(label = "Path to ilastik executable", style = FileWidget.OPEN_STYLE)
     public File executableFile = new File("/opt/ilastik/run_ilastik.sh");
 

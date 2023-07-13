@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.cmd;
+package org.ilastik.ilastik4ij.ui;
 
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
@@ -70,7 +70,7 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
 
     @Override
     public final void run() {
-        Options opts = optionsService.getOptions(Options.class);
+        IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
 
         Path executable = opts.executableFile.toPath().toAbsolutePath().normalize();

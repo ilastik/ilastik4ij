@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.cmd;
+package org.ilastik.ilastik4ij.ui;
 
 import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
