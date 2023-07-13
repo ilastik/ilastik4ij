@@ -86,9 +86,7 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
                 "--output_axis_order=tzyxc",
                 "--input_axes=tzyxc",
                 "--readonly=1",
-                "--output_internal_path=exported_data",
-                "--input_axes=tzyxc"
-        ));
+                "--output_internal_path=exported_data"));
         args.addAll(workflowArgs());
 
         Map<String, String> env = new HashMap<>();
