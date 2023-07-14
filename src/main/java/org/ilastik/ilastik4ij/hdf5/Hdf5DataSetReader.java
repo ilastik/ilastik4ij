@@ -18,7 +18,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
+import org.scijava.log.Logger;
 
 import javax.swing.*;
 import java.nio.file.Paths;
@@ -36,14 +36,14 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
     private final String filename;
     private final String dataset;
     private final String axesorder;
-    private final LogService logService;
+    private final Logger logger;
     private final Optional<StatusService> statusService;
 
-    public Hdf5DataSetReader(String filename, String dataset, String axesorder, LogService logService, StatusService statusService) {
+    public Hdf5DataSetReader(String filename, String dataset, String axesorder, Logger logger, StatusService statusService) {
         this.filename = filename;
         this.dataset = dataset;
         this.axesorder = axesorder;
-        this.logService = logService;
+        this.logger = logger;
         this.statusService = Optional.ofNullable(statusService);
     }
 
@@ -51,7 +51,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
         try (IHDF5Reader reader = HDF5Factory.openForReading(filename)) {
             HDF5DataSetInformation dsInfo = reader.object().getDataSetInformation(dataset);
             Hdf5DataSetConfig dsConfig = new Hdf5DataSetConfig(dsInfo, axesorder);
-            logService.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
+            logger.info(String.format("Found dataset '%s' of type '%s'", dataset, dsConfig.typeInfo));
 
             // construct output image
             final long[] dims = {dsConfig.dimX, dsConfig.dimY, dsConfig.numChannels, dsConfig.dimZ, dsConfig.numFrames};
@@ -60,7 +60,7 @@ public class Hdf5DataSetReader<T extends NativeType<T>> {
                     .mapToObj(String::valueOf)
                     .collect(Collectors.joining(", "));
 
-            logService.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
+            logger.info(String.format("Constructing output image of shape (%s). Axis order: 'XYCZT'", strDims));
 
             final T type = Hdf5Utils.getNativeType(dsConfig.typeInfo);
 

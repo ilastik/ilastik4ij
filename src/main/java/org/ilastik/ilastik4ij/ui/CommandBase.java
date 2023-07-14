@@ -8,16 +8,24 @@ import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
 import org.scijava.ItemIO;
 import org.scijava.app.StatusService;
 import org.scijava.command.ContextCommand;
+import org.scijava.log.LogLevel;
 import org.scijava.log.LogService;
+import org.scijava.log.Logger;
 import org.scijava.options.OptionsService;
 import org.scijava.plugin.Parameter;
 import org.scijava.util.PlatformUtils;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 /**
@@ -26,6 +34,9 @@ import java.util.function.Consumer;
  * Instead of {@link #run()}, derived classes can implement {@link #workflowArgs()}
  * and {@link #workflowInputs()}, which are used to build workflow-specific
  * command-line arguments.
+ * <p>
+ * Subclasses should be named as {@code [MyWorkflowName]Command}
+ * because workflow names are derived from their corresponding class names.
  */
 public abstract class CommandBase<T extends NativeType<T>> extends ContextCommand {
     public static final String ROLE_PROBABILITIES = "Probabilities";
@@ -49,8 +60,6 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
     @Parameter(type = ItemIO.OUTPUT)
     public ImgPlus<T> predictions;
 
-    private final String logPrefix = "ilastik4ij: " + getClass().getSimpleName();
-
     /**
      * Workflow-specific command-line arguments.
      */
@@ -70,26 +79,28 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
 
     @Override
     public final void run() {
+        Logger logger = logService.subLogger(getClass().getCanonicalName(), LogLevel.INFO);
+
         IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
 
-        Path executable = opts.executableFile.toPath().toAbsolutePath().normalize();
+        Path executable = opts.executableFile.toPath().toAbsolutePath();
         if (PlatformUtils.isMac() && executable.toString().endsWith(".app")) {
-            executable = executable.resolve(Paths.get("Contents", "MacOS", "ilastik"));
+            executable = executable.resolve("Contents").resolve("MacOS").resolve("ilastik");
         }
 
-        List<String> args = new ArrayList<>(Arrays.asList(
-                executable.toString(),
+        ProcessBuilder pb = new ProcessBuilder();
+        pb.command(executable.toString(),
                 "--headless",
                 "--project=" + projectFileName.getAbsolutePath(),
                 "--output_format=hdf5",
                 "--output_axis_order=tzyxc",
                 "--input_axes=tzyxc",
                 "--readonly=1",
-                "--output_internal_path=exported_data"));
-        args.addAll(workflowArgs());
+                "--output_internal_path=exported_data");
+        pb.command().addAll(workflowArgs());
 
-        Map<String, String> env = new HashMap<>();
+        Map<String, String> env = pb.environment();
         if (opts.numThreads >= 0) {
             env.put("LAZYFLOW_THREADS", String.valueOf(opts.numThreads));
         }
@@ -99,72 +110,66 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
         env.put("LC_CTYPE", "en_US.UTF-8");
 
         try {
-            try (TempDirCloseable temp = new TempDirCloseable()) {
-                Path inputs = temp.dir.resolve("inputs");
-                Files.createDirectory(inputs);
+            try (TempDir temp = new TempDir("ilastik4ij_")) {
+                Path inputDir = Files.createDirectory(temp.dir.resolve("inputs"));
+                Path outputDir = Files.createDirectory(temp.dir.resolve("outputs"));
 
-                args.add(writeInput("raw_data", temp.dir.resolve("raw_data.h5"), inputImage));
-                workflowInputs().forEach((name, dataset) ->
-                        args.add(writeInput(name, inputs.resolve(name + ".h5"), dataset)));
-
-                Path output = temp.dir.resolve("predictions.h5");
-                args.add("--output_filename_format=" + output);
-
-                ProcessBuilder pb = new ProcessBuilder(args);
-                pb.environment().putAll(env);
-
-                logService.info(String.format("%s: starting", logPrefix));
-                logService.info(String.format("%s: arguments = %s", logPrefix, args));
-                logService.info(String.format("%s: environment = %s", logPrefix, env));
-
-                Process proc = pb.start();
-                redirectInputStream(proc.getInputStream(), logService::info);
-                redirectInputStream(proc.getErrorStream(), logService::error);
-                if (proc.waitFor() != 0) {
-                    throw new RuntimeException("non-zero exit code " + proc.exitValue());
+                int counter = 0;
+                HashMap<String, Dataset> inputs = new HashMap<>(workflowInputs());
+                inputs.put("raw_data", inputImage);
+                for (String name : inputs.keySet()) {
+                    Dataset dataset = inputs.get(name);
+                    Path inputPath = inputDir.resolve(name + ".h5");
+                    statusService.showStatus(++counter, inputs.size(), "Exporting inputs");
+                    logger.info(String.format("write %s to %s starting", name, inputPath));
+                    new Hdf5DataSetWriter(
+                            dataset.getImgPlus(), inputPath.toString(), "data", 1, logger, statusService).write();
+                    logger.info("write finished");
+                    pb.command().add(String.format("--%s=%s", name, inputPath));
                 }
 
-                logService.info(String.format("%s: finished", logPrefix));
-                predictions = readOutput(output);
+                Path outputPath = outputDir.resolve("predictions.h5");
+                pb.command().add("--output_filename_format=" + outputPath);
+
+                logger.info(String.format("ilastik run starting with arguments %s and environment %s",
+                        pb.command(),
+                        pb.environment()));
+                Process process = pb.start();
+                redirectInputStream(process.getInputStream(), logger::info);
+                redirectInputStream(process.getErrorStream(), logger::info);
+
+                List<Character> spinnerChars = Arrays.asList('|', '/', '-', '\\');
+
+                String[] words = getClass().getSimpleName().split("(?=\\p{Lu})");
+                String workflowName = String.join(" ", Arrays.copyOfRange(words, 0, words.length - 1));
+                Consumer<Character> updateStatus = (spinner) ->
+                    statusService.showStatus(String.format("Running %s %c", workflowName, spinner));
+
+                try (Cycler<Character> ignored = new Cycler<>(300, spinnerChars, updateStatus)) {
+                    if (process.waitFor() != 0) {
+                        throw new RuntimeException("non-zero exit code " + process.exitValue());
+                    }
+                }
+                logger.info("ilastik run finished");
+
+                statusService.showStatus("Importing outputs");
+                logger.info(String.format("read from %s starting", outputPath));
+                predictions = new Hdf5DataSetReader<T>(
+                        outputPath.toString(), "exported_data", "tzyxc", logger, statusService).read();
+                logger.info("read finished");
             }
 
-        } catch (IOException | InterruptedException e) {
-            logService.error(String.format("%s: failed", logPrefix), e);
+        } catch (Exception e) {
+            statusService.clearStatus();
+            logger.error("ilastik run failed", e);
             throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Write dataset to file; return command-line argument for the input.
-     */
-    private String writeInput(String name, Path path, Dataset dataset) {
-        String prefix = String.format("%s: write %s to %s", logPrefix, name, path);
-        logService.info(prefix + " starting");
-        new Hdf5DataSetWriter(
-                dataset.getImgPlus(), path.toString(), "data", 1, logService, statusService).write();
-        logService.info(prefix + " finished");
-        return String.format("--%s=%s", name, path);
-    }
-
-    /**
-     * Read dataset from file.
-     */
-    private ImgPlus<T> readOutput(Path path) {
-        String prefix = String.format("%s: read from %s", logPrefix, path);
-        logService.info(prefix + " starting");
-        ImgPlus<T> output = new Hdf5DataSetReader<T>(
-                path.toString(), "exported_data", "tzyxc", logService, statusService).read();
-        logService.info(prefix + " finished");
-        return output;
-    }
-
-    /**
-     * Spawn a new thread that reads lines from input and sends them into sink.
-     */
-    private static void redirectInputStream(InputStream is, Consumer<String> sink) {
+    private static void redirectInputStream(InputStream src, Consumer<String> dst) {
         new Thread(() -> {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-                reader.lines().forEachOrdered(sink);
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(src, StandardCharsets.UTF_8))) {
+                reader.lines().forEachOrdered(dst);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -174,11 +179,11 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
     /**
      * Create temporary directory that exists within a try-with-resources block.
      */
-    private static final class TempDirCloseable implements AutoCloseable {
+    private static final class TempDir implements AutoCloseable {
         public final Path dir;
 
-        public TempDirCloseable() throws IOException {
-            dir = Files.createTempDirectory("ilastik4ij_");
+        public TempDir(String prefix) throws IOException {
+            dir = Files.createTempDirectory(prefix);
         }
 
         @Override
@@ -196,6 +201,33 @@ public abstract class CommandBase<T extends NativeType<T>> extends ContextComman
                     return FileVisitResult.CONTINUE;
                 }
             });
+        }
+    }
+
+    /**
+     * During try-with-resources block, periodically call sink with list items.
+     */
+    private static final class Cycler<T> implements AutoCloseable {
+        private final List<T> items;
+        private final Consumer<T> sink;
+        private final ScheduledExecutorService pool;
+        private int i = 0;
+
+        public Cycler(long periodMillis, List<T> items, Consumer<T> sink) {
+            this.items = new ArrayList<>(items);
+            this.sink = sink;
+            pool = Executors.newScheduledThreadPool(1);
+            pool.scheduleWithFixedDelay(this::update, 0, periodMillis, TimeUnit.MILLISECONDS);
+        }
+
+        private void update() {
+            sink.accept(items.get(i));
+            i = (i + 1) % items.size();
+        }
+
+        @Override
+        public void close() {
+            pool.shutdown();
         }
     }
 }

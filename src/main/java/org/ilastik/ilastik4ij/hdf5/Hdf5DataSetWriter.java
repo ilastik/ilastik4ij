@@ -18,7 +18,7 @@ import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.ilastik.ilastik4ij.util.Hdf5Utils;
 import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
+import org.scijava.log.Logger;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -33,13 +33,13 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     private final int dimZ;
     private final int dimY;
     private final int dimX;
-    private final LogService logService;
+    private final Logger logger;
     private final Optional<StatusService> statusService;
     private final String filename;
     private final String dataset;
     private final int compressionLevel;
 
-    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, LogService logService, StatusService statusService) {
+    public Hdf5DataSetWriter(ImgPlus<T> image, String filename, String dataset, int compressionLevel, Logger logger, StatusService statusService) {
         this.image = image;
         this.numFrames = getDimension(image, Axes.TIME);
         this.numChannels = getDimension(image, Axes.CHANNEL);
@@ -49,7 +49,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         this.filename = filename;
         this.dataset = dataset;
         this.compressionLevel = compressionLevel;
-        this.logService = logService;
+        this.logger = logger;
         this.statusService = Optional.ofNullable(statusService);
     }
 
@@ -59,7 +59,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
         String shape = Arrays.stream(dims)
                 .mapToObj(String::valueOf)
                 .collect(Collectors.joining(", "));
-        logService.info(String.format("Exporting image of shape (%s). Axis order: 'TZYXC'", shape));
+        logger.info(String.format("Exporting image of shape (%s). Axis order: 'TZYXC'", shape));
 
         try (IHDF5Writer writer = HDF5Factory.open(filename)) {
             T val = image.firstElement();
@@ -82,7 +82,7 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     }
 
     private void write(IHDF5Writer writer, long[] datasetDims, Class<T> pixelClass) {
-        logService.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
+        logger.info(String.format("Saving as '%s'. Compression level: %d", Hdf5Utils.getDtype(pixelClass), compressionLevel));
         final int totalCheckpoints = numFrames * numChannels * dimZ;
         final AtomicInteger checkpoint = new AtomicInteger(0);
         statusService.ifPresent(status -> status.showStatus(checkpoint.get(), totalCheckpoints, "Exporting HDF5..."));
@@ -205,11 +205,11 @@ public class Hdf5DataSetWriter<T extends Type<T>> {
     }
 
     private void writeARGB(IHDF5Writer writer, long[] datasetDims) {
-        logService.info("Saving ARGB as 'uint8' (4 channels). Compression level: " + compressionLevel);
+        logger.info("Saving ARGB as 'uint8' (4 channels). Compression level: " + compressionLevel);
 
         boolean isAlphaChannelPresent = true;
         if (numChannels == ARGB_CHANNEL_NUM - 1) {
-            logService.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
+            logger.warn("Only 3 channel RGB found. Setting ALPHA channel to -1 (transparent).");
             isAlphaChannelPresent = false;
             datasetDims[4] = ARGB_CHANNEL_NUM; // set channel dimension to 4 explicitly
         }
