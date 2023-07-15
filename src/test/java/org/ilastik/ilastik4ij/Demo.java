@@ -19,7 +19,7 @@ public final class Demo {
         ij.ui().showUI();
 
         // If you want to change ilastik options, e.g. executable path:
-        // Options opts = ij.options().getOptions(Options.class);
+        // IlastikOptions opts = ij.options().getOptions(IlastikOptions.class);
         // opts.load();
         // opts.executableFile = new File("/path/to/your/local/ilastik/executable");
         // opts.save();
