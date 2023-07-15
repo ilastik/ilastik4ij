@@ -26,8 +26,10 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /**
  * Base class for all commands that run ilastik in a subprocess.
@@ -43,14 +45,17 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     public static final String ROLE_PROBABILITIES = "Probabilities";
     public static final String ROLE_SEGMENTATION = "Segmentation";
 
-    @Parameter
-    public LogService logService;
+    private static final List<Character> SPINNER_CHARS = Collections.unmodifiableList(Arrays.asList(
+            '|', '/', '-', '\\'));
 
     @Parameter
-    public StatusService statusService;
+    private LogService logService;
 
     @Parameter
-    public OptionsService optionsService;
+    private StatusService statusService;
+
+    @Parameter
+    private OptionsService optionsService;
 
     @Parameter(label = "Trained ilastik project file")
     public File projectFileName;
@@ -61,6 +66,9 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     @Parameter(type = ItemIO.OUTPUT)
     public ImgPlus<T> predictions;
 
+    private Logger logger;
+    private ScheduledExecutorService spinnerPool;
+
     /**
      * Workflow-specific command-line arguments.
      */
@@ -69,7 +77,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     }
 
     /**
-     * Workflow inputs.
+     * Workflow-specific input datasets.
      * <p>
      * Keys are corresponding command-line arguments without leading dashes.
      * Values are input datasets.
@@ -80,18 +88,62 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
 
     @Override
     public final void run() {
-        Logger logger = logService.subLogger(getClass().getCanonicalName(), LogLevel.INFO);
+        logger = logService.subLogger(getClass().getCanonicalName(), LogLevel.INFO);
+        spinnerPool = Executors.newScheduledThreadPool(1);
 
+        try {
+            try (TempDir temp = new TempDir("ilastik4ij_")) {
+                runWithTempDirs(
+                        Files.createDirectory(temp.dir.resolve("inputs")),
+                        Files.createDirectory(temp.dir.resolve("outputs")));
+            }
+
+        } catch (Exception e) {
+            statusService.clearStatus();
+            logger.error("ilastik run failed", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Write inputs, run subprocess, read outputs.
+     */
+    private void runWithTempDirs(Path inputDir, Path outputDir) throws Exception {
+        ProcessBuilder pb = initialProcessBuilder();
+
+        Map<String, Dataset> inputs = new HashMap<>(workflowInputs());
+        inputs.put("raw_data", inputImage);
+        pb.command().addAll(writeInputs(inputs, inputDir));
+
+        Path outputPath = outputDir.resolve("predictions.h5");
+        pb.command().add("--output_filename_format=" + outputPath);
+
+        runSubprocess(pb);
+
+        logger.info(String.format("read from %s starting", outputPath));
+        try (Spinner ignored = new Spinner("Reading predictions")) {
+            predictions = new Hdf5DataSetReader<T>(
+                    outputPath.toString(), "exported_data", "tzyxc", logger, statusService).read();
+        }
+        logger.info("read finished");
+    }
+
+    /**
+     * Create {@link ProcessBuilder} with configured command-line arguments and environment variables,
+     * but without input and output parameters.
+     */
+    private ProcessBuilder initialProcessBuilder() {
         IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
 
-        Path executable = opts.executableFile.toPath().toAbsolutePath();
-        if (PlatformUtils.isMac() && executable.toString().endsWith(".app")) {
-            executable = executable.resolve("Contents").resolve("MacOS").resolve("ilastik");
+        Path exe = opts.executableFile.toPath().toAbsolutePath();
+        if (PlatformUtils.isMac() && exe.toString().endsWith(".app")) {
+            // On macOS, we need an actual executable path, not an app bundle path.
+            exe = exe.resolve("Contents").resolve("MacOS").resolve("ilastik");
         }
 
         ProcessBuilder pb = new ProcessBuilder();
-        pb.command(executable.toString(),
+        pb.command(exe.toString(),
                 "--headless",
                 "--project=" + projectFileName.getAbsolutePath(),
                 "--output_format=hdf5",
@@ -110,69 +162,93 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         env.put("LC_ALL", "en_US.UTF-8");
         env.put("LC_CTYPE", "en_US.UTF-8");
 
-        try {
-            try (TempDir temp = new TempDir("ilastik4ij_")) {
-                Path inputDir = Files.createDirectory(temp.dir.resolve("inputs"));
-                Path outputDir = Files.createDirectory(temp.dir.resolve("outputs"));
+        return pb;
+    }
 
-                int counter = 0;
-                HashMap<String, Dataset> inputs = new HashMap<>(workflowInputs());
-                inputs.put("raw_data", inputImage);
-                for (String name : inputs.keySet()) {
-                    Dataset dataset = inputs.get(name);
-                    Path inputPath = inputDir.resolve(name + ".h5");
-                    statusService.showStatus(++counter, inputs.size(), "Exporting inputs");
-                    logger.info(String.format("write %s to %s starting", name, inputPath));
-                    new Hdf5DataSetWriter(
-                            dataset.getImgPlus(), inputPath.toString(), "data", 1, logger, statusService).write();
-                    logger.info("write finished");
-                    pb.command().add(String.format("--%s=%s", name, inputPath));
-                }
+    /**
+     * Write inputs into temporary files, return command-line arguments for these inputs.
+     */
+    private List<String> writeInputs(Map<String, Dataset> inputs, Path dir) {
+        // We need a counter, but the lambda below requires an immutable reference.
+        final int[] progress = {0};
 
-                Path outputPath = outputDir.resolve("predictions.h5");
-                pb.command().add("--output_filename_format=" + outputPath);
+        return inputs.keySet().stream().map(name -> {
+            @SuppressWarnings("unchecked")
+            ImgPlus<T> img = (ImgPlus<T>) inputs.get(name).getImgPlus();
+            Path path = dir.resolve(name + ".h5");
 
-                logger.info(String.format("ilastik run starting with arguments %s and environment %s",
-                        pb.command(),
-                        pb.environment()));
-                Process process = pb.start();
-                redirectInputStream(process.getInputStream(), logger::info);
-                redirectInputStream(process.getErrorStream(), logger::info);
+            logger.info(String.format("write %s to %s starting", name, path));
+            statusService.showStatus(progress[0]++, inputs.size(), "Writing inputs");
 
-                List<Character> spinnerChars = Arrays.asList('|', '/', '-', '\\');
+            new Hdf5DataSetWriter<>(img, path.toString(), "data", 1, logger, statusService).write();
 
-                String[] words = getClass().getSimpleName().split("(?=\\p{Lu})");
-                String workflowName = String.join(" ", Arrays.copyOfRange(words, 0, words.length - 1));
-                Consumer<Character> updateStatus = (spinner) ->
-                    statusService.showStatus(String.format("Running %s %c", workflowName, spinner));
+            logger.info("write finished");
+            return String.format("--%s=%s", name, path);
 
-                try (Cycler<Character> ignored = new Cycler<>(300, spinnerChars, updateStatus)) {
-                    if (process.waitFor() != 0) {
-                        throw new RuntimeException("non-zero exit code " + process.exitValue());
-                    }
-                }
-                logger.info("ilastik run finished");
+        }).collect(Collectors.toList());
+    }
 
-                statusService.showStatus("Importing outputs");
-                logger.info(String.format("read from %s starting", outputPath));
-                predictions = new Hdf5DataSetReader<T>(
-                        outputPath.toString(), "exported_data", "tzyxc", logger, statusService).read();
-                logger.info("read finished");
+    /**
+     * Run ilastik subprocess and wait for it to finish.
+     */
+    private void runSubprocess(ProcessBuilder pb) throws Exception {
+        logger.info(String.format(
+                "ilastik run starting with arguments %s and environment %s",
+                pb.command(),
+                pb.environment()));
+
+        Process process = pb.start();
+        redirectInputStream(process.getInputStream(), logger::info);
+        // ilastik prints warnings to stderr, but we don't want them to be displayed as errors.
+        // Fatal errors should result in a non-zero exit code.
+        redirectInputStream(process.getErrorStream(), logger::info);
+
+        // Get "My Workflow" string from a MyWorkflowCommand class.
+        String[] words = getClass().getSimpleName().split("(?=\\p{Lu})");
+        String workflowName = String.join(" ", Arrays.copyOfRange(words, 0, words.length - 1));
+
+        try (Spinner ignored = new Spinner("Running " + workflowName)) {
+            if (process.waitFor() != 0) {
+                throw new RuntimeException("exit code " + process.exitValue());
             }
+        }
 
-        } catch (Exception e) {
-            statusService.clearStatus();
-            logger.error("ilastik run failed", e);
-            throw new RuntimeException(e);
+        logger.info("ilastik run finished");
+    }
+
+    /**
+     * During try-with-resources block, show message with a ticking spinner in the status bar.
+     */
+    private final class Spinner implements AutoCloseable {
+        private final String message;
+        private final ScheduledFuture<?> future;
+        private int i = 0;
+
+        public Spinner(String message) {
+            this.message = message;
+            future = spinnerPool.scheduleWithFixedDelay(this::update, 0, 300, TimeUnit.MILLISECONDS);
+        }
+
+        @Override
+        public void close() {
+            future.cancel(true);
+        }
+
+        private void update() {
+            statusService.showStatus(message + " " + SPINNER_CHARS.get(i));
+            i = (i + 1) % SPINNER_CHARS.size();
         }
     }
 
+    /**
+     * Start {@link Thread} that reads UTF-8 lines from source and sends them to destination.
+     */
     private static void redirectInputStream(InputStream src, Consumer<String> dst) {
         new Thread(() -> {
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(src, StandardCharsets.UTF_8))) {
                 reader.lines().forEachOrdered(dst);
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                throw new UncheckedIOException(e);
             }
         }).start();
     }
@@ -202,33 +278,6 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
                     return FileVisitResult.CONTINUE;
                 }
             });
-        }
-    }
-
-    /**
-     * During try-with-resources block, periodically call sink with list items.
-     */
-    private static final class Cycler<T> implements AutoCloseable {
-        private final List<T> items;
-        private final Consumer<T> sink;
-        private final ScheduledExecutorService pool;
-        private int i = 0;
-
-        public Cycler(long periodMillis, List<T> items, Consumer<T> sink) {
-            this.items = new ArrayList<>(items);
-            this.sink = sink;
-            pool = Executors.newScheduledThreadPool(1);
-            pool.scheduleWithFixedDelay(this::update, 0, periodMillis, TimeUnit.MILLISECONDS);
-        }
-
-        private void update() {
-            sink.accept(items.get(i));
-            i = (i + 1) % items.size();
-        }
-
-        @Override
-        public void close() {
-            pool.shutdown();
         }
     }
 }
