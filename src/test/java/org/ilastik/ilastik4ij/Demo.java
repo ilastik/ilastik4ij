@@ -2,8 +2,8 @@ package org.ilastik.ilastik4ij;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
-import org.ilastik.ilastik4ij.ui.ObjectClassificationCommand;
-import org.ilastik.ilastik4ij.ui.PixelClassificationCommand;
+import org.ilastik.ilastik4ij.workflow.ObjectClassificationCommand;
+import org.ilastik.ilastik4ij.workflow.PixelClassificationCommand;
 
 import java.io.File;
 import java.io.IOException;

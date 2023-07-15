@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.ui;
+package org.ilastik.ilastik4ij.workflow;
 
 import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Multicut")
-public final class MulticutCommand<T extends NativeType<T>> extends CommandBase<T> {
+public final class MulticutCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
     @Parameter(label = "Boundary Prediction Image")
     public Dataset boundaryPredictionImage;
 

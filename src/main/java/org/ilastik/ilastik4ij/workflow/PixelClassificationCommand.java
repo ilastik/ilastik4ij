@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij.ui;
+package org.ilastik.ilastik4ij.workflow;
 
 import net.imglib2.type.NativeType;
 import org.scijava.command.Command;
@@ -9,7 +9,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Pixel Classification Prediction")
-public final class PixelClassificationCommand<T extends NativeType<T>> extends CommandBase<T> {
+public final class PixelClassificationCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
     @Parameter(label = "Output type", choices = {ROLE_PROBABILITIES, ROLE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String pixelClassificationType;
 
