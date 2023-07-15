@@ -45,8 +45,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
     public static final String ROLE_PROBABILITIES = "Probabilities";
     public static final String ROLE_SEGMENTATION = "Segmentation";
 
-    private static final List<Character> SPINNER_CHARS = Collections.unmodifiableList(Arrays.asList(
-            '|', '/', '-', '\\'));
+    private static final String SPINNER_CHARS = "|/-\\";
 
     @Parameter
     private LogService logService;
@@ -235,8 +234,8 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         }
 
         private void update() {
-            statusService.showStatus(message + " " + SPINNER_CHARS.get(i));
-            i = (i + 1) % SPINNER_CHARS.size();
+            statusService.showStatus(message + " " + SPINNER_CHARS.charAt(i));
+            i = (i + 1) % SPINNER_CHARS.length();
         }
     }
 
