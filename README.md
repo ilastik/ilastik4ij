@@ -251,8 +251,9 @@ as `ImagePlus`, containing `ImageProcessors` to access the underlying data. We t
 containers everywhere which are roughly wrapped as `Dataset > ImgPlus > Img >
 RandomAccessibleInterval`.
 
-**Testing:** no real tests are included right now, but you can run the `main` method in
-`WorkflowTests.java` which fires up an ImageJ instance for each of the three plugins.
+### Demo
+
+`src/test/java/org/ilastik/ilastik4ij/Demo.java` contains usage examples of various workflows.
 
 ### Manually test in a local Fiji installation
 
