@@ -11,6 +11,23 @@ The ilastik workflows are invoked by running the ilastik headless mode from the 
 Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and tracking.
 There is one additional setting showing up in the ImageJ menu, which configures the location of the ilastik binary.
 
+## Contents
+
+* [Installation](#installation)
+* [User documentation](#user-documentation)
+    - [General](#general)
+    - [Import](#import)
+    - [Export](#export)
+    - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
+    - [ilastik configuration for the workflow wrappers](#configuration)
+    - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
+    - [Object Classification](#object-classification)
+    - [Boundary-based Segmentation with Multicut](#boundary-based-segmentation-with-multicut)
+    - [Tracking](#tracking)
+    - [Usage in KNIME](#usage-in-knime)
+* [Developer documentation](#developer-documentation)
+    - [Deployment](#deployment)
+
 ## Installation
 
 Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik Import Export` site.
