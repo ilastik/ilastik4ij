@@ -1,9 +1,15 @@
 package org.ilastik.ilastik4ij.io;
 
+import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
 import org.junit.Test;
+import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -11,54 +17,187 @@ import org.junit.runners.Parameterized.Parameters;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.IntStream;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
-@RunWith(Parameterized.class)
+@RunWith(Enclosed.class)
 public class Hdf5Test {
-    private final List<Hdf5.DatasetDescription> expected;
-    private final List<Hdf5.DatasetDescription> actual;
+    @RunWith(Parameterized.class)
+    public static class ListDatasetsTest {
+        private final List<Hdf5.DatasetDescription> expected;
+        private final List<Hdf5.DatasetDescription> actual;
 
-    @Parameters
-    public static Collection<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                {"/test.h5", Collections.singletonList(
-                        new Hdf5.DatasetDescription(
-                                "exported_data",
-                                new UnsignedShortType(),
-                                new long[]{3, 4, 5, 6, 7},
-                                "cxyzt"))
-                },
-                {"/test_axes.h5", Arrays.asList(
-                        new Hdf5.DatasetDescription(
-                                "dataset_without_axes",
-                                new LongType(),
-                                new long[]{64, 64},
-                                "xy"),
-                        new Hdf5.DatasetDescription(
-                                "exported_data",
-                                new FloatType(),
-                                new long[]{1, 256, 256, 256},
-                                "cxyz"))
-                },
-        });
-    }
-
-    public Hdf5Test(String resource, List<Hdf5.DatasetDescription> expected) throws IOException {
-        Path target = Files.createTempFile("", resource.replace('/', '-'));
-        try (InputStream in = Hdf5Test.class.getResourceAsStream(resource)) {
-            Files.copy(Objects.requireNonNull(in), target, StandardCopyOption.REPLACE_EXISTING);
+        @Parameters
+        public static Collection<Object[]> data() {
+            return Arrays.asList(new Object[][]{
+                    {"/test.h5", Collections.singletonList(
+                            new Hdf5.DatasetDescription(
+                                    "exported_data",
+                                    new UnsignedShortType(),
+                                    new long[]{3, 4, 5, 6, 7},
+                                    "cxyzt"))
+                    },
+                    {"/test_axes.h5", Arrays.asList(
+                            new Hdf5.DatasetDescription(
+                                    "dataset_without_axes",
+                                    new LongType(),
+                                    new long[]{64, 64},
+                                    "xy"),
+                            new Hdf5.DatasetDescription(
+                                    "exported_data",
+                                    new FloatType(),
+                                    new long[]{1, 256, 256, 256},
+                                    "cxyz"))
+                    },
+            });
         }
-        this.expected = expected;
-        actual = Hdf5.datasets(new File(target.toString()));
+
+        public ListDatasetsTest(String resource, List<Hdf5.DatasetDescription> expected) {
+            this.expected = expected;
+            actual = Hdf5.datasets(fromResource(resource));
+        }
+
+        @Test
+        public void testDatasetDescription() {
+            assertEquals(expected, actual);
+        }
     }
 
-    @Test
-    public void testDatasets() {
-        assertEquals(expected, actual);
+    @RunWith(Parameterized.class)
+    public static class ReadDatasetTest {
+        private final String expectedSuffix;
+        private final long[] expectedDimensions;
+        private final AxisType[] expectedAxes;
+        private final int expectedBits;
+        private final NativeType<?> expectedType;
+        private final Object[][] expectedPosAndVals;
+        private final ImgPlus<?> actual;
+
+        @Parameters
+        public static Collection<Object[]> data() {
+            return Arrays.asList(new Object[][]{
+                    {"/test.h5",
+                            "/exported_data",
+                            new long[]{3, 4, 5, 6, 7},
+                            new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME},
+                            16,
+                            new UnsignedShortType(),
+                            new Object[][]{
+                                    {1, 0, 0, 5, 6, 200},
+                                    {1, 0, 0, 5, 5, 0},
+                                    {1, 0, 0, 4, 6, 200},
+                            },
+                    },
+                    {"/test_axes.h5",
+                            "/exported_data",
+                            new long[]{1, 256, 256, 256},
+                            new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z},
+                            32,
+                            new FloatType(),
+                            new Object[][]{},
+                    },
+                    {"/test_axes.h5",
+                            "/dataset_without_axes",
+                            new long[]{64, 64},
+                            new AxisType[]{Axes.X, Axes.Y},
+                            64,
+                            new LongType(),
+                            new Object[][]{},
+                    },
+            });
+        }
+
+        public ReadDatasetTest(
+                String resource,
+                String path,
+                long[] shape,
+                AxisType[] axes,
+                int bits,
+                NativeType<?> type,
+                Object[][] posAndVals) {
+            expectedSuffix = path;
+            expectedDimensions = shape;
+            expectedAxes = axes;
+            expectedBits = bits;
+            expectedType = type;
+            expectedPosAndVals = posAndVals;
+            actual = Hdf5.readDataset(fromResource(resource), path);
+        }
+
+        @Test
+        public void testDimensions() {
+            assertArrayEquals(expectedDimensions, actual.dimensionsAsLongArray());
+        }
+
+        @Test
+        public void testAxes() {
+            AxisType[] actualAxes = new AxisType[actual.numDimensions()];
+            IntStream.range(0, actualAxes.length)
+                    .forEach(i -> actualAxes[i] = actual.axis(i).type());
+            assertArrayEquals(expectedAxes, actualAxes);
+        }
+
+        @Test
+        public void testBits() {
+            assertEquals(expectedBits, actual.getValidBits());
+        }
+
+        @Test
+        public void testNameSuffix() {
+            assertTrue(actual.getName().endsWith(expectedSuffix));
+        }
+
+        @Test
+        public void testImgClass() {
+            assertEquals(actual.getImg().getClass(), ArrayImg.class);
+        }
+
+        @Test
+        public void testElementClass() {
+            assertEquals(actual.firstElement().getClass(), expectedType.getClass());
+        }
+
+        @Test
+        public void testValues() {
+            int n = expectedDimensions.length;
+
+            for (Object[] posAndVal : expectedPosAndVals) {
+                long[] pos = Arrays.stream(posAndVal)
+                        .limit(n)
+                        .mapToLong(d -> ((Number) d).longValue())
+                        .toArray();
+
+                Object expectedVal = posAndVal[n];
+                Object actualVal = actual.getAt(pos);
+
+                // Compare strings because there is no simple way to get Number from NativeType.
+                assertEquals(
+                        String.format(
+                                "Expected value at %s to be %s, actual is %s",
+                                Arrays.toString(pos),
+                                expectedVal,
+                                actualVal),
+                        expectedVal.toString(),
+                        actualVal.toString());
+            }
+        }
+    }
+
+    private static File fromResource(String resource) {
+        try {
+            Path temp = Files.createTempFile("", resource.replace('/', '-'));
+            try (InputStream in = Hdf5Test.class.getResourceAsStream(resource)) {
+                Files.copy(Objects.requireNonNull(in), temp, StandardCopyOption.REPLACE_EXISTING);
+            }
+            return temp.toFile();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 }

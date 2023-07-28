@@ -2,7 +2,14 @@ package org.ilastik.ilastik4ij.io;
 
 import ch.systemsx.cisd.hdf5.*;
 import hdf.hdf5lib.exceptions.HDF5AttributeException;
+import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
+import net.imglib2.img.array.ArrayImg;
+import net.imglib2.img.array.ArrayImgs;
+import net.imglib2.img.basictypeaccess.array.ArrayDataAccess;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.*;
 import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
@@ -16,6 +23,9 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class Hdf5 {
+    private static final AxisType[] IMAGEJ_DEFAULT_AXES = {
+            Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
+
     public static final class DatasetDescription implements Comparable<DatasetDescription> {
         public final String path;
         public final NativeType<?> type;
@@ -99,8 +109,89 @@ public final class Hdf5 {
         return result;
     }
 
+    public static <T extends NativeType<T> & RealType<T>> ImgPlus<T>
+    readDataset(File file, String path) {
+        try (IHDF5Reader reader = HDF5Factory.openForReading(file)) {
+            HDF5DataSetInformation hdf5Info = reader.getDataSetInformation(path);
+
+            T type = imglib2Type(hdf5Info.getTypeInformation());
+            if (type == null) {
+                throw new IllegalArgumentException(String.format(
+                        "Unsupported dataset type %s",
+                        hdf5Info.getTypeInformation()));
+            }
+
+            long[] shape = reversed(hdf5Info.getDimensions());
+            if (!(2 <= shape.length && shape.length <= 5)) {
+                throw new IllegalArgumentException(String.format(
+                        "%d-dimensional datasets are not supported",
+                        shape.length));
+            }
+            for (long dim : shape) {
+                if (dim < 1) {
+                    throw new IllegalArgumentException(String.format(
+                            "Shape %s contains non-positive dimension",
+                            Arrays.toString(shape)));
+                }
+            }
+
+            if (product(shape) > Integer.MAX_VALUE) {
+                throw new IllegalArgumentException(
+                        "Datasets with 2^31 elements or more are not supported yet");
+            }
+
+            ArrayImg<T, ?> img = readArrayImg(type, reader, path, shape);
+            String name = file.toPath()
+                    .resolve(path.replaceFirst("/+", ""))
+                    .toString()
+                    .replace('\\', '/');
+            AxisType[] axes = Arrays.copyOf(IMAGEJ_DEFAULT_AXES, shape.length);
+
+            ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes);
+            imgPlus.setValidBits(type.getBitsPerPixel());
+            return imgPlus;
+        }
+    }
+
     @SuppressWarnings("unchecked")
-    private static <T extends NativeType<T>> T imglib2Type(HDF5DataTypeInformation hdf5TypeInfo) {
+    private static <T extends NativeType<T>, A extends ArrayDataAccess<A>>
+    ArrayImg<T, A> readArrayImg(Object type, IHDF5Reader r, String path, long[] shape) {
+        if (type instanceof ByteType) {
+            return (ArrayImg<T, A>) ArrayImgs.bytes(r.int8().readArray(path), shape);
+        }
+        if (type instanceof UnsignedByteType) {
+            return (ArrayImg<T, A>) ArrayImgs.unsignedBytes(r.uint8().readArray(path), shape);
+        }
+        if (type instanceof ShortType) {
+            return (ArrayImg<T, A>) ArrayImgs.shorts(r.int16().readArray(path), shape);
+        }
+        if (type instanceof UnsignedShortType) {
+            return (ArrayImg<T, A>) ArrayImgs.unsignedShorts(r.uint16().readArray(path), shape);
+        }
+        if (type instanceof IntType) {
+            return (ArrayImg<T, A>) ArrayImgs.ints(r.int32().readArray(path), shape);
+        }
+        if (type instanceof UnsignedIntType) {
+            return (ArrayImg<T, A>) ArrayImgs.unsignedInts(r.uint32().readArray(path), shape);
+        }
+        if (type instanceof LongType) {
+            return (ArrayImg<T, A>) ArrayImgs.longs(r.int64().readArray(path), shape);
+        }
+        if (type instanceof UnsignedLongType) {
+            return (ArrayImg<T, A>) ArrayImgs.unsignedLongs(r.uint64().readArray(path), shape);
+        }
+        if (type instanceof FloatType) {
+            return (ArrayImg<T, A>) ArrayImgs.floats(r.float32().readArray(path), shape);
+        }
+        if (type instanceof DoubleType) {
+            return (ArrayImg<T, A>) ArrayImgs.doubles(r.float64().readArray(path), shape);
+        }
+        throw new IllegalStateException("Unexpected value: " + type);
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends NativeType<T> & RealType<T>>
+    T imglib2Type(HDF5DataTypeInformation hdf5TypeInfo) {
         HDF5DataClass dataClass = hdf5TypeInfo.getDataClass();
         int size = hdf5TypeInfo.getElementSize();
         boolean signed = hdf5TypeInfo.isSigned();
@@ -169,6 +260,14 @@ public final class Hdf5 {
 
     private static String reversed(String src) {
         return new StringBuilder(src).reverse().toString();
+    }
+
+    private static long product(long[] src) {
+        long p = 1;
+        for (long x : src) {
+            p *= x;
+        }
+        return p;
     }
 
     private Hdf5() {
