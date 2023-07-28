@@ -8,8 +8,11 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.integer.LongType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
+import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -19,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.stream.IntStream;
@@ -30,8 +32,12 @@ import static org.junit.Assert.*;
 public class Hdf5Test {
     @RunWith(Parameterized.class)
     public static class ListDatasetsTest {
+        @Rule
+        public TemporaryFolder temp = new TemporaryFolder();
+
+        private final String resource;
         private final List<Hdf5.DatasetDescription> expected;
-        private final List<Hdf5.DatasetDescription> actual;
+        private List<Hdf5.DatasetDescription> actual;
 
         @Parameters
         public static Collection<Object[]> data() {
@@ -59,8 +65,13 @@ public class Hdf5Test {
         }
 
         public ListDatasetsTest(String resource, List<Hdf5.DatasetDescription> expected) {
+            this.resource = resource;
             this.expected = expected;
-            actual = Hdf5.datasets(fromResource(resource));
+        }
+
+        @Before
+        public void setUp() {
+            actual = Hdf5.datasets(fromResource(temp, resource));
         }
 
         @Test
@@ -71,13 +82,18 @@ public class Hdf5Test {
 
     @RunWith(Parameterized.class)
     public static class ReadDatasetTest {
+        @Rule
+        public TemporaryFolder temp = new TemporaryFolder();
+
+        private final String resource;
+        private final String path;
         private final String expectedSuffix;
         private final long[] expectedDimensions;
         private final AxisType[] expectedAxes;
         private final int expectedBits;
         private final NativeType<?> expectedType;
         private final Object[][] expectedPosAndVals;
-        private final ImgPlus<?> actual;
+        private ImgPlus<?> actual;
 
         @Parameters
         public static Collection<Object[]> data() {
@@ -121,13 +137,19 @@ public class Hdf5Test {
                 int bits,
                 NativeType<?> type,
                 Object[][] posAndVals) {
+            this.resource = resource;
+            this.path = path;
             expectedSuffix = path;
             expectedDimensions = shape;
             expectedAxes = axes;
             expectedBits = bits;
             expectedType = type;
             expectedPosAndVals = posAndVals;
-            actual = Hdf5.readDataset(fromResource(resource), path);
+        }
+
+        @Before
+        public void setUp() {
+            actual = Hdf5.readDataset(fromResource(temp, resource), path);
         }
 
         @Test
@@ -189,13 +211,12 @@ public class Hdf5Test {
         }
     }
 
-    private static File fromResource(String resource) {
-        try {
-            Path temp = Files.createTempFile("", resource.replace('/', '-'));
-            try (InputStream in = Hdf5Test.class.getResourceAsStream(resource)) {
-                Files.copy(Objects.requireNonNull(in), temp, StandardCopyOption.REPLACE_EXISTING);
-            }
-            return temp.toFile();
+    private static File fromResource(TemporaryFolder tempFolder, String resource) {
+        try (InputStream in = Hdf5Test.class.getResourceAsStream(resource)) {
+            Objects.requireNonNull(in);
+            File tempFile = tempFolder.newFile(resource);
+            Files.copy(in, tempFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return tempFile;
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
