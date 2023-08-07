@@ -3,11 +3,7 @@ package org.ilastik.ilastik4ij.io;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
-import net.imglib2.img.array.ArrayImg;
-import net.imglib2.type.NativeType;
-import net.imglib2.type.numeric.integer.LongType;
-import net.imglib2.type.numeric.integer.UnsignedShortType;
-import net.imglib2.type.numeric.real.FloatType;
+import net.imglib2.type.numeric.RealType;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,6 +20,7 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.*;
@@ -40,27 +37,28 @@ public class Hdf5Test {
         private List<Hdf5.DatasetDescription> actual;
 
         @Parameters
+
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][]{
                     {"/test.h5", Collections.singletonList(
                             new Hdf5.DatasetDescription(
                                     "exported_data",
-                                    new UnsignedShortType(),
+                                    Hdf5.DatasetType.UINT16,
                                     new long[]{3, 4, 5, 6, 7},
-                                    "cxyzt"))
-                    },
+                                    new AxisType[]{Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z, Axes.TIME})
+                    )},
                     {"/test_axes.h5", Arrays.asList(
                             new Hdf5.DatasetDescription(
                                     "dataset_without_axes",
-                                    new LongType(),
+                                    Hdf5.DatasetType.INT64,
                                     new long[]{64, 64},
-                                    "xy"),
+                                    new AxisType[]{Axes.X, Axes.Y}),
                             new Hdf5.DatasetDescription(
                                     "exported_data",
-                                    new FloatType(),
+                                    Hdf5.DatasetType.FLOAT32,
                                     new long[]{1, 256, 256, 256},
-                                    "cxyz"))
-                    },
+                                    new AxisType[]{Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z})
+                    )}
             });
         }
 
@@ -87,44 +85,38 @@ public class Hdf5Test {
 
         private final String resource;
         private final String path;
-        private final String expectedSuffix;
-        private final long[] expectedDimensions;
-        private final AxisType[] expectedAxes;
-        private final int expectedBits;
-        private final NativeType<?> expectedType;
-        private final Object[][] expectedPosAndVals;
-        private ImgPlus<?> actual;
+        private final List<AxisType> axes;
+        private final Hdf5.DatasetType type;
+        private final long[] dims;
+        private final Object[][] values;
+        private ImgPlus<?> img;
 
         @Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][]{
                     {"/test.h5",
-                            "/exported_data",
-                            new long[]{3, 4, 5, 6, 7},
-                            new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME},
-                            16,
-                            new UnsignedShortType(),
+                            "exported_data",
+                            Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z, Axes.TIME),
+                            Hdf5.DatasetType.UINT16,
+                            new long[]{4, 5, 3, 6, 7},
                             new Object[][]{
                                     {1, 0, 0, 5, 6, 200},
                                     {1, 0, 0, 5, 5, 0},
-                                    {1, 0, 0, 4, 6, 200},
-                            },
+                                    {1, 0, 0, 4, 6, 200}}
                     },
-                    {"/test_axes.h5",
-                            "/exported_data",
-                            new long[]{1, 256, 256, 256},
-                            new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z},
-                            32,
-                            new FloatType(),
-                            new Object[][]{},
+                    {"/test.h5",
+                            "exported_data",
+                            Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.TIME, Axes.Z),
+                            Hdf5.DatasetType.UINT16,
+                            new long[]{4, 5, 3, 7, 6},
+                            new Object[][]{}
                     },
-                    {"/test_axes.h5",
-                            "/dataset_without_axes",
-                            new long[]{64, 64},
-                            new AxisType[]{Axes.X, Axes.Y},
-                            64,
-                            new LongType(),
-                            new Object[][]{},
+                    {"/test.h5",
+                            "exported_data",
+                            Arrays.asList(Axes.X, Axes.CHANNEL, Axes.Y, Axes.TIME, Axes.Z),
+                            Hdf5.DatasetType.UINT16,
+                            new long[]{3, 5, 4, 7, 6},
+                            new Object[][]{}
                     },
             });
         }
@@ -132,81 +124,67 @@ public class Hdf5Test {
         public ReadDatasetTest(
                 String resource,
                 String path,
-                long[] shape,
-                AxisType[] axes,
-                int bits,
-                NativeType<?> type,
-                Object[][] posAndVals) {
+                List<AxisType> axes,
+                Hdf5.DatasetType type,
+                long[] dims,
+                Object[][] values) {
             this.resource = resource;
             this.path = path;
-            expectedSuffix = path;
-            expectedDimensions = shape;
-            expectedAxes = axes;
-            expectedBits = bits;
-            expectedType = type;
-            expectedPosAndVals = posAndVals;
+            this.axes = axes;
+            this.type = type;
+            this.dims = dims;
+            this.values = values;
         }
 
         @Before
         public void setUp() {
-            actual = Hdf5.readDataset(fromResource(temp, resource), path);
+            img = Hdf5.readDataset(
+                    fromResource(temp, resource), path, axes.toArray(new AxisType[0]));
         }
 
         @Test
-        public void testDimensions() {
-            assertArrayEquals(expectedDimensions, actual.dimensionsAsLongArray());
+        public void testSuffix() {
+            String name = img.getName();
+            String suffix = "/" + path;
+            assertTrue(
+                    String.format("Expected '%s' to end with '%s'", name, suffix),
+                    name.endsWith(suffix));
         }
 
         @Test
         public void testAxes() {
-            AxisType[] actualAxes = new AxisType[actual.numDimensions()];
-            IntStream.range(0, actualAxes.length)
-                    .forEach(i -> actualAxes[i] = actual.axis(i).type());
-            assertArrayEquals(expectedAxes, actualAxes);
+            int n = img.numDimensions();
+            List<AxisType> expected = Hdf5.DEFAULT_AXES.subList(0, n);
+            List<AxisType> actual = IntStream.range(0, n)
+                    .mapToObj(d -> img.axis(d).type())
+                    .collect(Collectors.toList());
+            assertEquals(expected, actual);
         }
 
         @Test
-        public void testBits() {
-            assertEquals(expectedBits, actual.getValidBits());
+        public void testType() {
+            assertEquals(type.imglib2Type().getClass(), img.firstElement().getClass());
         }
 
         @Test
-        public void testNameSuffix() {
-            assertTrue(actual.getName().endsWith(expectedSuffix));
-        }
-
-        @Test
-        public void testImgClass() {
-            assertEquals(actual.getImg().getClass(), ArrayImg.class);
-        }
-
-        @Test
-        public void testElementClass() {
-            assertEquals(actual.firstElement().getClass(), expectedType.getClass());
+        public void testDims() {
+            assertArrayEquals(dims, img.dimensionsAsLongArray());
         }
 
         @Test
         public void testValues() {
-            int n = expectedDimensions.length;
-
-            for (Object[] posAndVal : expectedPosAndVals) {
-                long[] pos = Arrays.stream(posAndVal)
+            int n = img.numDimensions();
+            for (Object[] idxAndVal : values) {
+                assert idxAndVal.length == n + 1;
+                long[] idx = Arrays.stream(idxAndVal)
                         .limit(n)
-                        .mapToLong(d -> ((Number) d).longValue())
+                        .mapToLong(x -> ((Number) x).longValue())
                         .toArray();
-
-                Object expectedVal = posAndVal[n];
-                Object actualVal = actual.getAt(pos);
-
-                // Compare strings because there is no simple way to get Number from NativeType.
-                assertEquals(
-                        String.format(
-                                "Expected value at %s to be %s, actual is %s",
-                                Arrays.toString(pos),
-                                expectedVal,
-                                actualVal),
-                        expectedVal.toString(),
-                        actualVal.toString());
+                // Double is the most common primitive type across supported types.
+                double expected = ((Number) idxAndVal[n]).doubleValue();
+                double actual = ((RealType<?>) getAt(img, idx, axes)).getRealDouble();
+                // Compare exact values (delta == 0) because we only test reading.
+                assertEquals(expected, actual, 0);
             }
         }
     }
@@ -220,5 +198,15 @@ public class Hdf5Test {
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    private static <T> T getAt(ImgPlus<T> img, long[] idx, List<AxisType> axes) {
+        List<AxisType> imgAxes = IntStream.range(0, img.numDimensions())
+                .mapToObj(d -> img.axis(d).type())
+                .collect(Collectors.toList());
+        long[] imgIdx = imgAxes.stream()
+                .mapToLong(axis -> idx[axes.indexOf(axis)])
+                .toArray();
+        return img.getAt(imgIdx);
     }
 }
