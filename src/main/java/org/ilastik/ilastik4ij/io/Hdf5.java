@@ -6,6 +6,8 @@ import hdf.hdf5lib.exceptions.HDF5AttributeException;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
+import net.imglib2.Cursor;
+import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgView;
@@ -30,6 +32,7 @@ import org.json.JSONObject;
 
 import java.io.File;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public final class Hdf5 {
@@ -87,6 +90,12 @@ public final class Hdf5 {
                 default:
                     return Optional.empty();
             }
+        }
+
+        private static <T extends NativeType<T>> Optional<DatasetType> fromType(T type) {
+            return Arrays.stream(values())
+                    .filter(dt -> dt.type.getClass() == type.getClass())
+                    .findFirst();
         }
 
         DatasetType(Type<?> type) {
@@ -214,6 +223,105 @@ public final class Hdf5 {
                     type.getEntitiesPerPixel());
             img.setLinkedType(type);
             return img;
+        }
+
+        private <T extends NativeType<T>> void writeBlock(
+                IHDF5Writer writer, HDF5DataSet dataset, RandomAccessibleInterval<T> block) {
+
+            IterableInterval<T> interval = Views.flatIterable(block);
+            Cursor<T> cursor = interval.cursor();
+            int size = Math.toIntExact(interval.size());
+
+            int[] blockDims = Arrays.stream(reversed(interval.dimensionsAsLongArray()))
+                    .mapToInt(Math::toIntExact)
+                    .toArray();
+            long[] offset = reversed(interval.minAsLongArray());
+
+            switch (this) {
+                case INT8: {
+                    MDByteArray dst = new MDByteArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((ByteType) cursor.next()).get(), i);
+                    }
+                    writer.int8().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case UINT8: {
+                    MDByteArray dst = new MDByteArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set((byte) ((UnsignedByteType) cursor.next()).get(), i);
+                    }
+                    writer.uint8().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case INT16: {
+                    MDShortArray dst = new MDShortArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((ShortType) cursor.next()).get(), i);
+                    }
+                    writer.int16().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case UINT16: {
+                    MDShortArray dst = new MDShortArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set((short) ((UnsignedShortType) cursor.next()).get(), i);
+                    }
+                    writer.uint16().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case INT32: {
+                    MDIntArray dst = new MDIntArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((IntType) cursor.next()).get(), i);
+                    }
+                    writer.int32().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case UINT32: {
+                    MDIntArray dst = new MDIntArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set((int) ((UnsignedIntType) cursor.next()).get(), i);
+                    }
+                    writer.uint32().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case INT64: {
+                    MDLongArray dst = new MDLongArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((LongType) cursor.next()).get(), i);
+                    }
+                    writer.int64().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case UINT64: {
+                    MDLongArray dst = new MDLongArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        // Large unsigned long values might not fit into signed long.
+                        dst.set(((UnsignedLongType) cursor.next()).get(), i);
+                    }
+                    writer.uint64().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case FLOAT32: {
+                    MDFloatArray dst = new MDFloatArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((FloatType) cursor.next()).get(), i);
+                    }
+                    writer.float32().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                case FLOAT64: {
+                    MDDoubleArray dst = new MDDoubleArray(blockDims);
+                    for (int i = 0; i < size; i++) {
+                        dst.set(((DoubleType) cursor.next()).get(), i);
+                    }
+                    writer.float64().writeMDArrayBlockWithOffset(dataset, dst, offset);
+                    break;
+                }
+                default:
+                    throw new IllegalStateException("Unexpected value: " + this);
+            }
         }
     }
 
@@ -387,6 +495,51 @@ public final class Hdf5 {
             ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes);
             imgPlus.setValidBits(type.bits());
             return imgPlus;
+        }
+    }
+
+    private static int[] outputBlockDims(ImgPlus<?> img) {
+        int n = img.numDimensions();
+        List<AxisType> axes = IntStream.range(0, n)
+                .mapToObj(d -> img.axis(d).type())
+                .collect(Collectors.toList());
+        int[] blockDims = new int[n];
+        Arrays.fill(blockDims, 1);
+        if (!(axes.contains(Axes.X) && axes.contains(Axes.Y))) {
+            throw new IllegalArgumentException("Expected axes X and Y to be present, got " + axes);
+        }
+        if (axes.contains(Axes.Z)) {
+            blockDims[axes.indexOf(Axes.X)] = 64;
+            blockDims[axes.indexOf(Axes.Y)] = 64;
+            blockDims[axes.indexOf(Axes.Z)] = 64;
+        } else {
+            blockDims[axes.indexOf(Axes.X)] = 512;
+            blockDims[axes.indexOf(Axes.Y)] = 512;
+        }
+        return blockDims;
+    }
+
+    public static <T extends NativeType<T>> void writeDataset(
+            File file, String path, ImgPlus<T> img) {
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(img);
+
+        DatasetType type = DatasetType.fromType(img.firstElement()).orElseThrow(() ->
+                new IllegalArgumentException("Unsupported " + img.firstElement().getClass()));
+
+        long[] dims = img.dimensionsAsLongArray();
+        int[] blockDims = outputBlockDims(img);
+        Cursor<RandomAccessibleInterval<T>> blockCursor =
+                Views.flatIterable(Views.tiles(img, blockDims)).cursor();
+
+        try (IHDF5Writer writer = HDF5Factory.open(file)) {
+            try (HDF5DataSet dataset = writer.uint8().createMDArrayAndOpen(
+                    path, reversed(dims), reversed(blockDims))) {
+                while (blockCursor.hasNext()) {
+                    type.writeBlock(writer, dataset, blockCursor.next());
+                }
+            }
         }
     }
 
