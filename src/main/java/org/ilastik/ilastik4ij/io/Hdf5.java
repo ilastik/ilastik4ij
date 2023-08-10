@@ -228,6 +228,48 @@ public final class Hdf5 {
             return img;
         }
 
+        private HDF5DataSet openDataset(
+                String path,
+                IHDF5Writer writer,
+                long[] dims,
+                int[] blockDims,
+                int compressionLevel) {
+            switch (this) {
+                case INT8:
+                    return writer.int8().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case UINT8:
+                    return writer.uint8().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case INT16:
+                    return writer.int16().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case UINT16:
+                    return writer.uint16().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case INT32:
+                    return writer.int32().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case UINT32:
+                    return writer.uint32().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case INT64:
+                    return writer.int64().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case UINT64:
+                    return writer.uint64().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel));
+                case FLOAT32:
+                    return writer.float32().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5FloatStorageFeatures.createDeflationDelete(compressionLevel));
+                case FLOAT64:
+                    return writer.float64().createMDArrayAndOpen(path, dims, blockDims,
+                            HDF5FloatStorageFeatures.createDeflationDelete(compressionLevel));
+                default:
+                    throw new IllegalStateException("Unexpected value: " + this);
+            }
+        }
+
         private <T extends NativeType<T>> void writeBlock(
                 IHDF5Writer writer, HDF5DataSet dataset, RandomAccessibleInterval<T> block) {
 
@@ -528,6 +570,11 @@ public final class Hdf5 {
 
     public static <T extends NativeType<T>> void writeDataset(
             File file, String path, ImgPlus<T> img) {
+        writeDataset(file, path, img, 0);
+    }
+
+    public static <T extends NativeType<T>> void writeDataset(
+            File file, String path, ImgPlus<T> img, int compressionLevel) {
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
         Objects.requireNonNull(img);
@@ -555,8 +602,9 @@ public final class Hdf5 {
                 Views.flatIterable(Views.tiles(img, blockDims)).cursor();
 
         try (IHDF5Writer writer = HDF5Factory.open(file)) {
-            try (HDF5DataSet dataset = writer.uint8().createMDArrayAndOpen(
-                    path, reversed(dims), reversed(blockDims))) {
+            HDF5IntStorageFeatures.createDeflationDelete(compressionLevel);
+            try (HDF5DataSet dataset = type.openDataset(
+                    path, writer, reversed(dims), reversed(blockDims), compressionLevel)) {
                 while (blockCursor.hasNext()) {
                     type.writeBlock(writer, dataset, blockCursor.next());
                 }
