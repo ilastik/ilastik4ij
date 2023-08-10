@@ -9,6 +9,7 @@ import net.imagej.axis.AxisType;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgView;
 import net.imglib2.img.array.ArrayImg;
@@ -21,6 +22,7 @@ import net.imglib2.img.cell.CellImgFactory;
 import net.imglib2.img.list.ListImg;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
+import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.*;
 import net.imglib2.type.numeric.real.DoubleType;
@@ -34,6 +36,7 @@ import java.io.File;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 public final class Hdf5 {
     /**
@@ -500,9 +503,7 @@ public final class Hdf5 {
 
     private static int[] outputBlockDims(ImgPlus<?> img) {
         int n = img.numDimensions();
-        List<AxisType> axes = IntStream.range(0, n)
-                .mapToObj(d -> img.axis(d).type())
-                .collect(Collectors.toList());
+        List<AxisType> axes = imgPlusAxes(img);
         int[] blockDims = new int[n];
         Arrays.fill(blockDims, 1);
         if (!(axes.contains(Axes.X) && axes.contains(Axes.Y))) {
@@ -519,14 +520,34 @@ public final class Hdf5 {
         return blockDims;
     }
 
+    private static List<AxisType> imgPlusAxes(ImgPlus<?> img) {
+        return IntStream.range(0, img.numDimensions())
+                .mapToObj(d -> img.axis(d).type())
+                .collect(Collectors.toList());
+    }
+
     public static <T extends NativeType<T>> void writeDataset(
             File file, String path, ImgPlus<T> img) {
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
         Objects.requireNonNull(img);
 
-        DatasetType type = DatasetType.fromType(img.firstElement()).orElseThrow(() ->
-                new IllegalArgumentException("Unsupported " + img.firstElement().getClass()));
+        T imglib2Type = img.firstElement();
+        if (imglib2Type.getClass() == ARGBType.class) {
+            // ARGBType is a special, uncommon case.
+            // Create a multichannel view from it, and call ourselves again
+            // with a different type T.
+            @SuppressWarnings("unchecked")
+            Img<ARGBType> argbImg = (Img<ARGBType>) img;
+            Img<UnsignedByteType> multiChannelImg = ImgView.wrap(Converters.argbChannels(argbImg));
+            AxisType[] axes = Stream.concat(imgPlusAxes(img).stream(), Stream.of(Axes.CHANNEL))
+                    .toArray(AxisType[]::new);
+            writeDataset(file, path, new ImgPlus<>(multiChannelImg, img.getName(), axes));
+            return;
+        }
+
+        DatasetType type = DatasetType.fromType(imglib2Type).orElseThrow(() ->
+                new IllegalArgumentException("Unsupported " + imglib2Type.getClass()));
 
         long[] dims = img.dimensionsAsLongArray();
         int[] blockDims = outputBlockDims(img);
