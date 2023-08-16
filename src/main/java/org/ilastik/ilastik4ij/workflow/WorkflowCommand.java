@@ -92,8 +92,9 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
 
         IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
+
         List<String> args = commonSubprocessArgs(opts, projectFileName);
-        Map<String, String> env = subprocessEnv(opts);
+        args.addAll(workflowArgs());
 
         Map<String, Dataset> inputs = new HashMap<>(workflowInputs());
         inputs.put("raw_data", inputImage);
@@ -114,6 +115,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         Path outputPath = outputDir.resolve("predictions.h5");
         args.add("--output_filename_format=" + outputPath);
 
+        Map<String, String> env = subprocessEnv(opts);
         logger.info(String.format(
                 "Subprocess starting with arguments %s and environment %s", args, env));
         status.withSpinner("Running " + workflowName(), () -> {
