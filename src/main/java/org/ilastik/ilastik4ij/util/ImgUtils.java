@@ -154,16 +154,21 @@ public final class ImgUtils {
     }
 
     /**
-     * Transpose image dimensions with the specified axes to match {@link #DEFAULT_AXES}.
+     * Transpose image dimensions with source axes to destination axes.
      */
-    public static <T extends Type<T>> Img<T> permuteAxes(Img<T> img, List<AxisType> axes) {
+    public static <T extends Type<T>> Img<T> permuteAxes(
+            Img<T> img, List<AxisType> srcAxes, List<AxisType> dstAxes) {
         RandomAccessibleInterval<T> view = img;
-        axes = new ArrayList<>(axes);
+        srcAxes = new ArrayList<>(srcAxes);
 
-        for (int src = 0; src < axes.size(); src++) {
-            int dst = DEFAULT_AXES.indexOf(axes.get(src));
+        for (int src = 0; src < srcAxes.size(); src++) {
+            AxisType axis = srcAxes.get(src);
+            int dst = dstAxes.indexOf(axis);
+            if (dst < 0) {
+                throw new IllegalArgumentException("Axis " + axis + " not found");
+            }
             if (src != dst) {
-                Collections.swap(axes, src, dst);
+                Collections.swap(srcAxes, src, dst);
                 view = Views.permute(view, src, dst);
             }
         }

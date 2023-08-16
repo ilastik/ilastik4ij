@@ -54,6 +54,14 @@ public final class Hdf5 {
     }
 
     /**
+     * {@link #readDataset(File, String, List)}
+     * with {@link org.ilastik.ilastik4ij.util.ImgUtils#DEFAULT_AXES}.
+     */
+    public static <T extends NativeType<T>> ImgPlus<T> readDataset(File file, String path) {
+        return readDataset(file, path, null);
+    }
+
+    /**
      * Read HDF5 dataset contents.
      * <p>
      * Only 2D-5D datasets with types enumerated in {@link DatasetType} are supported.
@@ -88,8 +96,11 @@ public final class Hdf5 {
             }
         }
 
-        img = permuteAxes(img, axes);
-        axes = DEFAULT_AXES.subList(0, axes.size());
+        if (axes != null) {
+            img = permuteAxes(img, axes, DEFAULT_AXES.subList(0, axes.size()));
+        }
+        axes = DEFAULT_AXES.subList(0, img.numDimensions());
+
         String name = file.toPath()
                 .resolve(path.replaceFirst("/+", ""))
                 .toString()
@@ -100,16 +111,51 @@ public final class Hdf5 {
         return imgPlus;
     }
 
+    /**
+     * {@link #writeDataset(File, String, ImgPlus, int, List)}
+     * without compression and axis reordering.
+     */
+    public static <T extends NativeType<T>> void writeDataset(
+            File file, String path, ImgPlus<T> img) {
+        writeDataset(file, path, img, 0);
+    }
+
+    /**
+     * {@link #writeDataset(File, String, ImgPlus, int, List)}
+     * without axis reordering.
+     */
     public static <T extends NativeType<T>> void writeDataset(
             File file, String path, ImgPlus<T> img, int compressionLevel) {
+        writeDataset(file, path, img, compressionLevel, null);
+    }
+
+    /**
+     * Write image contents to HDF5 dataset, creating/overwriting file and dataset if needed.
+     * <p>
+     * Only 2D-5D datasets with types enumerated in {@link DatasetType} are supported.
+     * As a special case, {@link ARGBType} is supported too, but its use is discouraged.
+     * <p>
+     * if axes are specified, image will be written in the specified axis order.
+     */
+    public static <T extends NativeType<T>> void writeDataset(
+            File file, String path, ImgPlus<T> img, int compressionLevel, List<AxisType> axes) {
+
+        if (!(2 <= img.numDimensions() && img.numDimensions() <= 5)) {
+            throw new IllegalArgumentException(
+                    img.numDimensions() + "D datasets are not supported");
+        }
 
         T imglib2Type = img.firstElement();
         if (imglib2Type.getClass() == ARGBType.class) {
             // Can't reassign argbImg to img: generic type T is changed.
             @SuppressWarnings("unchecked")
             ImgPlus<ARGBType> argbImg = (ImgPlus<ARGBType>) img;
-            writeDataset(file, path, argbToMultiChannel(argbImg), compressionLevel);
+            writeDataset(file, path, argbToMultiChannel(argbImg), compressionLevel, axes);
             return;
+        }
+
+        if (axes != null) {
+            permuteAxes(img, getAxes(img), axes);
         }
 
         DatasetType type = DatasetType.ofImglib2(imglib2Type).orElseThrow(() ->
