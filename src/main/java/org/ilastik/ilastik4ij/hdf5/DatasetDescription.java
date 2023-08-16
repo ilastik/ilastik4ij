@@ -12,13 +12,39 @@ import java.util.*;
 import static org.ilastik.ilastik4ij.util.ImgUtils.guessAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
 
+/**
+ * Metadata for HDF5 dataset.
+ */
 public final class DatasetDescription {
+    /**
+     * Internal dataset path in a file.
+     */
     public final String path;
+
+    /**
+     * Type of the dataset.
+     */
     public final DatasetType type;
+
+    /**
+     * Dataset dimensions in the <em>column-major</em> order.
+     */
     public final long[] dims;
+
+    /**
+     * Dimension axes.
+     */
     public final List<AxisType> axes;
+
+    /**
+     * Whether {@link #axes} are read by {@link ImgUtils#parseAxes}
+     * or inferred with {@link ImgUtils#guessAxes}.
+     */
     public boolean axesGuessed;
 
+    /**
+     * Try to get dataset description for HDF5 dataset.
+     */
     static Optional<DatasetDescription> ofHdf5(IHDF5Reader reader, String path) {
         HDF5DataSetInformation info = reader.object().getDataSetInformation(path);
 

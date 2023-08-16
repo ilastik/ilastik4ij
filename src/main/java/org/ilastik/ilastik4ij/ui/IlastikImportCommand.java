@@ -8,7 +8,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.DatasetEntryProvider;
 import org.ilastik.ilastik4ij.hdf5.HDF5DatasetEntryProvider;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
+import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
@@ -16,10 +16,13 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 import org.scijava.ui.UIService;
 
-import javax.swing.*;
+import java.io.File;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Objects;
+
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 
 @Plugin(type = Command.class, menuPath = "Plugins>ilastik>Import HDF5")
 public class IlastikImportCommand implements Command {
@@ -69,8 +72,8 @@ public class IlastikImportCommand implements Command {
 
         Instant start = Instant.now();
 
-        ImgPlus<T> imgPlus = new Hdf5DataSetReader<T>(hdf5FilePath, datasetName,
-                axisOrder, logService, statusService).read();
+        ImgPlus<T> imgPlus = Hdf5.readDataset(
+                new File(hdf5FilePath), datasetName, toImagejAxes(reversed(axisOrder)));
         ImageJFunctions.show(imgPlus);
 
         Instant finish = Instant.now();

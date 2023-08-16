@@ -8,8 +8,8 @@ import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imglib2.RandomAccess;
 import net.imglib2.RandomAccessibleInterval;
+import net.imglib2.converter.ColorChannelOrder;
 import net.imglib2.converter.Converters;
-import net.imglib2.converter.RealARGBConverter;
 import net.imglib2.converter.RealFloatConverter;
 import net.imglib2.converter.RealUnsignedShortConverter;
 import net.imglib2.img.Img;
@@ -20,20 +20,19 @@ import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.type.numeric.integer.UnsignedIntType;
 import net.imglib2.type.numeric.integer.UnsignedShortType;
 import net.imglib2.type.numeric.real.FloatType;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.scijava.Context;
-import org.scijava.app.StatusService;
-import org.scijava.log.LogService;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 import static org.junit.Assert.assertEquals;
 
 
@@ -41,8 +40,6 @@ public class Hdf5DataSetReaderTest {
     private static final List<AxisType> AXES = Arrays.asList(Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME);
     private static final String DATASET = "exported_data";
     private static Context context;
-    private static LogService logService;
-    private static StatusService statusService;
     private static DatasetIOService datasetIOService;
 
     private static File testH5;
@@ -52,8 +49,6 @@ public class Hdf5DataSetReaderTest {
     @BeforeClass
     public static void setUpClass() throws IOException {
         context = new ImageJ().getContext();
-        logService = context.getService(LogService.class);
-        statusService = context.getService(StatusService.class);
         datasetIOService = context.getService(DatasetIOService.class);
         testH5 = File.createTempFile("chocolate", "h5");
     }
@@ -68,7 +63,7 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public <T extends NativeType<T>> void testReadAxes() {
-        ImgPlus<T> image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<T> image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 16", 16, image.getValidBits());
@@ -78,7 +73,7 @@ public class Hdf5DataSetReaderTest {
         assertEquals("DimZ should be 6", 6, dims[3]);
         assertEquals("DimT should be 7", 7, dims[4]);
 
-        image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "ztyxc", logService, statusService);
+        image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "ztyxc");
         image.dimensions(dims);
         assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 4", 4, dims[0]);
@@ -87,7 +82,7 @@ public class Hdf5DataSetReaderTest {
         assertEquals("DimZ should be 7", 7, dims[3]);
         assertEquals("DimT should be 6", 6, dims[4]);
 
-        image = readFromHdf5(TEST_H5_RESOURCE, "exported_data", "ztycx", logService, statusService);
+        image = readFromHdf5(TEST_H5_RESOURCE, "exported_data", "ztycx");
         image.dimensions(dims);
         assertEquals("Bits should be 16", 16, image.getValidBits());
         assertEquals("DimX should be 3", 3, dims[0]);
@@ -102,7 +97,7 @@ public class Hdf5DataSetReaderTest {
      */
     @Test
     public <T extends NativeType<T>> void testImageContents() {
-        ImgPlus<T> image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<T> image = readFromHdf5(TEST_H5_RESOURCE, DATASET, "tzyxc");
         assertEquals("DimX", 0, AXES.indexOf(Axes.X));
         assertEquals("DimY", 1, AXES.indexOf(Axes.Y));
         assertEquals("DimC", 2, AXES.indexOf(Axes.CHANNEL));
@@ -134,9 +129,9 @@ public class Hdf5DataSetReaderTest {
         Dataset input = datasetIOService.open(TEST_JPG_RESOURCE);
         ImgPlus<T> imgPlus = (ImgPlus<T>) input.getImgPlus();
         String h5Path = testH5.getPath();
-        new Hdf5DataSetWriter<T>(imgPlus, h5Path, DATASET, 0, logService, statusService).write();
+        writeToHdf5(h5Path, DATASET, imgPlus);
         // Loading file in tzyxc order
-        ImgPlus<T> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<T> image = readFromHdf5(h5Path, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 8", 8, image.getValidBits());
@@ -169,14 +164,13 @@ public class Hdf5DataSetReaderTest {
         String h5Path = testH5.getPath();
         Dataset input = datasetIOService.open(TEST_JPG_RESOURCE);
         ImgPlus<UnsignedByteType> inputImage = (ImgPlus<UnsignedByteType>) input.getImgPlus();
-        final RandomAccessibleInterval<ARGBType> output = Converters.convert((RandomAccessibleInterval<UnsignedByteType>) inputImage, new RealARGBConverter<>(0, 255), new ARGBType());
+        final RandomAccessibleInterval<ARGBType> output = Converters.mergeARGB(inputImage, ColorChannelOrder.RGB);
         Img<ARGBType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new ARGBType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<ARGBType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<ARGBType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
-        hdf5.write();
+        writeToHdf5(h5Path, DATASET, imgrgb);
         // Loading file in tzyxc order
-        ImgPlus<ARGBType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<ARGBType> image = readFromHdf5(h5Path, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 8", 8, image.getValidBits());
@@ -193,7 +187,6 @@ public class Hdf5DataSetReaderTest {
         UnsignedByteType valout = (UnsignedByteType) raiOut.get();
 
         RandomAccess raiIn = imgrgb.randomAccess();
-        raiIn.setPosition(0, imgrgb.dimensionIndex(Axes.CHANNEL));
         raiIn.setPosition(80, imgrgb.dimensionIndex(Axes.X));
         raiIn.setPosition(115, imgrgb.dimensionIndex(Axes.Y));
         ARGBType valIn = (ARGBType) raiIn.get();
@@ -220,10 +213,9 @@ public class Hdf5DataSetReaderTest {
         Img<FloatType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new FloatType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<FloatType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<FloatType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
-        hdf5.write();
+        writeToHdf5(h5Path, DATASET, imgrgb);
         // Loading file in tzyxc order
-        ImgPlus<FloatType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<FloatType> image = readFromHdf5(h5Path, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 32", 32, image.getValidBits());
@@ -261,10 +253,9 @@ public class Hdf5DataSetReaderTest {
         Img<UnsignedShortType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedShortType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedShortType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<UnsignedShortType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
-        hdf5.write();
+        writeToHdf5(h5Path, DATASET, imgrgb);
         // Loading file in tzyxc order
-        ImgPlus<UnsignedShortType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<UnsignedShortType> image = readFromHdf5(h5Path, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 16", 16, image.getValidBits());
@@ -302,10 +293,9 @@ public class Hdf5DataSetReaderTest {
         Img<UnsignedIntType> imview = ImgView.wrap(output, inputImage.getImg().factory().imgFactory(new UnsignedIntType()));
         AxisType[] axes = {Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME};
         ImgPlus<UnsignedIntType> imgrgb = new ImgPlus<>(imview, "", axes);
-        Hdf5DataSetWriter<UnsignedIntType> hdf5 = new Hdf5DataSetWriter<>(imgrgb, h5Path, DATASET, 0, logService, statusService);
-        hdf5.write();
+        writeToHdf5(h5Path, DATASET, imgrgb);
         // Loading file in tzyxc order
-        ImgPlus<UnsignedIntType> image = readFromHdf5(h5Path, DATASET, "tzyxc", logService, statusService);
+        ImgPlus<UnsignedIntType> image = readFromHdf5(h5Path, DATASET, "tzyxc");
         long[] dims = new long[5];
         image.dimensions(dims);
         assertEquals("Bits should be 32", 32, image.getValidBits());
@@ -329,9 +319,19 @@ public class Hdf5DataSetReaderTest {
         assertEquals("Image content should be same.", valOut.get(), valIn.get());
     }
 
-    private <T extends NativeType<T>> ImgPlus<T> readFromHdf5(String filename, String dataset, String axesOrder,
-                                                              LogService logService, StatusService statusService) {
-        return new Hdf5DataSetReader<T>(filename, dataset, axesOrder, logService, statusService).read();
+    /**
+     * Read dataset contents.
+     * Axis order is <em>row-major</em>.
+     */
+    private <T extends NativeType<T>> ImgPlus<T> readFromHdf5(String filename, String dataset, String axesOrder) {
+        return Hdf5.readDataset(new File(filename), dataset, toImagejAxes(reversed(axesOrder)));
     }
 
+    /**
+     * Write dataset contents.
+     * Axis order is <em>row-major</em> tzyxc (carried over from the old implementation).
+     */
+    private <T extends NativeType<T>> void writeToHdf5(String filename, String dataset, ImgPlus<T> img) {
+        Hdf5.writeDataset(new File(filename), dataset, img, 0, toImagejAxes(reversed("tzyxc")));
+    }
 }

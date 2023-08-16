@@ -3,8 +3,7 @@ package org.ilastik.ilastik4ij.workflow;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
 import org.ilastik.ilastik4ij.util.StatusBar;
 import org.ilastik.ilastik4ij.util.Subprocess;
@@ -25,6 +24,8 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import static org.ilastik.ilastik4ij.util.ImgUtils.*;
 
 /**
  * Base class for all commands that run ilastik in a subprocess.
@@ -107,8 +108,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
             ImgPlus<T> inputImg = (ImgPlus<T>) entry.getValue().getImgPlus();
 
             logger.info(String.format("Write input '%s' starting", inputPath));
-            new Hdf5DataSetWriter<>(
-                    inputImg, inputPath.toString(), "data", 1, logger, statusService).write();
+            Hdf5.writeDataset(inputPath.toFile(), "data", inputImg, 1, DEFAULT_AXES);
             logger.info(String.format("Write input '%s' finished", inputPath));
         });
 
@@ -130,12 +130,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         logger.info("Subprocess finished");
 
         status.withSpinner("Reading output", () ->
-                predictions = new Hdf5DataSetReader<T>(
-                        outputPath.toString(),
-                        "exported_data",
-                        "tzyxc",
-                        logger,
-                        statusService).read());
+                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
     }
 
     private String workflowName() {
@@ -149,13 +144,14 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         if (PlatformUtils.isMac() && executable.toString().endsWith(".app")) {
             executable = executable.resolve("Contents").resolve("MacOS").resolve("ilastik");
         }
+        String axes = reversed(DEFAULT_STRING_AXES);
         return new ArrayList<>(Arrays.asList(
                 executable.toString(),
                 "--headless",
                 "--project=" + projectFileName.getAbsolutePath(),
                 "--output_format=hdf5",
-                "--output_axis_order=tzyxc",
-                "--input_axes=tzyxc",
+                "--output_axis_order=" + axes,
+                "--input_axes=" + axes,
                 "--readonly=1",
                 "--output_internal_path=exported_data"));
     }

@@ -32,7 +32,7 @@ public class GridCoordinates implements Iterable<GridCoordinates.Block> {
     }
 
     private final class EntryIterator implements Iterator<Block> {
-        private final long[] offset = new long[imageDims.length];
+        private final long[] offset = imageDims.clone();
         private final int[] dims = new int[imageDims.length];
         private final long size = Arrays.stream(gridDims).reduce(1, (l, r) -> l * r);
         private long curr;

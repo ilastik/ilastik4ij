@@ -79,6 +79,9 @@ public final class Hdf5 {
             if (!(2 <= dims.length && dims.length <= 5)) {
                 throw new IllegalArgumentException(dims.length + "D datasets are not supported");
             }
+            if (axes != null && axes.size() != dims.length) {
+                throw new IllegalArgumentException("Requested axes don't match dataset dimensions");
+            }
 
             HDF5DataTypeInformation typeInfo = info.getTypeInformation();
             type = DatasetType.ofHdf5(typeInfo).orElseThrow(() ->
@@ -96,17 +99,15 @@ public final class Hdf5 {
             }
         }
 
-        if (axes != null) {
-            img = permuteAxes(img, axes, DEFAULT_AXES.subList(0, axes.size()));
-        }
-        axes = DEFAULT_AXES.subList(0, img.numDimensions());
-
         String name = file.toPath()
                 .resolve(path.replaceFirst("/+", ""))
                 .toString()
                 .replace('\\', '/');
+        if (axes == null) {
+            axes = DEFAULT_AXES.subList(0, img.numDimensions());
+        }
 
-        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]));
+        ImgPlus<T> imgPlus = permuteAxes(new ImgPlus<>(img, name, axes.toArray(new AxisType[0])));
         imgPlus.setValidBits(8 * type.size);
         return imgPlus;
     }
@@ -155,7 +156,7 @@ public final class Hdf5 {
         }
 
         if (axes != null) {
-            permuteAxes(img, getAxes(img), axes);
+            img = permuteAxes(extendAxes(img, axes), axes);
         }
 
         DatasetType type = DatasetType.ofImglib2(imglib2Type).orElseThrow(() ->

@@ -7,7 +7,6 @@ import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgView;
-import net.imglib2.type.NativeType;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
@@ -23,6 +22,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Utilities for dimensions and axes.
+ */
 public final class ImgUtils {
     /**
      * Supported ImageJ axes in the default order.
@@ -34,6 +36,34 @@ public final class ImgUtils {
      * Supported axes in the character format, in the same order as {@link #DEFAULT_AXES}.
      */
     public static final String DEFAULT_STRING_AXES = "xyczt";
+
+    /**
+     * Convert axes from {@link #DEFAULT_AXES}
+     * to string with chars from {@link #DEFAULT_STRING_AXES}.
+     */
+    public static String toStringAxes(List<AxisType> axes) {
+        return axes.stream().map(axis -> {
+            int i = DEFAULT_AXES.indexOf(axis);
+            if (i < 0) {
+                throw new IllegalArgumentException("Unsupported axis " + axis);
+            }
+            return String.valueOf(DEFAULT_STRING_AXES.charAt(i));
+        }).collect(Collectors.joining());
+    }
+
+    /**
+     * Convert string with chars from {@link #DEFAULT_STRING_AXES}
+     * to axes from {@link #DEFAULT_AXES}.
+     */
+    public static List<AxisType> toImagejAxes(String axes) {
+        return axes.chars().mapToObj(c -> {
+            int i = DEFAULT_STRING_AXES.indexOf(c);
+            if (i < 0) {
+                throw new IllegalArgumentException("Unsupported axis " + c);
+            }
+            return DEFAULT_AXES.get(i);
+        }).collect(Collectors.toList());
+    }
 
     /**
      * Return a new reversed array.
@@ -55,6 +85,13 @@ public final class ImgUtils {
             b[i] = a[a.length - 1 - i];
         }
         return b;
+    }
+
+    /**
+     * Return a reversed string.
+     */
+    public static String reversed(String s) {
+        return new StringBuilder(s).reverse().toString();
     }
 
     /**
@@ -124,7 +161,7 @@ public final class ImgUtils {
     /**
      * Extract axes from {@link ImgPlus}.
      */
-    public static <T extends NativeType<T>> List<AxisType> getAxes(ImgPlus<T> img) {
+    public static List<AxisType> getAxes(ImgPlus<?> img) {
         return IntStream.range(0, img.numDimensions())
                 .mapToObj(d -> img.axis(d).type())
                 .collect(Collectors.toList());
@@ -154,16 +191,22 @@ public final class ImgUtils {
     }
 
     /**
-     * Transpose image dimensions with source axes to destination axes.
+     * Transpose image dimensions to the first {@link #DEFAULT_AXES}.
      */
-    public static <T extends Type<T>> Img<T> permuteAxes(
-            Img<T> img, List<AxisType> srcAxes, List<AxisType> dstAxes) {
+    public static <T extends Type<T>> ImgPlus<T> permuteAxes(ImgPlus<T> img) {
+        return permuteAxes(img, DEFAULT_AXES.subList(0, img.numDimensions()));
+    }
+
+    /**
+     * Transpose image dimensions to the specified axes.
+     */
+    public static <T extends Type<T>> ImgPlus<T> permuteAxes(ImgPlus<T> img, List<AxisType> axes) {
         RandomAccessibleInterval<T> view = img;
-        srcAxes = new ArrayList<>(srcAxes);
+        List<AxisType> srcAxes = getAxes(img);
 
         for (int src = 0; src < srcAxes.size(); src++) {
             AxisType axis = srcAxes.get(src);
-            int dst = dstAxes.indexOf(axis);
+            int dst = axes.indexOf(axis);
             if (dst < 0) {
                 throw new IllegalArgumentException("Axis " + axis + " not found");
             }
@@ -174,7 +217,35 @@ public final class ImgUtils {
         }
 
         // Compare references and skip wrapping if no changes were made.
-        return view != img ? ImgView.wrap(view, img.factory()) : img;
+        if (view == img) {
+            return img;
+        }
+
+        return new ImgPlus<>(
+                ImgView.wrap(view, img.factory()), img.getName(), axes.toArray(new AxisType[0]));
+    }
+
+    /**
+     * Append singleton dimensions that are present in axes but missing from the image.
+     */
+    public static <T extends Type<T>> ImgPlus<T> extendAxes(ImgPlus<T> img, List<AxisType> axes) {
+        RandomAccessibleInterval<T> tmp = img;
+        List<AxisType> newAxes = getAxes(img);
+
+        for (AxisType axis : axes) {
+            if (!newAxes.contains(axis)) {
+                tmp = Views.addDimension(tmp, 0, 0);
+                newAxes.add(axis);
+            }
+        }
+
+        // Compare references and skip wrapping if no changes were made.
+        if (tmp == img) {
+            return img;
+        }
+
+        return new ImgPlus<>(
+                ImgView.wrap(tmp, img.factory()), img.getName(), newAxes.toArray(new AxisType[0]));
     }
 
     /**
@@ -214,6 +285,7 @@ public final class ImgUtils {
     public static ImgPlus<UnsignedByteType> argbToMultiChannel(ImgPlus<ARGBType> img) {
         Img<UnsignedByteType> multiChannelImg = ImgView.wrap(Converters.argbChannels(img));
         List<AxisType> axes = getAxes(img);
+        axes.remove(Axes.CHANNEL);
         axes.add(Axes.CHANNEL);
         return new ImgPlus<>(multiChannelImg, img.getName(), axes.toArray(new AxisType[0]));
     }
