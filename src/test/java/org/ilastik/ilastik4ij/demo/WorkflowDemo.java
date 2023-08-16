@@ -1,4 +1,4 @@
-package org.ilastik.ilastik4ij;
+package org.ilastik.ilastik4ij.demo;
 
 import net.imagej.Dataset;
 import net.imagej.ImageJ;
@@ -8,12 +8,16 @@ import org.ilastik.ilastik4ij.workflow.PixelClassificationCommand;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.Objects;
 
-public final class Demo {
+/**
+ * Shows how to run ilastik workflows.
+ */
+public final class WorkflowDemo {
     public static void main(String[] args) throws Exception {
         ImageJ ij = new ImageJ();
         ij.ui().showUI();
@@ -29,7 +33,7 @@ public final class Demo {
     }
 
     @SuppressWarnings("unused")
-    private static void pixelClassification(ImageJ ij) throws Exception {
+    private static void pixelClassification(ImageJ ij) throws IOException {
         Dataset inputImage = ij.scifio().datasetIO().open(fromResource("/2d_cells_apoptotic.tif"));
         ij.ui().show(inputImage);
 
@@ -44,7 +48,7 @@ public final class Demo {
     }
 
     @SuppressWarnings("unused")
-    private static void objectClassification(ImageJ ij) throws Exception {
+    private static void objectClassification(ImageJ ij) throws IOException {
         Dataset inputImage = ij.scifio().datasetIO().open(fromResource("/2d_cells_apoptotic.tif"));
         ij.ui().show(inputImage);
 
@@ -68,14 +72,17 @@ public final class Demo {
      * This function is used here just for the demonstration purposes.
      * If you read files from a local disk, just use the path directly.
      */
-    private static String fromResource(String resourcePath) throws IOException {
-        Path target = Files.createTempFile("", resourcePath.replace('/', '-'));
-        try (InputStream in = Demo.class.getResourceAsStream(resourcePath)) {
+    private static String fromResource(String resourcePath) {
+        try (InputStream in = WorkflowDemo.class.getResourceAsStream(resourcePath)) {
+            Path target = Files.createTempFile("", resourcePath.replace('/', '-'));
             Files.copy(Objects.requireNonNull(in), target, StandardCopyOption.REPLACE_EXISTING);
+            return target.toString();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
-        return target.toString();
     }
 
-    private Demo() {
+    private WorkflowDemo() {
+        throw new AssertionError();
     }
 }
