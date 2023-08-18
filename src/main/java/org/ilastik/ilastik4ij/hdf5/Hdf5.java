@@ -2,6 +2,7 @@ package org.ilastik.ilastik4ij.hdf5;
 
 import ch.systemsx.cisd.hdf5.*;
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import net.imglib2.Cursor;
 import net.imglib2.IterableInterval;
@@ -23,6 +24,7 @@ import org.ilastik.ilastik4ij.util.GridCoordinates;
 import java.io.File;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.*;
@@ -35,6 +37,8 @@ public final class Hdf5 {
      * Return descriptions of supported datasets in an HDF5 file, sorted by their paths.
      */
     public static List<DatasetDescription> datasets(File file) {
+        Objects.requireNonNull(file);
+
         List<DatasetDescription> result = new ArrayList<>();
         Deque<String> stack = new ArrayDeque<>();
         stack.push("/");
@@ -60,7 +64,7 @@ public final class Hdf5 {
      * and without callback.
      */
     public static <T extends NativeType<T>> ImgPlus<T> readDataset(File file, String path) {
-        return readDataset(file, path, null);
+        return readDataset(file, path, null, null);
     }
 
     /**
@@ -82,6 +86,16 @@ public final class Hdf5 {
      */
     public static <T extends NativeType<T>> ImgPlus<T> readDataset(
             File file, String path, List<AxisType> axes, BiConsumer<Long, Long> callback) {
+
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(path);
+        if (axes != null && !(axes.contains(Axes.X) && axes.contains(Axes.Y))) {
+            throw new IllegalArgumentException("Axes must contain X and Y");
+        }
+        if (callback == null) {
+            callback = (a, b) -> {
+            };
+        }
 
         DatasetType type;
         Img<T> img;
@@ -106,9 +120,7 @@ public final class Hdf5 {
 
             try (HDF5DataSet dataset = reader.object().openDataSet(path)) {
                 if (IntStream.range(0, dims.length).allMatch(i -> dims[i] == blockDims[i])) {
-                    if (callback != null) {
-                        callback.accept(0L, 1L);
-                    }
+                    callback.accept(0L, 1L);
                     img = readArrayImg(type, reader, dataset, dims);
                 } else {
                     img = readCellImg(type, reader, dataset, dims, blockDims, callback);
@@ -120,11 +132,16 @@ public final class Hdf5 {
                 .resolve(path.replaceFirst("/+", ""))
                 .toString()
                 .replace('\\', '/');
+
         if (axes == null) {
             axes = DEFAULT_AXES.subList(0, img.numDimensions());
+        } else {
+            List<AxisType> srcAxes = axes;
+            axes = DEFAULT_AXES.stream().filter(srcAxes::contains).collect(Collectors.toList());
+            img = transformDims(img, srcAxes, axes);
         }
 
-        ImgPlus<T> imgPlus = permuteAxes(new ImgPlus<>(img, name, axes.toArray(new AxisType[0])));
+        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]));
         imgPlus.setValidBits(8 * type.size);
         return imgPlus;
     }
@@ -174,6 +191,17 @@ public final class Hdf5 {
             List<AxisType> axes,
             BiConsumer<Long, Long> callback) {
 
+        Objects.requireNonNull(file);
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(img);
+        if (compressionLevel < 0) {
+            throw new IllegalArgumentException("Compression level cannot be negative");
+        }
+        if (callback == null) {
+            callback = (a, b) -> {
+            };
+        }
+
         if (!(2 <= img.numDimensions() && img.numDimensions() <= 5)) {
             throw new IllegalArgumentException(
                     img.numDimensions() + "D datasets are not supported");
@@ -181,39 +209,33 @@ public final class Hdf5 {
 
         T imglib2Type = img.firstElement();
         if (imglib2Type.getClass() == ARGBType.class) {
-            // Can't reassign argbImg to img: generic type T is changed.
             @SuppressWarnings("unchecked")
             ImgPlus<ARGBType> argbImg = (ImgPlus<ARGBType>) img;
             writeDataset(file, path, argbToMultiChannel(argbImg), compressionLevel, axes, callback);
             return;
         }
 
-        if (axes != null) {
-            img = permuteAxes(extendAxes(img, axes), axes);
-        }
-
+        Img<T> data = transformDims(img, axesOf(img), axes);
         DatasetType type = DatasetType.ofImglib2(imglib2Type).orElseThrow(() ->
                 new IllegalArgumentException("Unsupported image type " + imglib2Type.getClass()));
 
-        long[] dims = img.dimensionsAsLongArray();
+        long[] dims = data.dimensionsAsLongArray();
         IterableInterval<RandomAccessibleInterval<T>> grid =
-                Views.flatIterable(Views.tiles(img, largeBlockDims(dims)));
-        long gridSize = grid.size();
+                Views.flatIterable(Views.tiles(data, largeBlockDims(dims)));
         Cursor<RandomAccessibleInterval<T>> gridCursor = grid.cursor();
+        long gridSize = grid.size();
 
         try (IHDF5Writer writer = HDF5Factory.open(file);
              HDF5DataSet dataset = type.createDataset(
                      writer,
                      path,
                      reversed(dims),
-                     reversed(smallBlockDims(dims, getAxes(img))),
+                     reversed(smallBlockDims(dims, axes)),
                      compressionLevel)) {
 
             long gridIndex = 0;
             while (gridCursor.hasNext()) {
-                if (callback != null) {
-                    callback.accept(gridIndex++, gridSize);
-                }
+                callback.accept(gridIndex++, gridSize);
                 RandomAccessibleInterval<T> block = gridCursor.next();
                 Cursor<T> blockCursor = Views.flatIterable(block).cursor();
                 long[] currBlockDims = reversed(block.dimensionsAsLongArray());
@@ -248,9 +270,7 @@ public final class Hdf5 {
         CellGrid grid = new CellGrid(dims, blockDims);
         List<Cell<A>> cells = new ArrayList<>();
         for (GridCoordinates.Block block : new GridCoordinates(grid)) {
-            if (callback != null) {
-                callback.accept(block.index, block.count);
-            }
+            callback.accept(block.index, block.count);
             A data = type.readBlock(reader, dataset, reversed(block.dims), reversed(block.offset));
             cells.add(new Cell<>(block.dims, block.offset, data));
         }

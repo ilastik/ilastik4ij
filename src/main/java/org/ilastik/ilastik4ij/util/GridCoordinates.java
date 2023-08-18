@@ -4,6 +4,7 @@ import net.imglib2.img.cell.CellGrid;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.Objects;
 
 /**
  * Iterate over offset and block (cell) dimensions of a grid in the flat, column-major order.
@@ -65,6 +66,7 @@ public class GridCoordinates implements Iterable<GridCoordinates.Block> {
     }
 
     public GridCoordinates(CellGrid grid) {
+        Objects.requireNonNull(grid);
         imageDims = grid.getImgDimensions();
         gridDims = grid.getGridDimensions();
         blockDims = grid.getCellDimensions();

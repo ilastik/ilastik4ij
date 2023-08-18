@@ -46,6 +46,9 @@ public final class DatasetDescription {
      * Try to get dataset description for HDF5 dataset.
      */
     static Optional<DatasetDescription> ofHdf5(IHDF5Reader reader, String path) {
+        Objects.requireNonNull(reader);
+        Objects.requireNonNull(path);
+
         HDF5DataSetInformation info = reader.object().getDataSetInformation(path);
 
         Optional<DatasetType> type = DatasetType.ofHdf5(info.getTypeInformation());
@@ -68,15 +71,16 @@ public final class DatasetDescription {
             axesGuessed = true;
         }
 
+        path = "/" + path.replaceFirst("/+", "");
         return Optional.of(new DatasetDescription(path, type.get(), dims, axes, axesGuessed));
     }
 
     public DatasetDescription(
             String path, DatasetType type, long[] dims, List<AxisType> axes, boolean axesGuessed) {
-        this.path = path;
-        this.type = type;
-        this.dims = dims.clone();
-        this.axes = new ArrayList<>(axes);
+        this.path = Objects.requireNonNull(path);
+        this.type = Objects.requireNonNull(type);
+        this.dims = Objects.requireNonNull(dims).clone();
+        this.axes = new ArrayList<>(Objects.requireNonNull(axes));
         this.axesGuessed = axesGuessed;
     }
 

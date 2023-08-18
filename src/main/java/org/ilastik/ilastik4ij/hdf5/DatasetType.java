@@ -12,6 +12,7 @@ import net.imglib2.type.numeric.real.DoubleType;
 import net.imglib2.type.numeric.real.FloatType;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -54,6 +55,7 @@ public enum DatasetType {
      * Get dataset type from imglib2 type, if possible.
      */
     static <T extends NativeType<T>> Optional<DatasetType> ofImglib2(T imglib2Type) {
+        Objects.requireNonNull(imglib2Type);
         return Arrays.stream(values())
                 .filter(dt -> dt.imglib2Type.getClass() == imglib2Type.getClass())
                 .findFirst();
@@ -63,6 +65,8 @@ public enum DatasetType {
      * Get dataset type from HDF5 type information, if possible.
      */
     static Optional<DatasetType> ofHdf5(HDF5DataTypeInformation typeInfo) {
+        Objects.requireNonNull(typeInfo);
+
         HDF5DataClass dataClass = typeInfo.getDataClass();
         if (!(dataClass == HDF5DataClass.INTEGER || dataClass == HDF5DataClass.FLOAT)) {
             return Optional.empty();
@@ -100,6 +104,7 @@ public enum DatasetType {
     @SuppressWarnings("unchecked")
     <T extends NativeType<T>, A extends ArrayDataAccess<A>> void linkImglib2Type(
             NativeImg<T, A> nativeImg) {
+        Objects.requireNonNull(nativeImg);
         NativeTypeFactory<T, A> ntf = (NativeTypeFactory<T, A>) imglib2Type.getNativeTypeFactory();
         nativeImg.setLinkedType(ntf.createLinkedType(nativeImg));
     }
@@ -112,6 +117,14 @@ public enum DatasetType {
     @SuppressWarnings("unchecked")
     <A extends ArrayDataAccess<A>> A readBlock(
             IHDF5Reader reader, HDF5DataSet dataset, int[] blockDims, long[] offset) {
+        Objects.requireNonNull(reader);
+        Objects.requireNonNull(dataset);
+        Objects.requireNonNull(blockDims);
+        Objects.requireNonNull(offset);
+        if (blockDims.length != offset.length) {
+            throw new IllegalArgumentException("blockDims and offset must have the same length");
+        }
+
         switch (this) {
             case INT8:
                 return (A) new ByteArray(reader.int8()
@@ -153,6 +166,17 @@ public enum DatasetType {
      */
     HDF5DataSet createDataset(
             IHDF5Writer writer, String path, long[] dims, int[] blockDims, int compressionLevel) {
+        Objects.requireNonNull(writer);
+        Objects.requireNonNull(path);
+        Objects.requireNonNull(dims);
+        Objects.requireNonNull(blockDims);
+        if (dims.length != blockDims.length) {
+            throw new IllegalArgumentException("dims and blockDims must have the same length");
+        }
+        if (compressionLevel < 0) {
+            throw new IllegalArgumentException("Compression level cannot be negative");
+        }
+
         HDF5IntStorageFeatures intFeatures =
                 HDF5IntStorageFeatures.createDeflationDelete(compressionLevel);
         HDF5FloatStorageFeatures floatFeatures =
@@ -191,6 +215,15 @@ public enum DatasetType {
     @SuppressWarnings("unchecked")
     <T extends NativeType<T>> void writeCursor(
             Cursor<T> cursor, IHDF5Writer writer, HDF5DataSet dataset, long[] dims, long[] offset) {
+        Objects.requireNonNull(cursor);
+        Objects.requireNonNull(writer);
+        Objects.requireNonNull(dataset);
+        Objects.requireNonNull(dims);
+        Objects.requireNonNull(offset);
+        if (dims.length != offset.length) {
+            throw new IllegalArgumentException("dims and offset must have the same length");
+        }
+
         switch (this) {
             case INT8: {
                 Cursor<ByteType> src = (Cursor<ByteType>) cursor;

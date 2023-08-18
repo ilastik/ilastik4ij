@@ -15,10 +15,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,6 +39,7 @@ public final class ImgUtils {
      * to string with chars from {@link #DEFAULT_STRING_AXES}.
      */
     public static String toStringAxes(List<AxisType> axes) {
+        Objects.requireNonNull(axes);
         return axes.stream().map(axis -> {
             int i = DEFAULT_AXES.indexOf(axis);
             if (i < 0) {
@@ -56,6 +54,7 @@ public final class ImgUtils {
      * to axes from {@link #DEFAULT_AXES}.
      */
     public static List<AxisType> toImagejAxes(String axes) {
+        Objects.requireNonNull(axes);
         return axes.chars().mapToObj(c -> {
             int i = DEFAULT_STRING_AXES.indexOf(c);
             if (i < 0) {
@@ -69,6 +68,7 @@ public final class ImgUtils {
      * Return a new reversed array.
      */
     public static int[] reversed(int[] a) {
+        Objects.requireNonNull(a);
         int[] b = new int[a.length];
         for (int i = 0; i < a.length; i++) {
             b[i] = a[a.length - 1 - i];
@@ -80,6 +80,7 @@ public final class ImgUtils {
      * Return a new reversed array.
      */
     public static long[] reversed(long[] a) {
+        Objects.requireNonNull(a);
         long[] b = new long[a.length];
         for (int i = 0; i < a.length; i++) {
             b[i] = a[a.length - 1 - i];
@@ -91,7 +92,7 @@ public final class ImgUtils {
      * Return a reversed string.
      */
     public static String reversed(String s) {
-        return new StringBuilder(s).reverse().toString();
+        return new StringBuilder(Objects.requireNonNull(s)).reverse().toString();
     }
 
     /**
@@ -100,6 +101,12 @@ public final class ImgUtils {
      * Typically used for determining on-disk block size.
      */
     public static int[] smallBlockDims(long[] dims, List<AxisType> axes) {
+        Objects.requireNonNull(dims);
+        Objects.requireNonNull(axes);
+        if (dims.length != axes.size()) {
+            throw new IllegalArgumentException("Dimension and axis count must be the same");
+        }
+
         int x = axes.indexOf(Axes.X);
         int y = axes.indexOf(Axes.Y);
         int z = axes.indexOf(Axes.Z);
@@ -107,7 +114,7 @@ public final class ImgUtils {
             throw new IllegalArgumentException("Axes X or Y not found");
         }
 
-        int[] blockDims = new int[axes.size()];
+        int[] blockDims = new int[dims.length];
         Arrays.fill(blockDims, 1);
 
         if (z < 0 || dims[z] == 1) {
@@ -132,6 +139,8 @@ public final class ImgUtils {
      * Typically used for determining in-memory block size for some operations.
      */
     public static int[] largeBlockDims(long[] dims) {
+        Objects.requireNonNull(dims);
+
         int[] blockDims = new int[dims.length];
         Arrays.fill(blockDims, 1);
         long elementCount = 1;
@@ -161,7 +170,8 @@ public final class ImgUtils {
     /**
      * Extract axes from {@link ImgPlus}.
      */
-    public static List<AxisType> getAxes(ImgPlus<?> img) {
+    public static List<AxisType> axesOf(ImgPlus<?> img) {
+        Objects.requireNonNull(img);
         return IntStream.range(0, img.numDimensions())
                 .mapToObj(d -> img.axis(d).type())
                 .collect(Collectors.toList());
@@ -171,81 +181,75 @@ public final class ImgUtils {
      * Guess axes from image dimensions.
      */
     public static List<AxisType> guessAxes(long[] dims) {
+        Objects.requireNonNull(dims);
         // The corresponding default axis ordering logic from ilastik:
         // https://github.com/ilastik/ilastik/blob/414b6e15a2802ed923ec832776e0f33b1c7d30ae/lazyflow/utility/helpers.py#L76
         switch (dims.length) {
             case 2:
-                return Arrays.asList(Axes.X, Axes.Y);
+                return new ArrayList<>(Arrays.asList(Axes.X, Axes.Y));
             case 3:
                 // Heuristic for 2D multi-channel data.
                 return dims[0] <= 4 ?
-                        Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y) :
-                        Arrays.asList(Axes.X, Axes.Y, Axes.Z);
+                        new ArrayList<>(Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y)) :
+                        new ArrayList<>(Arrays.asList(Axes.X, Axes.Y, Axes.Z));
             case 4:
-                return Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z);
+                return new ArrayList<>(Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z));
             case 5:
-                return Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z, Axes.TIME);
+                return new ArrayList<>(
+                        Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z, Axes.TIME));
             default:
-                throw new IllegalStateException("Unexpected dims.length: " + dims.length);
+                throw new IllegalStateException("Can't guess axes for dimensions other than 2D-5D");
         }
     }
 
     /**
-     * Transpose image dimensions to the first {@link #DEFAULT_AXES}.
+     * {@link #transformDims} to {@link #DEFAULT_AXES}.
      */
-    public static <T extends Type<T>> ImgPlus<T> permuteAxes(ImgPlus<T> img) {
-        return permuteAxes(img, DEFAULT_AXES.subList(0, img.numDimensions()));
+    public static <T extends Type<T>> Img<T> transformDims(Img<T> img, List<AxisType> srcAxes) {
+        return transformDims(img, srcAxes, DEFAULT_AXES);
     }
 
     /**
-     * Transpose image dimensions to the specified axes.
+     * Change dimensions of the image with the given source axes to match destination axes.
+     * <p>
+     * Existing axes are transposed to match the new order, new axes are inserted as singletons.
      */
-    public static <T extends Type<T>> ImgPlus<T> permuteAxes(ImgPlus<T> img, List<AxisType> axes) {
-        RandomAccessibleInterval<T> view = img;
-        List<AxisType> srcAxes = getAxes(img);
+    public static <T extends Type<T>> Img<T> transformDims(
+            Img<T> img, List<AxisType> srcAxes, List<AxisType> dstAxes) {
 
-        for (int src = 0; src < srcAxes.size(); src++) {
-            AxisType axis = srcAxes.get(src);
-            int dst = axes.indexOf(axis);
-            if (dst < 0) {
-                throw new IllegalArgumentException("Axis " + axis + " not found");
+        Objects.requireNonNull(img);
+        Objects.requireNonNull(srcAxes);
+        Objects.requireNonNull(dstAxes);
+        if (img.numDimensions() != srcAxes.size()) {
+            throw new IllegalArgumentException(
+                    "Number of image dimensions and number of source axes must be the same");
+        }
+
+        RandomAccessibleInterval<T> view = img;
+        srcAxes = new ArrayList<>(srcAxes);
+
+        for (AxisType axis : dstAxes) {
+            if (!srcAxes.contains(axis)) {
+                view = Views.addDimension(view, 0, 0);
+                srcAxes.add(axis);
             }
+        }
+
+        if (srcAxes.size() != dstAxes.size()) {
+            throw new IllegalArgumentException(
+                    "Some source axes are not listed in destination axes");
+        }
+
+        for (int dst = 0; dst < dstAxes.size(); dst++) {
+            AxisType axis = dstAxes.get(dst);
+            int src = srcAxes.indexOf(axis);
             if (src != dst) {
                 Collections.swap(srcAxes, src, dst);
                 view = Views.permute(view, src, dst);
             }
         }
 
-        // Compare references and skip wrapping if no changes were made.
-        if (view == img) {
-            return img;
-        }
-
-        return new ImgPlus<>(
-                ImgView.wrap(view, img.factory()), img.getName(), axes.toArray(new AxisType[0]));
-    }
-
-    /**
-     * Append singleton dimensions that are present in axes but missing from the image.
-     */
-    public static <T extends Type<T>> ImgPlus<T> extendAxes(ImgPlus<T> img, List<AxisType> axes) {
-        RandomAccessibleInterval<T> tmp = img;
-        List<AxisType> newAxes = getAxes(img);
-
-        for (AxisType axis : axes) {
-            if (!newAxes.contains(axis)) {
-                tmp = Views.addDimension(tmp, 0, 0);
-                newAxes.add(axis);
-            }
-        }
-
-        // Compare references and skip wrapping if no changes were made.
-        if (tmp == img) {
-            return img;
-        }
-
-        return new ImgPlus<>(
-                ImgView.wrap(tmp, img.factory()), img.getName(), newAxes.toArray(new AxisType[0]));
+        return ImgView.wrap(view, img.factory());
     }
 
     /**
@@ -257,6 +261,8 @@ public final class ImgUtils {
      * @throws JSONException if JSON is malformed/invalid, or if axes are invalid.
      */
     public static List<AxisType> parseAxes(String json) {
+        Objects.requireNonNull(json);
+
         List<AxisType> axes = new ArrayList<>();
         JSONArray arr = new JSONObject(json).getJSONArray("axes");
 
@@ -283,9 +289,15 @@ public final class ImgUtils {
      * as a separate, last channel dimension.
      */
     public static ImgPlus<UnsignedByteType> argbToMultiChannel(ImgPlus<ARGBType> img) {
+        Objects.requireNonNull(img);
+
+        List<AxisType> axes = axesOf(img);
+        if (axes.contains(Axes.CHANNEL)) {
+            throw new IllegalArgumentException(
+                    "Cannot handle ARGBType images with channel dimension");
+        }
+
         Img<UnsignedByteType> multiChannelImg = ImgView.wrap(Converters.argbChannels(img));
-        List<AxisType> axes = getAxes(img);
-        axes.remove(Axes.CHANNEL);
         axes.add(Axes.CHANNEL);
         return new ImgPlus<>(multiChannelImg, img.getName(), axes.toArray(new AxisType[0]));
     }
