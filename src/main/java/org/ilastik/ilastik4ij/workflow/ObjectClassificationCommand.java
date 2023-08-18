@@ -2,6 +2,7 @@ package org.ilastik.ilastik4ij.workflow;
 
 import net.imagej.Dataset;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -10,7 +11,7 @@ import java.util.Collections;
 import java.util.Map;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
-public final class ObjectClassificationCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
+public final class ObjectClassificationCommand<T extends NativeType<T> & RealType<T>> extends WorkflowCommand<T> {
     @Parameter(label = "Pixel Probability or Segmentation image")
     public Dataset inputProbOrSegImage;
 
