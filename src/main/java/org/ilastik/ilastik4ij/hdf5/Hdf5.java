@@ -215,7 +215,11 @@ public final class Hdf5 {
             return;
         }
 
-        Img<T> data = transformDims(img, axesOf(img), axes);
+        Img<T> data = axes == null ? img.getImg() : transformDims(img, axesOf(img), axes);
+        if (axes == null) {
+            axes = axesOf(img);
+        }
+
         DatasetType type = DatasetType.ofImglib2(imglib2Type).orElseThrow(() ->
                 new IllegalArgumentException("Unsupported image type " + imglib2Type.getClass()));
 
