@@ -1,6 +1,11 @@
 package org.ilastik.ilastik4ij.hdf5;
 
-import ch.systemsx.cisd.hdf5.*;
+import ch.systemsx.cisd.hdf5.HDF5DataSet;
+import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
+import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
+import ch.systemsx.cisd.hdf5.HDF5Factory;
+import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import ch.systemsx.cisd.hdf5.IHDF5Writer;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
@@ -22,13 +27,25 @@ import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.util.GridCoordinates;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Deque;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.LongConsumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.ilastik.ilastik4ij.util.ImgUtils.*;
+import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.argbToMultiChannel;
+import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
+import static org.ilastik.ilastik4ij.util.ImgUtils.inputBlockDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.outputDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.transformDims;
 
 /**
  * Read/write/list HDF5 datasets.

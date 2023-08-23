@@ -23,10 +23,17 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.LongConsumer;
 
-import static org.ilastik.ilastik4ij.util.ImgUtils.*;
+import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 
 /**
  * Base class for all commands that run ilastik in a subprocess.

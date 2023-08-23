@@ -7,7 +7,11 @@ import net.imagej.axis.AxisType;
 import org.ilastik.ilastik4ij.util.ImgUtils;
 import org.json.JSONException;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.guessAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
