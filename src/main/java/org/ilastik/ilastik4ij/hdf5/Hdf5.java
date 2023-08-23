@@ -23,7 +23,7 @@ import org.ilastik.ilastik4ij.util.GridCoordinates;
 
 import java.io.File;
 import java.util.*;
-import java.util.function.BiConsumer;
+import java.util.function.LongConsumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -81,12 +81,12 @@ public final class Hdf5 {
      * <p>
      * Only 2D-5D datasets with types enumerated in {@link DatasetType} are supported.
      * <p>
-     * If not null, callback will be invoked each time a block is about to be read.
-     * The callback accepts an index of the current block and the total number of blocks.
-     * The callback will be called at least once.
+     * If not null, callback will be invoked between block writes (N + 1 invocations for N blocks).
+     * The callback accepts the total number of bytes written so far.
+     * This is useful for progress reporting.
      */
     public static <T extends NativeType<T>> ImgPlus<T> readDataset(
-            File file, String path, List<AxisType> axes, BiConsumer<Long, Long> callback) {
+            File file, String path, List<AxisType> axes, LongConsumer callback) {
 
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
@@ -94,7 +94,7 @@ public final class Hdf5 {
             throw new IllegalArgumentException("Axes must contain X and Y");
         }
         if (callback == null) {
-            callback = (a, b) -> {
+            callback = (a) -> {
             };
         }
 
@@ -120,9 +120,10 @@ public final class Hdf5 {
                     info.tryGetChunkSizes() != null ? reversed(info.tryGetChunkSizes()) : null);
 
             try (HDF5DataSet dataset = reader.object().openDataSet(path)) {
+                callback.accept(0L);
                 if (IntStream.range(0, dims.length).allMatch(i -> dims[i] == blockDims[i])) {
-                    callback.accept(0L, 1L);
                     img = readArrayImg(type, reader, dataset, dims);
+                    callback.accept(Arrays.stream(dims).reduce(type.size, (l, r) -> l * r));
                 } else {
                     img = readCellImg(type, reader, dataset, dims, blockDims, callback);
                 }
@@ -179,10 +180,9 @@ public final class Hdf5 {
      * <p>
      * if axes are specified, image will be written in the specified axis order.
      * <p>
-     * <p>
-     * If not null, callback will be invoked each time a block is about to be written.
-     * The callback accepts an index of the current block and the total number of blocks.
-     * The callback will be called at least once.
+     * If not null, callback will be invoked between block writes (N + 1 invocations for N blocks).
+     * The callback accepts the total number of bytes written so far.
+     * This is useful for progress reporting.
      */
     public static <T extends NativeType<T>> void writeDataset(
             File file,
@@ -190,7 +190,7 @@ public final class Hdf5 {
             ImgPlus<T> img,
             int compressionLevel,
             List<AxisType> axes,
-            BiConsumer<Long, Long> callback) {
+            LongConsumer callback) {
 
         Objects.requireNonNull(file);
         Objects.requireNonNull(path);
@@ -199,7 +199,7 @@ public final class Hdf5 {
             throw new IllegalArgumentException("Compression level cannot be negative");
         }
         if (callback == null) {
-            callback = (a, b) -> {
+            callback = (a) -> {
             };
         }
 
@@ -233,7 +233,7 @@ public final class Hdf5 {
         IterableInterval<RandomAccessibleInterval<T>> grid =
                 Views.flatIterable(Views.tiles(data, blockDims));
         Cursor<RandomAccessibleInterval<T>> gridCursor = grid.cursor();
-        long gridSize = grid.size();
+        long bytes = 0;
 
         try (IHDF5Writer writer = HDF5Factory.open(file);
              HDF5DataSet dataset = type.createDataset(
@@ -243,14 +243,17 @@ public final class Hdf5 {
                      reversed(chunkDims),
                      compressionLevel)) {
 
-            long gridIndex = 0;
+            callback.accept(0L);
+
             while (gridCursor.hasNext()) {
-                callback.accept(gridIndex++, gridSize);
                 RandomAccessibleInterval<T> block = gridCursor.next();
                 Cursor<T> blockCursor = Views.flatIterable(block).cursor();
                 long[] currBlockDims = reversed(block.dimensionsAsLongArray());
                 long[] offset = reversed(block.minAsLongArray());
                 type.writeCursor(blockCursor, writer, dataset, currBlockDims, offset);
+
+                bytes += Arrays.stream(currBlockDims).reduce(type.size, (l, r) -> l * r);
+                callback.accept(bytes);
             }
         }
     }
@@ -274,15 +277,18 @@ public final class Hdf5 {
             HDF5DataSet dataset,
             long[] dims,
             int[] blockDims,
-            BiConsumer<Long, Long> callback) {
+            LongConsumer callback) {
 
         // Grid is an ND array of blocks (cells), which are themselves ND arrays of pixels.
         CellGrid grid = new CellGrid(dims, blockDims);
         List<Cell<A>> cells = new ArrayList<>();
+        long bytes = 0;
+
         for (GridCoordinates.Block block : new GridCoordinates(grid)) {
-            callback.accept(block.index, block.count);
             A data = type.readBlock(reader, dataset, reversed(block.dims), reversed(block.offset));
             cells.add(new Cell<>(block.dims, block.offset, data));
+            bytes += Arrays.stream(block.dims).reduce(type.size, (l, r) -> l * r);
+            callback.accept(bytes);
         }
 
         CellImgFactory<T> factory = new CellImgFactory<T>(type.createVariable(), blockDims);

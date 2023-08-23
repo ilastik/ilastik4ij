@@ -25,14 +25,10 @@ public class GridCoordinates implements Iterable<GridCoordinates.Block> {
     public static final class Block {
         public final long[] offset;
         public final int[] dims;
-        public final long index;
-        public final long count;
 
-        public Block(long[] offset, int[] dims, long index, long count) {
+        public Block(long[] offset, int[] dims) {
             this.offset = offset;
             this.dims = dims;
-            this.index = index;
-            this.count = count;
         }
     }
 
@@ -49,6 +45,8 @@ public class GridCoordinates implements Iterable<GridCoordinates.Block> {
 
         @Override
         public Block next() {
+            index++;
+
             for (int i = 0; i < dims.length; i++) {
                 offset[i] += blockDims[i];
                 if (offset[i] < imageDims[i]) {
@@ -61,7 +59,7 @@ public class GridCoordinates implements Iterable<GridCoordinates.Block> {
                 dims[i] = (int) Math.min(blockDims[i], imageDims[i] - offset[i]);
             }
 
-            return new Block(offset, dims, index++, count);
+            return new Block(offset, dims);
         }
     }
 
