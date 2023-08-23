@@ -24,6 +24,7 @@ import org.ilastik.ilastik4ij.util.GridCoordinates;
 import java.io.File;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -209,6 +210,7 @@ public final class Hdf5 {
 
         T imglib2Type = img.firstElement();
         if (imglib2Type.getClass() == ARGBType.class) {
+            Logger.getLogger(Hdf5.class.getName()).warning("Writing ARGBType images is deprecated");
             @SuppressWarnings("unchecked")
             ImgPlus<ARGBType> argbImg = (ImgPlus<ARGBType>) img;
             writeDataset(file, path, argbToMultiChannel(argbImg), compressionLevel, axes, callback);
