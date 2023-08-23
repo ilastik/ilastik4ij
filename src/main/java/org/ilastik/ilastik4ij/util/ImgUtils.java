@@ -11,6 +11,7 @@ import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.view.Views;
+import org.ilastik.ilastik4ij.hdf5.DatasetType;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -96,17 +97,16 @@ public final class ImgUtils {
     }
 
     /**
-     * Pick small, reasonable block dimensions from image dimensions and it's axes.
+     * Compute chunk and block dimensions suitable for writing.
      * <p>
-     * Typically used for determining on-disk block size.
+     * Chunk dimensions are used for HDF5 chunking.
+     * Block dimensions are used for tiling input dataset.
      */
-    public static int[] smallBlockDims(long[] dims, List<AxisType> axes) {
-        Objects.requireNonNull(dims);
-        Objects.requireNonNull(axes);
-        if (dims.length != axes.size()) {
-            throw new IllegalArgumentException("Dimension and axis count must be the same");
-        }
-
+    public static void outputDims(long[] dims,
+                                  List<AxisType> axes,
+                                  DatasetType type,
+                                  int[] chunkDims,
+                                  int[] blockDims) {
         int x = axes.indexOf(Axes.X);
         int y = axes.indexOf(Axes.Y);
         int z = axes.indexOf(Axes.Z);
@@ -114,48 +114,58 @@ public final class ImgUtils {
             throw new IllegalArgumentException("Axes X or Y not found");
         }
 
-        int[] blockDims = new int[dims.length];
+        int maxBytes = 256 * (1 << 20);
+        int maxElements = maxBytes / type.size;
+
+        boolean is3d = z >= 0 && dims[z] > 1;
+        int chunkDim = is3d ? 32 : 128;
+        int blockDim = (int) (is3d ? Math.cbrt(maxElements) : Math.sqrt(maxElements));
+
+        Arrays.fill(chunkDims, 1);
         Arrays.fill(blockDims, 1);
 
-        if (z < 0 || dims[z] == 1) {
-            int n = 128;
-            blockDims[x] = n;
-            blockDims[y] = n;
-        } else {
-            int n = 32;
-            blockDims[x] = n;
-            blockDims[y] = n;
-            blockDims[z] = n;
-        }
+        chunkDims[x] = (int) Math.min(dims[x], chunkDim);
+        blockDims[x] = (int) Math.min(dims[x], blockDim);
 
-        return blockDims;
+        chunkDims[y] = (int) Math.min(dims[y], chunkDim);
+        blockDims[y] = (int) Math.min(dims[y], blockDim);
+
+        if (is3d) {
+            chunkDims[z] = (int) Math.min(dims[z], chunkDim);
+            blockDims[z] = (int) Math.min(dims[z], blockDim);
+        }
     }
 
     /**
-     * Pick the largest possible optimal block dimensions from image dimensions.
-     * <p>
-     * Element count in the result does not exceed {@link Integer#MAX_VALUE}.
-     * <p>
-     * Typically used for determining in-memory block size for some operations.
+     * Compute block dimensions suitable for reading.
      */
-    public static int[] largeBlockDims(long[] dims) {
+    public static int[] inputBlockDims(long[] dims, int[] chunkDims) {
         Objects.requireNonNull(dims);
 
-        int[] blockDims = new int[dims.length];
-        Arrays.fill(blockDims, 1);
-        long elementCount = 1;
+        int[] blockDims;
+        if (chunkDims == null) {
+            blockDims = new int[dims.length];
+            Arrays.fill(blockDims, 1);
+        } else {
+            blockDims = chunkDims.clone();
+        }
+
+        long elementCount = Arrays.stream(blockDims).reduce(1, (l, r) -> l * r);
 
         for (int i = 0; i < dims.length; i++) {
+            // Block element count assuming the current dimension is reduced to 1.
+            long elementCount1 = elementCount / blockDims[i];
+
             long dim = dims[i];
 
             // Halve the current dimension until block element count fits into int.
-            while (elementCount * dim > Integer.MAX_VALUE) {
+            while (elementCount1 * dim > Integer.MAX_VALUE) {
                 // Round up odd values to avoid tiny tail blocks.
                 dim = dim / 2 + dim % 2;
             }
 
             // Everything still fits into int because of the loop condition above.
-            elementCount *= dim;
+            elementCount = elementCount1 * dim;
             blockDims[i] = (int) dim;
 
             if (2 * elementCount > Integer.MAX_VALUE) {

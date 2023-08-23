@@ -115,8 +115,8 @@ public final class Hdf5 {
             type = DatasetType.ofHdf5(typeInfo).orElseThrow(() ->
                     new IllegalArgumentException("Unsupported dataset type " + typeInfo));
 
-            int[] blockDims = info.getStorageLayout() == HDF5StorageLayout.CHUNKED ?
-                    reversed(info.tryGetChunkSizes()) : largeBlockDims(dims);
+            int[] blockDims = inputBlockDims(dims,
+                    info.tryGetChunkSizes() != null ? reversed(info.tryGetChunkSizes()) : null);
 
             try (HDF5DataSet dataset = reader.object().openDataSet(path)) {
                 if (IntStream.range(0, dims.length).allMatch(i -> dims[i] == blockDims[i])) {
@@ -224,8 +224,12 @@ public final class Hdf5 {
                 new IllegalArgumentException("Unsupported image type " + imglib2Type.getClass()));
 
         long[] dims = data.dimensionsAsLongArray();
+        int[] chunkDims = new int[dims.length];
+        int[] blockDims = new int[dims.length];
+        outputDims(dims, axes, type, chunkDims, blockDims);
+
         IterableInterval<RandomAccessibleInterval<T>> grid =
-                Views.flatIterable(Views.tiles(data, largeBlockDims(dims)));
+                Views.flatIterable(Views.tiles(data, blockDims));
         Cursor<RandomAccessibleInterval<T>> gridCursor = grid.cursor();
         long gridSize = grid.size();
 
@@ -234,7 +238,7 @@ public final class Hdf5 {
                      writer,
                      path,
                      reversed(dims),
-                     reversed(smallBlockDims(dims, axes)),
+                     reversed(chunkDims),
                      compressionLevel)) {
 
             long gridIndex = 0;

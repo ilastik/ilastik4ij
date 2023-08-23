@@ -34,17 +34,17 @@ public enum DatasetType {
     /**
      * true for integers, false for floats.
      */
-    final boolean integral;
+    public final boolean integral;
 
     /**
      * Element size in bytes.
      */
-    final int size;
+    public final int size;
 
     /**
      * true for integral signed types and floats, false for unsigned integral types.
      */
-    final boolean signed;
+    public final boolean signed;
 
     /**
      * The corresponding imglib2 type.
