@@ -110,6 +110,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         int totalMegabytes = (int) (totalBytes >> 20);
         LongConsumer updateStatusBar = (size) ->
                 statusBar.service.showStatus((int) (size >> 20), totalMegabytes, "Writing inputs");
+        long writeStartTime = System.nanoTime();
 
         for (String inputName : inputs.keySet()) {
             Path inputPath = inputDir.resolve(inputName + ".h5");
@@ -123,6 +124,8 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
                     inputPath.toFile(), "data", inputImg, 1, DEFAULT_AXES, updateStatusBar);
             logger.info(String.format("Write input '%s' finished", inputPath));
         }
+        long writeTime = System.nanoTime() - writeStartTime;
+        logger.info(String.format("Write inputs finished in %.3f seconds", writeTime / 1e9));
 
         Path outputPath = outputDir.resolve("predictions.h5");
         args.add("--output_filename_format=" + outputPath);
@@ -141,8 +144,12 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         });
         logger.info("Subprocess finished");
 
+        logger.info("Read output starting");
+        long readStartTime = System.nanoTime();
         statusBar.withSpinner("Reading output", () ->
                 predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
+        long readTime = System.nanoTime() - readStartTime;
+        logger.info(String.format("Read output finished in %.3f seconds", readTime / 1e9));
     }
 
     private String workflowName() {
