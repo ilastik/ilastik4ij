@@ -3,6 +3,7 @@ package org.ilastik.ilastik4ij.workflow;
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
 import org.ilastik.ilastik4ij.util.StatusBar;
@@ -45,7 +46,7 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
  * Subclasses should be named as {@code [MyWorkflowName]Command}
  * because workflow names are derived from their corresponding class names.
  */
-public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCommand {
+public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> extends ContextCommand {
     public static final String ROLE_PROBABILITIES = "Probabilities";
     public static final String ROLE_SEGMENTATION = "Segmentation";
 

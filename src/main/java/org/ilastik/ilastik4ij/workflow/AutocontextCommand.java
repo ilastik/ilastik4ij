@@ -1,6 +1,7 @@
 package org.ilastik.ilastik4ij.workflow;
 
 import net.imglib2.type.NativeType;
+import net.imglib2.type.numeric.RealType;
 import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
@@ -9,7 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Autocontext Prediction")
-public final class AutocontextCommand<T extends NativeType<T>> extends WorkflowCommand<T> {
+public final class AutocontextCommand<T extends NativeType<T> & RealType<T>> extends WorkflowCommand<T> {
     @Parameter(label = "Output type", choices = {ROLE_PROBABILITIES, ROLE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String AutocontextPredictionType;
 
