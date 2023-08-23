@@ -98,6 +98,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
 
     private void runImpl(StatusBar statusBar, Path inputDir, Path outputDir) {
         Logger logger = logService.subLogger(getClass().getCanonicalName(), LogLevel.INFO);
+        long startTime;
 
         IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
@@ -117,7 +118,7 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
         int totalMegabytes = (int) (totalBytes >> 20);
         LongConsumer updateStatusBar = (size) ->
                 statusBar.service.showStatus((int) (size >> 20), totalMegabytes, "Writing inputs");
-        long writeStartTime = System.nanoTime();
+        startTime = System.nanoTime();
 
         for (String inputName : inputs.keySet()) {
             Path inputPath = inputDir.resolve(inputName + ".h5");
@@ -131,13 +132,14 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
                     inputPath.toFile(), "data", inputImg, 1, DEFAULT_AXES, updateStatusBar);
             logger.info(String.format("Write input '%s' finished", inputPath));
         }
-        long writeTime = System.nanoTime() - writeStartTime;
-        logger.info(String.format("Write inputs finished in %.3f seconds", writeTime / 1e9));
+        logger.info(String.format(
+                "Write inputs finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
 
         Path outputPath = outputDir.resolve("predictions.h5");
         args.add("--output_filename_format=" + outputPath);
 
         Map<String, String> env = subprocessEnv(opts);
+        startTime = System.nanoTime();
         logger.info(String.format(
                 "Subprocess starting with arguments %s and environment %s", args, env));
         statusBar.withSpinner("Running " + workflowName(), () -> {
@@ -149,14 +151,15 @@ public abstract class WorkflowCommand<T extends NativeType<T>> extends ContextCo
                 throw new RuntimeException("Subprocess failed with exit code " + exitCode);
             }
         });
-        logger.info("Subprocess finished");
+        logger.info(String.format(
+                "Subprocess finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
 
         logger.info("Read output starting");
-        long readStartTime = System.nanoTime();
+        startTime = System.nanoTime();
         statusBar.withSpinner("Reading output", () ->
                 predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
-        long readTime = System.nanoTime() - readStartTime;
-        logger.info(String.format("Read output finished in %.3f seconds", readTime / 1e9));
+        logger.info(String.format(
+                "Read output finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
     }
 
     private String workflowName() {
