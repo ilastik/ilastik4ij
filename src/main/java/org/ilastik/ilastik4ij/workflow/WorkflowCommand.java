@@ -133,6 +133,7 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
                     inputPath.toFile(), "data", inputImg, 1, DEFAULT_AXES, updateStatusBar);
             logger.info(String.format("Write input '%s' finished", inputPath));
         }
+        statusBar.service.clearStatus();
         logger.info(String.format(
                 "Write inputs finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
 
