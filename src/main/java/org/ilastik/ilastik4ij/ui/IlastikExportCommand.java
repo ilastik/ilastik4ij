@@ -7,13 +7,14 @@ import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.log.LogService;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import java.io.File;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.Instant;
@@ -60,8 +61,7 @@ public class IlastikExportCommand implements Command {
 
         @SuppressWarnings("unchecked")
         ImgPlus<T> imgPlus = (ImgPlus<T>) input.getImgPlus();
-        new Hdf5DataSetWriter<>(imgPlus, hdf5FilePath, datasetName,
-                compressionLevel, logService, statusService).write();
+        Hdf5.writeDataset(new File(hdf5FilePath), datasetName, imgPlus, compressionLevel);
 
         Instant finish = Instant.now();
         long timeElapsed = Duration.between(start, finish).toMillis();

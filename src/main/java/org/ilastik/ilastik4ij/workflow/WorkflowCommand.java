@@ -4,8 +4,7 @@ import net.imagej.Dataset;
 import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetReader;
-import org.ilastik.ilastik4ij.hdf5.Hdf5DataSetWriter;
+import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
 import org.ilastik.ilastik4ij.util.StatusBar;
 import org.ilastik.ilastik4ij.util.Subprocess;
@@ -25,7 +24,17 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.LongConsumer;
+
+import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 
 /**
  * Base class for all commands that run ilastik in a subprocess.
@@ -61,11 +70,11 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
 
     @Override
     public final void run() {
-        try (StatusBar status = new StatusBar(statusService, 300)) {
+        try (StatusBar statusBar = new StatusBar(statusService, 300)) {
             try (TempDir tempDir = new TempDir("ilastik4ij_")) {
                 Path inputDir = Files.createDirectory(tempDir.path.resolve("inputs"));
                 Path outputDir = Files.createDirectory(tempDir.path.resolve("outputs"));
-                runImpl(status, inputDir, outputDir);
+                runImpl(statusBar, inputDir, outputDir);
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
@@ -88,8 +97,9 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         return Collections.emptyMap();
     }
 
-    private void runImpl(StatusBar status, Path inputDir, Path outputDir) {
+    private void runImpl(StatusBar statusBar, Path inputDir, Path outputDir) {
         Logger logger = logService.subLogger(getClass().getCanonicalName(), LogLevel.INFO);
+        long startTime;
 
         IlastikOptions opts = optionsService.getOptions(IlastikOptions.class);
         opts.load();
@@ -100,26 +110,41 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         Map<String, Dataset> inputs = new HashMap<>(workflowInputs());
         inputs.put("raw_data", inputImage);
 
-        status.withProgress("Writing inputs", inputs.entrySet(), (entry) -> {
-            Path inputPath = inputDir.resolve(entry.getKey() + ".h5");
-            args.add(String.format("--%s=%s", entry.getKey(), inputPath));
+        long totalBytes = inputs.values().stream()
+                .mapToLong(dataset -> dataset.size() * dataset.firstElement().getBitsPerPixel() / 8)
+                .sum();
+        if ((totalBytes >> 20) > Integer.MAX_VALUE) {
+            throw new IllegalArgumentException("Total input size is too large");
+        }
+        int totalMegabytes = (int) (totalBytes >> 20);
+        LongConsumer updateStatusBar = (size) ->
+                statusBar.service.showStatus((int) (size >> 20), totalMegabytes, "Writing inputs");
+        startTime = System.nanoTime();
+
+        for (String inputName : inputs.keySet()) {
+            Path inputPath = inputDir.resolve(inputName + ".h5");
+            args.add(String.format("--%s=%s", inputName, inputPath));
 
             @SuppressWarnings("unchecked")
-            ImgPlus<T> inputImg = (ImgPlus<T>) entry.getValue().getImgPlus();
+            ImgPlus<T> inputImg = (ImgPlus<T>) inputs.get(inputName).getImgPlus();
 
             logger.info(String.format("Write input '%s' starting", inputPath));
-            new Hdf5DataSetWriter<>(
-                    inputImg, inputPath.toString(), "data", 1, logger, statusService).write();
+            Hdf5.writeDataset(
+                    inputPath.toFile(), "data", inputImg, 1, DEFAULT_AXES, updateStatusBar);
             logger.info(String.format("Write input '%s' finished", inputPath));
-        });
+        }
+        statusBar.service.clearStatus();
+        logger.info(String.format(
+                "Write inputs finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
 
         Path outputPath = outputDir.resolve("predictions.h5");
         args.add("--output_filename_format=" + outputPath);
 
         Map<String, String> env = subprocessEnv(opts);
+        startTime = System.nanoTime();
         logger.info(String.format(
                 "Subprocess starting with arguments %s and environment %s", args, env));
-        status.withSpinner("Running " + workflowName(), () -> {
+        statusBar.withSpinner("Running " + workflowName(), () -> {
             // ilastik prints warnings to stderr, but we don't want them to be displayed as errors.
             // Therefore, use Logger#info for both stdout and stderr.
             // Fatal errors should still result in a non-zero exit code.
@@ -128,15 +153,15 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
                 throw new RuntimeException("Subprocess failed with exit code " + exitCode);
             }
         });
-        logger.info("Subprocess finished");
+        logger.info(String.format(
+                "Subprocess finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
 
-        status.withSpinner("Reading output", () ->
-                predictions = new Hdf5DataSetReader<T>(
-                        outputPath.toString(),
-                        "exported_data",
-                        "tzyxc",
-                        logger,
-                        statusService).read());
+        logger.info("Read output starting");
+        startTime = System.nanoTime();
+        statusBar.withSpinner("Reading output", () ->
+                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
+        logger.info(String.format(
+                "Read output finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
     }
 
     private String workflowName() {
@@ -150,13 +175,14 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         if (PlatformUtils.isMac() && executable.toString().endsWith(".app")) {
             executable = executable.resolve("Contents").resolve("MacOS").resolve("ilastik");
         }
+        String axes = reversed(DEFAULT_STRING_AXES);
         return new ArrayList<>(Arrays.asList(
                 executable.toString(),
                 "--headless",
                 "--project=" + projectFileName.getAbsolutePath(),
                 "--output_format=hdf5",
-                "--output_axis_order=tzyxc",
-                "--input_axes=tzyxc",
+                "--output_axis_order=" + axes,
+                "--input_axes=" + axes,
                 "--readonly=1",
                 "--output_internal_path=exported_data"));
     }

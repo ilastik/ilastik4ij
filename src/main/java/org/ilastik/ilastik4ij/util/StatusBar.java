@@ -2,13 +2,11 @@ package org.ilastik.ilastik4ij.util;
 
 import org.scijava.app.StatusService;
 
-import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /**
  * Update status bar while functions are running or collections are iterated.
@@ -16,13 +14,13 @@ import java.util.function.Consumer;
 public final class StatusBar implements AutoCloseable {
     private static final String SPINNER_CHARS = "|/-\\";
 
+    public final StatusService service;
     private final ScheduledExecutorService pool;
-    private final StatusService status;
     private final int period;
 
     public StatusBar(StatusService statusService, int updatePeriodMillis) {
+        service = Objects.requireNonNull(statusService);
         pool = Executors.newScheduledThreadPool(1);
-        status = Objects.requireNonNull(statusService);
         period = updatePeriodMillis;
         if (updatePeriodMillis <= 0) {
             throw new IllegalArgumentException("update period should be positive");
@@ -32,7 +30,7 @@ public final class StatusBar implements AutoCloseable {
     @Override
     public void close() {
         pool.shutdown();
-        status.clearStatus();
+        service.clearStatus();
     }
 
     /**
@@ -44,7 +42,7 @@ public final class StatusBar implements AutoCloseable {
 
         final int[] index = {0};
         Runnable update = () -> {
-            status.showStatus(message + " " + SPINNER_CHARS.charAt(index[0]));
+            service.showStatus(message + " " + SPINNER_CHARS.charAt(index[0]));
             index[0] = (index[0] + 1) % SPINNER_CHARS.length();
         };
 
@@ -53,22 +51,6 @@ public final class StatusBar implements AutoCloseable {
             func.run();
         } finally {
             sf.cancel(true);
-        }
-    }
-
-    /**
-     * Update status bar each time a new collection item is processed.
-     */
-    public <E> void withProgress(String message, Collection<E> items, Consumer<E> func) {
-        Objects.requireNonNull(message);
-        Objects.requireNonNull(items);
-        Objects.requireNonNull(func);
-
-        int progress = 0;
-        status.showStatus(progress++, items.size(), message);
-        for (E item : items) {
-            func.accept(item);
-            status.showStatus(progress++, items.size(), message);
         }
     }
 }
