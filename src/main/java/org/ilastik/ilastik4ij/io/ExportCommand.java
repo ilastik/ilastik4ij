@@ -6,6 +6,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.ilastik.ilastik4ij.util.ImgUtils;
+import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
@@ -19,6 +20,7 @@ import java.util.Locale;
 import java.util.function.LongConsumer;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
 public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends ContextCommand {
@@ -26,13 +28,13 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
     public Dataset input;
 
     @Parameter(label = "Export path")
-    public File path;
+    public File exportPath;
 
     @Parameter(label = "Axis order")
-    public String axes = DEFAULT_STRING_AXES;
+    public String axisOrder = DEFAULT_STRING_AXES;
 
     @Parameter(label = "Dataset name")
-    public String dataset = "/data";
+    public String datasetName = "/data";
 
     @Parameter(label = "Compression level", min = "0", max = "9")
     public int compressionLevel = 0;
@@ -47,17 +49,17 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
     public void run() {
         Logger logger = logService.subLogger(getClass().getName());
 
-        if (!path.getPath().endsWith(".h5")) {
+        if (!exportPath.getPath().endsWith(".h5")) {
             throw new IllegalArgumentException("HDF5 export file must have '.h5' suffix");
         }
-        axes = axes.toLowerCase(Locale.ROOT);
-        if (axes.indexOf('x') < 0 || axes.indexOf('y') < 0) {
+        axisOrder = axisOrder.toLowerCase(Locale.ROOT);
+        if (axisOrder.indexOf('x') < 0 || axisOrder.indexOf('y') < 0) {
             throw new IllegalArgumentException("Axes 'x' and 'y' are mandatory");
         }
-        if (axes.chars().anyMatch(c -> DEFAULT_STRING_AXES.indexOf(c) < 0)) {
+        if (axisOrder.chars().anyMatch(c -> DEFAULT_STRING_AXES.indexOf(c) < 0)) {
             throw new IllegalArgumentException(String.format(
                     "One or more axes in '%s' are unsupported; supported axes: '%s'",
-                    axes,
+                    axisOrder,
                     DEFAULT_STRING_AXES));
         }
 
@@ -72,10 +74,15 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
         LongConsumer updateStatusBar = (bytes) ->
                 statusService.showStatus((int) (bytes >> 20), totalMegabytes, "Exporting to HDF5");
 
-        logger.info("Starting dataset export to " + path);
+        logger.info("Starting dataset export to " + exportPath);
         long startTime = System.nanoTime();
         Hdf5.writeDataset(
-                path, dataset, img, compressionLevel, ImgUtils.toImagejAxes(axes), updateStatusBar);
+                exportPath,
+                datasetName,
+                img,
+                compressionLevel,
+                toImagejAxes(axisOrder),
+                updateStatusBar);
         statusService.clearStatus();
         logger.info(String.format(
                 "Finished dataset export in %.3f seconds", (System.nanoTime() - startTime) / 1e9));

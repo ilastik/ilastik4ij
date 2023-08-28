@@ -37,7 +37,7 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
     @SuppressWarnings("unused")
     private void fileChanged() {
-        MutableModuleItem<String> item = getInfo().getMutableInput("dataset", String.class);
+        MutableModuleItem<String> item = getInfo().getMutableInput("datasetName", String.class);
         try {
             List<DatasetDescription> descriptions = Hdf5.datasets(select);
             item.setChoices(descriptions.stream().map(dd -> dd.path).collect(Collectors.toList()));
@@ -48,7 +48,7 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
         }
     }
 
-    // " " is an ImageJ workaround.
+    // Non-empty choices and " " are ImageJ workarounds.
     @Parameter(
             label = "Dataset name",
             persist = false,
