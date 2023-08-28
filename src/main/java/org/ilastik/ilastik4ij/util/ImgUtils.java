@@ -63,7 +63,7 @@ public final class ImgUtils {
         return axes.chars().mapToObj(c -> {
             int i = DEFAULT_STRING_AXES.indexOf(c);
             if (i < 0) {
-                throw new IllegalArgumentException("Unsupported axis " + c);
+                throw new IllegalArgumentException(String.format("Unsupported axis '%c'", c));
             }
             return DEFAULT_AXES.get(i);
         }).collect(Collectors.toList());

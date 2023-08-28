@@ -71,7 +71,9 @@ def main():
         report["chunk_size"] = human_size(chunk, dtype.itemsize)
     print(json.dumps(report, indent=2))
 
-    with h5py.File(path, "w") as f:
+    with h5py.File(path, "a") as f:
+        if dataset in f:
+            del f[dataset]
         ds = f.create_dataset(dataset, shape=shape, dtype=dtype, chunks=chunk)
         ds.write_direct(numpy.zeros(shape, dtype=dtype))
 
