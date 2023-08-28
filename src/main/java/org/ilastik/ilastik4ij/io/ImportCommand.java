@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toStringAxes;
 import static org.scijava.ItemIO.OUTPUT;
@@ -61,8 +62,9 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     private void datasetChanged() {
         DatasetDescription dd = datasets.get(datasetName);
         type = dd != null ? dd.type.toString().toLowerCase() : NOT_SELECTED;
-        dimensions = dd != null ? Arrays.toString(dd.dims) : NOT_SELECTED;
-        axisOrder = dd != null ? toStringAxes(dd.axes) : "";
+        // Show dimensions and axes in the row-major order for backwards compatibility.
+        dimensions = dd != null ? Arrays.toString(reversed(dd.dims)) : NOT_SELECTED;
+        axisOrder = dd != null ? reversed(toStringAxes(dd.axes)) : "";
     }
 
     @Parameter(label = "Type", persist = false, visibility = MESSAGE)
@@ -71,7 +73,10 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     @Parameter(label = "Dimensions", persist = false, visibility = MESSAGE)
     private String dimensions = NOT_SELECTED;
 
-    @Parameter(label = "Axes", persist = false)
+    @Parameter(
+            label = "Axes",
+            persist = false,
+            description = "Row-major axes (last axis varies fastest)")
     public String axisOrder = "";
 
     @Parameter(label = "Output image", persist = false, type = OUTPUT)
@@ -96,7 +101,8 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
         try (StatusBar statusBar = new StatusBar(statusService, 300)) {
             statusBar.withSpinner("Importing dataset", () -> {
                 long startTime = System.nanoTime();
-                output = Hdf5.readDataset(select, datasetName, toImagejAxes(axisOrder));
+                // Reverse axis order back from row-major to column-major.
+                output = Hdf5.readDataset(select, datasetName, toImagejAxes(reversed(axisOrder)));
                 logger.info(String.format(
                         "Import dataset finished in %.3f seconds",
                         (System.nanoTime() - startTime) / 1e9));

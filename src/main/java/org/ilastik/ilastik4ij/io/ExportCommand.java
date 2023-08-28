@@ -20,6 +20,7 @@ import java.util.Locale;
 import java.util.function.LongConsumer;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
+import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
@@ -30,8 +31,9 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
     @Parameter(label = "Export path")
     public File exportPath;
 
-    @Parameter(label = "Axis order")
-    public String axisOrder = DEFAULT_STRING_AXES;
+    // Reverse axis order from column-major to row-major for backwards compatibility.
+    @Parameter(label = "Axis order", description = "Row-major axes (last axis varies fastest)")
+    public String axisOrder = reversed(DEFAULT_STRING_AXES);
 
     @Parameter(label = "Dataset name")
     public String datasetName = "/data";
@@ -60,7 +62,7 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
             throw new IllegalArgumentException(String.format(
                     "One or more axes in '%s' are unsupported; supported axes: '%s'",
                     axisOrder,
-                    DEFAULT_STRING_AXES));
+                    reversed(DEFAULT_STRING_AXES)));
         }
 
         @SuppressWarnings("unchecked")
@@ -81,7 +83,8 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
                 datasetName,
                 img,
                 compressionLevel,
-                toImagejAxes(axisOrder),
+                // Reverse axis order back from row-major to column-major.
+                toImagejAxes(reversed(axisOrder)),
                 updateStatusBar);
         statusService.clearStatus();
         logger.info(String.format(
