@@ -38,12 +38,22 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
     @SuppressWarnings("unused")
     private void selectChanged() {
-        List<DatasetDescription> desc = Hdf5.datasets(select);
-        getInfo().getMutableInput("datasetName", String.class).setChoices(
-                desc.isEmpty() ?
-                        Collections.singletonList(" ") :
-                        desc.stream().map(dd -> dd.path).collect(Collectors.toList()));
-        datasets = desc.stream().collect(Collectors.toMap(dd -> dd.path, dd -> dd));
+        List<String> choices = Collections.singletonList(" ");
+        Map<String, DatasetDescription> datasets = Collections.emptyMap();
+
+        try {
+            List<DatasetDescription> desc = Hdf5.datasets(select);
+            if (!desc.isEmpty()) {
+                choices = desc.stream().map(dd -> dd.path).collect(Collectors.toList());
+                datasets = desc.stream().collect(Collectors.toMap(dd -> dd.path, dd -> dd));
+            }
+        } catch (Exception ignored) {
+            // Can happen while user is modifying the file name.
+            return;
+        }
+
+        getInfo().getMutableInput("datasetName", String.class).setChoices(choices);
+        this.datasets = datasets;
     }
 
     // Non-empty choices and " " are ImageJ workarounds.
