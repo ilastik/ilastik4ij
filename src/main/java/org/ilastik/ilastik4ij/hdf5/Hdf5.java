@@ -56,17 +56,18 @@ public final class Hdf5 {
      */
     public static List<DatasetDescription> datasets(File file) {
         Objects.requireNonNull(file);
-
         List<DatasetDescription> result = new ArrayList<>();
-        Deque<String> stack = new ArrayDeque<>();
-        stack.push("/");
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(file)) {
+            Deque<String> stack = new ArrayDeque<>(reader.object().getAllGroupMembers("/"));
+
             while (!stack.isEmpty()) {
                 String path = stack.pop();
 
                 if (reader.object().isGroup(path)) {
-                    stack.addAll(reader.object().getAllGroupMembers(path));
+                    reader.object().getAllGroupMembers(path).stream()
+                            .map(subPath -> path + "/" + subPath)
+                            .forEach(stack::add);
                 } else if (reader.object().isDataSet(path)) {
                     DatasetDescription.ofHdf5(reader, path).ifPresent(result::add);
                 }
@@ -148,7 +149,7 @@ public final class Hdf5 {
         }
 
         String name = file.toPath()
-                .resolve(path.replaceFirst("/+", ""))
+                .resolve(path.replace("^/+", ""))
                 .toString()
                 .replace('\\', '/');
 
