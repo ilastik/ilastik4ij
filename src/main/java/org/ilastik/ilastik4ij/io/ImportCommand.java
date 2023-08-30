@@ -33,34 +33,31 @@ import static org.scijava.widget.ChoiceWidget.LIST_BOX_STYLE;
 public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends DynamicCommand {
     private static final String NOT_SELECTED = "<i>Select file and dataset...</i>";
 
-    @Parameter(label = "HDF5 file", persist = false, callback = "fileChanged")
+    @Parameter(label = "HDF5 file", persist = false, callback = "selectChanged")
     public File select;
 
     @SuppressWarnings("unused")
-    private void fileChanged() {
-        MutableModuleItem<String> item = getInfo().getMutableInput("datasetName", String.class);
-        try {
-            List<DatasetDescription> descriptions = Hdf5.datasets(select);
-            item.setChoices(descriptions.stream().map(dd -> dd.path).collect(Collectors.toList()));
-            datasets = descriptions.stream().collect(Collectors.toMap(dd -> dd.path, dd -> dd));
-        } catch (Exception ignored) {
-            item.setChoices(Collections.singletonList(" "));
-            datasets = Collections.emptyMap();
-        }
+    private void selectChanged() {
+        List<DatasetDescription> desc = Hdf5.datasets(select);
+        getInfo().getMutableInput("datasetName", String.class).setChoices(
+                desc.isEmpty() ?
+                        Collections.singletonList(" ") :
+                        desc.stream().map(dd -> dd.path).collect(Collectors.toList()));
+        datasets = desc.stream().collect(Collectors.toMap(dd -> dd.path, dd -> dd));
     }
 
     // Non-empty choices and " " are ImageJ workarounds.
     @Parameter(
             label = "Dataset name",
             persist = false,
-            callback = "datasetChanged",
+            callback = "datasetNameChanged",
             style = LIST_BOX_STYLE,
             choices = {" "})
     public String datasetName = " ";
 
     @SuppressWarnings("unused")
-    private void datasetChanged() {
-        DatasetDescription dd = datasets.get(datasetName);
+    private void datasetNameChanged() {
+        DatasetDescription dd = datasetName.equals(" ") ? null : datasets.get(datasetName);
         type = dd != null ? dd.type.toString().toLowerCase() : NOT_SELECTED;
         // Show dimensions and axes in the row-major order for backwards compatibility.
         dimensions = dd != null ? Arrays.toString(reversed(dd.dims)) : NOT_SELECTED;
