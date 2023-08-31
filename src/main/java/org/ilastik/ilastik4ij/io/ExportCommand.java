@@ -32,8 +32,12 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
     public File exportPath;
 
     // Reverse axis order from column-major to row-major for backwards compatibility.
-    @Parameter(label = "Axis order", description = "Row-major axes (last axis varies fastest)")
-    public String axisOrder = reversed(DEFAULT_STRING_AXES);
+    // The default axis order here is kept for backwards compatibility.
+    @Parameter(
+            label = "Axis order",
+            description = "Row-major axes (last axis varies fastest)",
+            required = false)
+    public String axisOrder = reversed("cxyzt");
 
     @Parameter(label = "Dataset name")
     public String datasetName = "/data";
