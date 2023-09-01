@@ -18,6 +18,9 @@ def main():
             print(f"removing old jar {old_jar}")
             old_jar.unlink()
 
+    print("cleaning project")
+    subprocess.run(["mvn", "clean"], check=True)
+
     print(f"building project")
     subprocess.run(["mvn", "package", "-DskipTests=true"], check=True)
 
