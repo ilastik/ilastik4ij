@@ -5,13 +5,12 @@ import net.imagej.ImgPlus;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5;
-import org.ilastik.ilastik4ij.util.ImgUtils;
-import org.scijava.ItemVisibility;
 import org.scijava.app.StatusService;
 import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.log.LogService;
 import org.scijava.log.Logger;
+import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -23,7 +22,10 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
 
-@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
+@Plugin(
+        type = Command.class,
+        headless = true, menuPath = "Plugins>ilastik>Export HDF5",
+        attrs = @Attr(name = "resolve-optional"))
 public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends ContextCommand {
     @Parameter(label = "Image to save")
     public Dataset input;
