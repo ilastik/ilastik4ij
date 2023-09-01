@@ -255,6 +255,12 @@ RandomAccessibleInterval`.
 
 `src/test/java/org/ilastik/ilastik4ij/Demo.java` contains usage examples of various workflows.
 
+### Run example macros
+
+It's possible to run some example macros from command line with
+`/path/to/fiji/executable --headless -macro examples/your-example.ijm`.
+Note that headless mode behaves differently than the GUI.
+
 ### Manually test in a local Fiji installation
 
 Run `scripts/fiji-deploy.py` to build project and copy the newly built plugin to Fiji.
