@@ -74,10 +74,10 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
         axisOrder = dd != null ? reversed(toStringAxes(dd.axes)) : "";
     }
 
-    @Parameter(label = "Type", persist = false, visibility = MESSAGE)
+    @Parameter(label = "Type", persist = false, required = false, visibility = MESSAGE)
     private String type = NOT_SELECTED;
 
-    @Parameter(label = "Dimensions", persist = false, visibility = MESSAGE)
+    @Parameter(label = "Dimensions", persist = false, required = false, visibility = MESSAGE)
     private String dimensions = NOT_SELECTED;
 
     @Parameter(
