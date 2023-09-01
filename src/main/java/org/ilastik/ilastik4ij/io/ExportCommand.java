@@ -10,36 +10,19 @@ import org.scijava.command.Command;
 import org.scijava.command.ContextCommand;
 import org.scijava.log.LogService;
 import org.scijava.log.Logger;
-import org.scijava.plugin.Attr;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.io.File;
-import java.util.Locale;
 import java.util.function.LongConsumer;
 
-import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
-import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
-import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
-
-@Plugin(
-        type = Command.class,
-        headless = true, menuPath = "Plugins>ilastik>Export HDF5",
-        attrs = @Attr(name = "resolve-optional"))
+@Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
 public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends ContextCommand {
     @Parameter(label = "Image to save")
     public Dataset input;
 
     @Parameter(label = "Export path")
     public File exportPath;
-
-    // Reverse axis order from column-major to row-major for backwards compatibility.
-    // The default axis order here is kept for backwards compatibility.
-    @Parameter(
-            label = "Axis order",
-            description = "Row-major axes (last axis varies fastest)",
-            required = false)
-    public String axisOrder = reversed("cxyzt");
 
     @Parameter(label = "Dataset name")
     public String datasetName = "/data";
@@ -60,16 +43,6 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
         if (!exportPath.getPath().endsWith(".h5")) {
             throw new IllegalArgumentException("HDF5 export file must have '.h5' suffix");
         }
-        axisOrder = axisOrder.toLowerCase(Locale.ROOT);
-        if (axisOrder.indexOf('x') < 0 || axisOrder.indexOf('y') < 0) {
-            throw new IllegalArgumentException("Axes 'x' and 'y' are mandatory");
-        }
-        if (axisOrder.chars().anyMatch(c -> DEFAULT_STRING_AXES.indexOf(c) < 0)) {
-            throw new IllegalArgumentException(String.format(
-                    "One or more axes in '%s' are unsupported; supported axes: '%s'",
-                    axisOrder,
-                    reversed(DEFAULT_STRING_AXES)));
-        }
 
         @SuppressWarnings("unchecked")
         ImgPlus<T> img = (ImgPlus<T>) input.getImgPlus();
@@ -84,14 +57,7 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
 
         logger.info("Starting dataset export to " + exportPath);
         long startTime = System.nanoTime();
-        Hdf5.writeDataset(
-                exportPath,
-                datasetName,
-                img,
-                compressionLevel,
-                // Reverse axis order back from row-major to column-major.
-                toImagejAxes(reversed(axisOrder)),
-                updateStatusBar);
+        Hdf5.writeDataset(exportPath, datasetName, img, compressionLevel, null, updateStatusBar);
         statusService.clearStatus();
         logger.info(String.format(
                 "Finished dataset export in %.3f seconds", (System.nanoTime() - startTime) / 1e9));
