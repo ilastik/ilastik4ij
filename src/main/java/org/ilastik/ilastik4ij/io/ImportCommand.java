@@ -11,7 +11,6 @@ import org.scijava.command.Command;
 import org.scijava.command.DynamicCommand;
 import org.scijava.log.LogService;
 import org.scijava.log.Logger;
-import org.scijava.module.MutableModuleItem;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
@@ -83,6 +82,7 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     @Parameter(
             label = "Axes",
             persist = false,
+            required = false,
             description = "Row-major axes (last axis varies fastest)")
     public String axisOrder = "";
 
