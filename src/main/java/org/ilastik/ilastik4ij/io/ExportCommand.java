@@ -20,9 +20,12 @@ import java.util.function.LongConsumer;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
+import static org.scijava.ItemVisibility.MESSAGE;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
 public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends ContextCommand {
+    private static final String AXIS_ORDER = "tzyxc";
+
     @Parameter(label = "Image to save")
     public Dataset input;
 
@@ -37,10 +40,9 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
 
     @Parameter(
             label = "Axes",
-            persist = false,
-            required = false,
-            description = "Row-major axes (last axis varies fastest)")
-    public final String axisOrder = "tzyxc";
+            description = "Row-major axes (last axis varies fastest)",
+            visibility = MESSAGE)
+    private String axisOrder = String.format("<i>%s</i>", AXIS_ORDER);
 
     @Parameter
     private LogService logService;
@@ -58,7 +60,7 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
 
         @SuppressWarnings("unchecked")
         ImgPlus<T> img = (ImgPlus<T>) input.getImgPlus();
-        List<AxisType> axes = toImagejAxes(reversed(axisOrder));
+        List<AxisType> axes = toImagejAxes(reversed(AXIS_ORDER));
 
         long totalBytes = img.size() * img.firstElement().getBitsPerPixel() / 8;
         if (totalBytes >> 20 > Integer.MAX_VALUE) {
