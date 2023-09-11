@@ -251,15 +251,11 @@ as `ImagePlus`, containing `ImageProcessors` to access the underlying data. We t
 containers everywhere which are roughly wrapped as `Dataset > ImgPlus > Img >
 RandomAccessibleInterval`.
 
-### Demo
+### Examples
 
-`src/test/java/org/ilastik/ilastik4ij/Demo.java` contains usage examples of various workflows.
-
-### Run example macros
-
-It's possible to run some example macros from command line with
-`/path/to/fiji/executable --headless -macro examples/your-example.ijm`.
-Note that headless mode behaves differently than the GUI.
+If you want to run workflows from your own Java code, have a look at
+`src/test/java/org/ilastik/ilastik4ij/Demo.java`.
+Example macros can be found in the `examples` directory.
 
 ### Manually test in a local Fiji installation
 
