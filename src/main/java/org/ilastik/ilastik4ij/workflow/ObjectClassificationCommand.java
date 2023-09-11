@@ -8,6 +8,7 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
@@ -17,6 +18,17 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
 
     @Parameter(label = "Second Input Type", choices = {ROLE_PROBABILITIES, ROLE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String secondInputType = ROLE_PROBABILITIES;
+
+    @Override
+    protected List<String> workflowArgs() {
+        if (ROLE_PROBABILITIES.equals(secondInputType)) {
+            return Collections.singletonList("--export_source=Object Probabilities");
+        }
+        if (ROLE_SEGMENTATION.equals(secondInputType)) {
+            return Collections.singletonList("--export_source=Object Predictions");
+        }
+        throw new IllegalStateException("Unexpected value: " + secondInputType);
+    }
 
     @Override
     protected Map<String, Dataset> workflowInputs() {
