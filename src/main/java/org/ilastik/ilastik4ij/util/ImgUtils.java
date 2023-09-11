@@ -3,12 +3,14 @@ package org.ilastik.ilastik4ij.util;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
+import net.imglib2.IterableRealInterval;
 import net.imglib2.RandomAccessibleInterval;
 import net.imglib2.converter.Converters;
 import net.imglib2.img.Img;
 import net.imglib2.img.ImgView;
 import net.imglib2.type.Type;
 import net.imglib2.type.numeric.ARGBType;
+import net.imglib2.type.numeric.RealType;
 import net.imglib2.type.numeric.integer.UnsignedByteType;
 import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.hdf5.DatasetType;
@@ -314,6 +316,15 @@ public final class ImgUtils {
         Img<UnsignedByteType> multiChannelImg = ImgView.wrap(Converters.argbChannels(img));
         axes.add(Axes.CHANNEL);
         return new ImgPlus<>(multiChannelImg, img.getName(), axes.toArray(new AxisType[0]));
+    }
+
+    /**
+     * Return the total size of all images in megabytes.
+     */
+    public static int totalMegabytes(List<IterableRealInterval<? extends RealType<?>>> imgs) {
+        return Math.toIntExact(imgs.stream()
+                .mapToLong(img -> img.firstElement().getBitsPerPixel() / 8)
+                .sum());
     }
 
     private ImgUtils() {

@@ -15,11 +15,13 @@ import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.LongConsumer;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.toImagejAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.totalMegabytes;
 import static org.scijava.ItemVisibility.MESSAGE;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Export HDF5")
@@ -62,13 +64,9 @@ public final class ExportCommand<T extends NativeType<T> & RealType<T>> extends 
         ImgPlus<T> img = (ImgPlus<T>) input.getImgPlus();
         List<AxisType> axes = toImagejAxes(reversed(AXIS_ORDER));
 
-        long totalBytes = img.size() * img.firstElement().getBitsPerPixel() / 8;
-        if (totalBytes >> 20 > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Image is too large to export");
-        }
-        int totalMegabytes = (int) (totalBytes >> 20);
+        int total = totalMegabytes(Collections.singletonList(img));
         LongConsumer updateStatusBar = (bytes) ->
-                statusService.showStatus((int) (bytes >> 20), totalMegabytes, "Exporting to HDF5");
+                statusService.showStatus((int) (bytes >> 20), total, "Exporting to HDF5");
 
         logger.info("Starting dataset export to " + exportPath);
         long startTime = System.nanoTime();
