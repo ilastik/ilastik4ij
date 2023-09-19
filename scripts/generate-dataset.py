@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Generate HDF5 dataset of the specified size filled with zeros."""
 
@@ -9,16 +9,8 @@ import h5py
 import numpy
 
 
-def parse_shape(s: str) -> tuple[int, ...]:
-    return tuple(map(int, reversed(s.split(","))))
-
-
-def show_shape(shape: tuple[int, ...]) -> str:
-    return ",".join(map(str, reversed(shape)))
-
-
 def human_size(shape: tuple[int, ...], itemsize: int) -> str:
-    n = numpy.prod(shape) * itemsize
+    n = int(numpy.prod(shape)) * itemsize
     suffixes = "bytes", "KiB", "MiB", "GiB", "TiB", "PiB"
     suffix = suffixes[0]
     for suffix in suffixes:
@@ -43,35 +35,37 @@ def main():
     ap.add_argument(
         "-s",
         "--shape",
-        help="comma-separated column-major shape (default: 64,64,3,64,10)",
-        default="64,64,3,64,10",
+        help="comma-separated shape (default: 10,64,3,64,64)",
+        default="10,64,3,64,64",
     )
     ap.add_argument(
         "-c",
         "--chunk",
-        help="comma-separated column-major chunk shape (default: no chunking)",
+        help="comma-separated chunk shape (default: no chunking)",
     )
     args = ap.parse_args()
 
     path = args.path
     dataset = "/" + args.dataset.removeprefix("/")
     dtype = numpy.dtype(args.dtype)
-    shape = parse_shape(args.shape)
-    chunk = parse_shape(args.chunk) if args.chunk is not None else None
+    shape = tuple(map(int, args.shape))
+    chunk = tuple(map(int, args.chunk)) if args.chunk is not None else None
 
     report = {
         "path": path,
         "dataset": dataset,
         "dtype": str(dtype),
-        "shape": show_shape(shape),
+        "shape": ",".join(map(str, shape)),
         "shape_size": human_size(shape, dtype.itemsize),
     }
     if chunk is not None:
-        report["chunk"] = show_shape(chunk)
+        report["chunk"] = ",".join(map(str, chunk))
         report["chunk_size"] = human_size(chunk, dtype.itemsize)
     print(json.dumps(report, indent=2))
 
-    with h5py.File(path, "w") as f:
+    with h5py.File(path, "a") as f:
+        if dataset in f:
+            del f[dataset]
         ds = f.create_dataset(dataset, shape=shape, dtype=dtype, chunks=chunk)
         ds.write_direct(numpy.zeros(shape, dtype=dtype))
 

@@ -251,37 +251,15 @@ as `ImagePlus`, containing `ImageProcessors` to access the underlying data. We t
 containers everywhere which are roughly wrapped as `Dataset > ImgPlus > Img >
 RandomAccessibleInterval`.
 
-### Demo
+### Examples
 
-`src/test/java/org/ilastik/ilastik4ij/Demo.java` contains usage examples of various workflows.
+If you want to run workflows from your own Java code, have a look at
+`src/test/java/org/ilastik/ilastik4ij/Demo.java`.
+Example macros can be found in the `examples` directory.
 
 ### Manually test in a local Fiji installation
 
-If you have [Fiji][fiji] installed locally somewhere in your system, it is
-possible to automatically copy the plugin into the Fiji's plugins directory.
-You need to specify path to your Fiji installation in local `.m2/settings.xml`:
-
-```xml
-<settings xmlns="http://maven.apache.org/SETTINGS/1.0.0"
-          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-          xsi:schemaLocation="http://maven.apache.org/SETTINGS/1.0.0 https://maven.apache.org/xsd/settings-1.0.0.xsd">
-    <profiles>
-        <profile>
-            <id>local-install-to-fiji</id>
-            <properties>
-                <fiji.home>/Applications/Fiji.app</fiji.home>
-            </properties>
-        </profile>
-    </profiles>
-</settings>
-```
-
-POM of this project has a build profile that will be automatically activated
-when the property `fiji.home` is defined, so you can run  `mvn install`
-or `mvn install -DskipTests` to put a fresh build of the plugin into Fiji.
-
-Make sure that the released plugin version is not installed in Fiji, and that
-`local-install-to-fiji` profile is not disabled.
+Run `scripts/fiji-deploy.py` to build project and copy the newly built plugin to Fiji.
 
 ### Deployment
 

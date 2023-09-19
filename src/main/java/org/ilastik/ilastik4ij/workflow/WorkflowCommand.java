@@ -6,6 +6,7 @@ import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5;
 import org.ilastik.ilastik4ij.ui.IlastikOptions;
+import org.ilastik.ilastik4ij.util.ImgUtils;
 import org.ilastik.ilastik4ij.util.StatusBar;
 import org.ilastik.ilastik4ij.util.Subprocess;
 import org.ilastik.ilastik4ij.util.TempDir;
@@ -110,15 +111,9 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         Map<String, Dataset> inputs = new HashMap<>(workflowInputs());
         inputs.put("raw_data", inputImage);
 
-        long totalBytes = inputs.values().stream()
-                .mapToLong(dataset -> dataset.size() * dataset.firstElement().getBitsPerPixel() / 8)
-                .sum();
-        if ((totalBytes >> 20) > Integer.MAX_VALUE) {
-            throw new IllegalArgumentException("Total input size is too large");
-        }
-        int totalMegabytes = (int) (totalBytes >> 20);
+        int total = ImgUtils.totalMegabytes(new ArrayList<>(inputs.values()));
         LongConsumer updateStatusBar = (size) ->
-                statusBar.service.showStatus((int) (size >> 20), totalMegabytes, "Writing inputs");
+                statusBar.service.showStatus((int) (size >> 20), total, "Writing inputs");
         startTime = System.nanoTime();
 
         for (String inputName : inputs.keySet()) {
