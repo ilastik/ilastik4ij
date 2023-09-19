@@ -142,7 +142,7 @@ public class Hdf5Test {
     private static Path copyResource(String resourcePath, Path dstDir) {
         try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
             Objects.requireNonNull(in);
-            Path path = dstDir.resolve(resourcePath.replaceFirst("/+", ""));
+            Path path = dstDir.resolve(resourcePath.replaceFirst("^/+", ""));
             Files.createDirectories(path.getParent());
             Files.copy(in, path);
             return path;

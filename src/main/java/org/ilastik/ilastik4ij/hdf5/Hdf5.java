@@ -149,7 +149,7 @@ public final class Hdf5 {
         }
 
         String name = file.toPath()
-                .resolve(path.replace("^/+", ""))
+                .resolve(path.replaceFirst("^/+", ""))
                 .toString()
                 .replace('\\', '/');
 

@@ -75,7 +75,7 @@ public final class DatasetDescription {
             axesGuessed = true;
         }
 
-        path = "/" + path.replace("^/+", "");
+        path = "/" + path.replaceFirst("^/+", "");
         return Optional.of(new DatasetDescription(path, type.get(), dims, axes, axesGuessed));
     }
 
