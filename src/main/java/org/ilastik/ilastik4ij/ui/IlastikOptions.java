@@ -10,19 +10,30 @@ import java.io.File;
 
 import static org.scijava.ItemVisibility.MESSAGE;
 
-@Plugin(type = OptionsPlugin.class, menuPath = "Plugins>ilastik>Configure ilastik executable location")
+@Plugin(
+        type = OptionsPlugin.class,
+        menuPath = "Plugins>ilastik>Configure ilastik executable location")
 public final class IlastikOptions extends OptionsPlugin {
-    @Parameter(label = "Path to ilastik executable", style = FileWidget.OPEN_STYLE)
+    @Parameter(
+            label = "Executable path",
+            description = "Path to ilastik executable",
+            style = FileWidget.OPEN_STYLE)
     public File executableFile;
 
-    @Parameter(label = "Number of Threads ilastik is allowed to use. Negative numbers means no restriction")
+    @Parameter(label = "Example path", visibility = MESSAGE)
+    private String examplePath = "";
+
+    @Parameter(
+            label = "Threads (-1 for all)",
+            description = "Number of threads that ilastik is allowed to use, " +
+                    "or \"-1\" for all available threads")
     public int numThreads = -1;
 
-    @Parameter(min = "256", label = "Maximum amount of RAM (in MB) that ilastik is allowed to use.")
+    @Parameter(
+            label = "Memory (MiB)",
+            min = "256",
+            description = "Maximum amount of RAM (in megabytes) that ilastik is allowed to use")
     public int maxRamMb = 4096;
-
-    @Parameter(visibility = MESSAGE)
-    private String examplePath = "";
 
     @Override
     public void initialize() {
@@ -36,7 +47,6 @@ public final class IlastikOptions extends OptionsPlugin {
         }
 
         if (!path.isEmpty()) {
-            getInfo().getMutableInput("examplePath", String.class).setLabel("Example path");
             examplePath = "<pre>" + path + "</pre>";
         }
     }
