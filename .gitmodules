@@ -1,0 +1,3 @@
+[submodule "scijava-scripts"]
+	path = scijava-scripts
+	url = https://github.com/scijava/scijava-scripts.git
