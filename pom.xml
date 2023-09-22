@@ -31,20 +31,57 @@
 
     <developers>
         <developer>
-            <id>chaubold</id>
-            <name>Carsten Haubold</name>
-            <url />
+            <id>emilmelnikov</id>
+            <name>Emil Melnikov</name>
         </developer>
         <developer>
             <id>awolny</id>
             <name>Adrian Wolny</name>
-            <url />
         </developer>
-
+        <developer>
+            <id>k-dominik</id>
+            <name>Dominik Kutra</name>
+        </developer>
+        <developer>
+            <id>btbest</id>
+            <name>Benedikt Best</name>
+        </developer>
+        <developer>
+            <id>Tomaz-Vieira</id>
+            <name>Tomaz Vieira</name>
+        </developer>
     </developers>
+
     <contributors>
         <contributor>
+            <name>Christian Tischer</name>
+        </contributor>
+        <contributor>
             <name>Carsten Haubold</name>
+        </contributor>
+        <contributor>
+            <name>Ashis Ravindran</name>
+        </contributor>
+        <contributor>
+            <name>Maxim Novikov</name>
+        </contributor>
+        <contributor>
+            <name>Curtis Rueden</name>
+        </contributor>
+        <contributor>
+            <name>Nicolas Chiaruttini</name>
+        </contributor>
+        <contributor>
+            <name>Mark Kittisopikul</name>
+        </contributor>
+        <contributor>
+            <name>Jan Eglinger</name>
+        </contributor>
+        <contributor>
+            <name>Stefan Helfrich</name>
+        </contributor>
+        <contributor>
+            <name>Gabriel Einsdorf</name>
         </contributor>
     </contributors>
 
