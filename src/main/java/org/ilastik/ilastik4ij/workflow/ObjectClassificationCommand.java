@@ -46,13 +46,7 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
 
     @Override
     protected List<String> workflowArgs() {
-        if (ROLE_PROBABILITIES.equals(secondInputType)) {
-            return Collections.singletonList("--export_source=Object Probabilities");
-        }
-        if (ROLE_SEGMENTATION.equals(secondInputType)) {
-            return Collections.singletonList("--export_source=Object Predictions");
-        }
-        throw new IllegalStateException("Unexpected value: " + secondInputType);
+        return Collections.singletonList("--export_source=Object Predictions");
     }
 
     @Override
