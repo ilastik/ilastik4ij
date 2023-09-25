@@ -118,7 +118,7 @@ Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ### Pixel Classification and Autocontext
 
-Pixel Classification and Autocontext workflow have similar input settings.
+[Pixel Classification](https://www.ilastik.org/documentation/pixelclassification/pixelclassification) and [Autocontext](https://www.ilastik.org/documentation/autocontext/autocontext) workflow have similar input settings.
 
 The Pixel Classification Workflow can be found at `Plugins -> ilastik -> Run Pixel Classification Prediction`, the Autocontext Workflow at `Plugins -> ilastik -> Run Autocontext Prediction`.
 
@@ -135,43 +135,28 @@ The Pixel Classification Workflow can be found at `Plugins -> ilastik -> Run Pix
 
 * if _Probabilities_ was selected: a multi-channel float image that you can _e.g._ threshold to obtain a 
   segmentation ![Pixel Classification Output: Probabilities](./doc/screenshots/IJ-PC-predictions.png)
-* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_.
-It is recommended to apply a LUT (e.g. `Image -> Lookup Tables -> glasbey`) to the result in order to see the _segmentation_ output. 
+* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to the label class.
+  e.g. all pixels belonging to your first label, will have the value `1`, all that belong to the 2nd class, will have the value `2` and so on.
+  ilastik will assign classes based on the _highest_ probability label for each pixel.
+  It is recommended to apply a LUT (e.g. `Image -> Lookup Tables -> glasbey`) to the result in order to see the _segmentation_ output. 
   ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png).
   
-#### Batch processing
-The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
-resulting probability maps in separate HDF5 files inside the input directory.
+#### Example macro usage
+
+A simple example macro that opens a `.tif` file and processes it with a pre-trained ilastik pixel classification project would look like the following:
+
+```javascript
+project = "/absolute/path/to/some/directory/pixel_class_2d_cells_apoptotic.ilp";
+input = "/absolute/path/to/some/directory/2d_cells_apoptotic.tif";
+
+type = "Probabilities";
+
+open(input);
+run("Run Pixel Classification Prediction", "projectfilename=[" + project + "] input=[" + input + "] pixelclassificationtype=[" + type + "]");
 ```
-// set global variables
-pixelClassificationProject = "<ILASTIK_PROJECT_PATH>";
-outputType = "Probabilities"; //  or "Segmentation"
-inputDataset = "data";
-outputDataset = "exported_data";
-axisOrder = "tzyxc";
-compressionLevel = 0;
 
-// process all H5 files in a given directory
-dataDir = "<DATASET_DIR>";
-fileList = getFileList(dataDir);
-for (i = 0; i < fileList.length; i++) {
-	// import image from the H5
-	fileName = dataDir + fileList[i];	
-	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
-	run("Import HDF5", importArgs);
+A more complex example can be found in [`./examples/pixel_classification.ijm`](./examples/pixel_classification.ijm).
 
-	// run pixel classification
-	inputImage = fileName + "/" + inputDataset;
-	pixelClassificationArgs = "projectfilename=" + pixelClassificationProject + " saveonly=false inputimage=" + inputImage + " pixelclassificationtype=" + outputType;
-	run("Run Pixel Classification Prediction", pixelClassificationArgs);
-
-	// export probability maps to H5
-	outputFile = dataDir + "output" + i + ".h5";
-	exportArgs = "select=" + outputFile + " datasetname=" + outputDataset + " compressionlevel=" + compressionLevel;
-	run("Export HDF5", exportArgs);
-}
-```
-replace `<DATASET_DIR>` with the input dataset where the HDF5 files reside (don't forget the trailing slash `/`) and `<ILASTIK_PROJECT_PATH>` with the path to your ilastik Pixel Classification project file.
 
 ### Object Classification
 Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
