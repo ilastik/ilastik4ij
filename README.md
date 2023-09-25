@@ -20,6 +20,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [Export](#export)
     - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
     - [ilastik configuration for the workflow wrappers](#configuration)
+    - [Configuration](#configuration-for-running-ilastik-from-within-Fiji)
     - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
     - [Object Classification](#object-classification)
     - [Boundary-based Segmentation with Multicut](#boundary-based-segmentation-with-multicut)
@@ -55,41 +56,45 @@ See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappe
 Found at `Plugins -> ilastik -> Import HDF5`.
 
 HDF5 files can contain multiple datasets. Thus, when you import an HDF5 file containing more than one dataset, 
-you will have to select which dataset you want to import. After choosing a given HDF5 file, you will be presented with the following dialog:
+you will have to select which dataset you want to import by selecting the _Dataset Name_:
 
 ![ImageJ Menu](./doc/screenshots/IJ-Import.png)
 
-where you should select or enter the correct meaning of the different dimensions of the dataset. 
+Here you should double check the correct meaning of the different _Dimensions_ of the dataset by specifying the _Axes_. 
 At least `x` and `y` must be present, and the number of characters (`x`,`y`,`z` spatial, `c` channels and `t` time)
 must be equal to the number of dimensions listed in the description above.
 
-#### Batch processing
+#### Example Macro usage
 
-The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro:
+The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro.
 
-```
-dataDir = "<DATASET_DIR>";
-fileList = getFileList(dataDir);
-for (i = 0; i < fileList.length; i++) {
-	// import image from the H5
-	fileName = dataDir + fileList[i];	
-	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
-	run("Import HDF5", importArgs);
-}
+```javascript
+input = "/absolute/path/to/some/directory/src/test/resources/2d_cells_apoptotic_1channel.h5";
+
+datasetname = "/data";
+axisorder = "tzyxc";
+
+run("Import HDF5", "select=[" + input + "] datasetname=[" + datasetname + "] axisorder=[" + axisorder + "]");
 ```
 
+see also [`./examples/import.ijm`](./examples/import.ijm)
 
 ### Export
 
 Found at `Plugins -> ilastik -> Export HDF5`.
 
-If you want to save the currently opened image to a HDF5 file that can be immediately opened in ilastik,
+If you want to save the currently opened image to an HDF5 file that can be immediately opened in ilastik,
 use this export option. Additionally to the location where the file should be saved, you could specify the output
 data set name as well as how much the dataset should be compressed.
 Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, where many pixel values are equal.
 The plugin uses (lossless) gzip compression.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
+
+#### Example Macro usage
+
+You can find a simple example macro in [`./examples/export.ijm`](./examples/export.ijm).
+Furthermore, there is an example macro demonstrating how to convert a whole folder of `.tiff` files to `.h5` in [`./examples/convert_tiff_to_ilastik_h5.ijm`](./examples/convert_tiff_to_ilastik_h5.ijm).
 
 ### How to train an ilastik project for use in the plugins
 
@@ -107,7 +112,8 @@ The export creates files with maximum compatibility with ilastik - and you will 
 With this you make sure that the whole processing chain will work.
 
 
-### ilastik configuration of the workflow wrappers
+### Configuration for running ilastik from within Fiji
+
 Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ![configuration dialog](./doc/screenshots/IJ-Config.png)
