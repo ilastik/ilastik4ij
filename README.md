@@ -191,25 +191,26 @@ A basic macro example for running object classification on a single image can be
 
 
 ### Boundary-based Segmentation with Multicut
-Found at `Plugins -> ilastik -> Run Multicut`.
 
-![Multicut Dialog](./doc/screenshots/multicut-dialog.png)
+Command for [Boundary-based Segmentation with Multicut](https://www.ilastik.org/documentation/multicut/multicut): `Plugins -> ilastik -> Run Multicut`.
+
+![Multicut Dialog](./doc/screenshots/IJ-mc-dialog.png)
 
 **Inputs:**
 
 * a project file
 * one raw image (select the appropriate one in the dropdown box as shown above)
-* one additional image that contains boundary probabilities. Those can be generated, e.g. in Pixel Classification or with a pre-trained Neural Network.
+* one additional image that contains boundary probabilities. Those can be generated, e.g. in Pixel Classification, Autocontext, or with a pre-trained Neural Network.
 
 **Output:**
 
 * a new integer value image (label image) where the pixels belonging to the same object have the same value.
   The example image below shows (left to right) raw data, boundary probability map, and multicut segmentation result (with applied LUT).
-  ![Multicut Output](./doc/screenshots/MC-output.png)
+  ![Multicut Output](./doc/screenshots/IJ-mc-output.png)
 
+#### Example macro usage
 
-
-
+A basic macro example for running Multicut on a single image can be found in [`./examples/multicut.ijm`](./examples/multicut.ijm).
 
 ### Tracking
 Found at `Plugins -> ilastik -> Run Tracking`.
@@ -221,7 +222,7 @@ Found at `Plugins -> ilastik -> Run Tracking`.
 * a project file
 * one raw image (with a time axis!) ![Tracking Raw Input](./doc/screenshots/IJ-Track-inputRaw.png)
 * one additional image that contains either per-pixel probabilities or a segmentation with the same dimensions as the raw image. 
-  ![Tracking Segmentation Input](./doc/screenshots/IJ-Track-inputSeg.png)
+  ![Tracking Segmentation Input](./doc/screenshots/IJ-Track-inputProb.png)
 * select the appropriate input type (_Probabilities_ or _Segmentation_)
 
 **Output:**
@@ -230,6 +231,10 @@ Found at `Plugins -> ilastik -> Run Tracking`.
   corresponds to the _lineage ID_ of the tracked object. Whenever an object enters the field of view
   it will be assigned a new _lineage ID_. All descendants of this object will be assigned the same
   _lineage ID_. ![Tracking Output](./doc/screenshots/IJ-Track-output.png)
+
+#### Example macro usage
+
+A basic macro example for running Tracking on a single image can be found in [`./examples/tracking.ijm`](./examples/tracking.ijm).
 
 ### Usage in KNIME
 
