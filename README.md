@@ -165,7 +165,8 @@ A more complex example can be found in [`./examples/pixel_classification.ijm`](.
 
 
 ### Object Classification
-Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
+
+Command to run pretrained [Object Classification](https://www.ilastik.org/documentation/objects/objects): `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 ![Object Classification Dialog](./doc/screenshots/IJ-OC-dialog.png)
 
@@ -178,8 +179,15 @@ Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 **Output:**
 
-* a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object. 
+* a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object (Object Predictions output from ilastik). 
+  Initially this image might appear black.
+  You can apply a colormap to it (e.g. `Image -> Lookup Tables -> glasbey_on_dark`) to see the result.
   ![Object Classification Output](./doc/screenshots/IJ-OC-output.png)
+
+
+#### Example macro usage
+
+A basic macro example for running object classification on a single image can be found in [`./examples/object_classification.ijm`](./examples/object_classification.ijm).
 
 
 ### Boundary-based Segmentation with Multicut
