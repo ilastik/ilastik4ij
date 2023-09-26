@@ -2,14 +2,14 @@
 
 [![Build Status](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml/badge.svg)](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml)
 
-_(c) Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
+Originally developed by Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
+Current development and maintenance by the _ilastik team_, Kreshuk Lab, CBB, European Molecular Biology Laboratory Heidelberg.
 
 This repository contains ImageJ2 plugins that wrap ilastik workflows for usage in [ImageJ](https://imagej.net) 
 and [KNIME](https://www.knime.com). Data transfer is managed through temporary HDF5 file export/import, which can also be performed individually.
 The ilastik workflows are invoked by running the ilastik headless mode from the command line.
 
-Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and tracking.
-There is one additional setting showing up in the ImageJ menu, which configures the location of the ilastik binary.
+Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and Tracking.
 
 ## Contents
 
@@ -18,8 +18,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [General](#general)
     - [Import](#import)
     - [Export](#export)
-    - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
-    - [ilastik configuration for the workflow wrappers](#configuration)
+    - [How to train an ilastik project to be used with those wrappers](#How-to-train-an-ilastik-project-for-use-in-the-plugins)
     - [Configuration](#configuration-for-running-ilastik-from-within-Fiji)
     - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
     - [Object Classification](#object-classification)
@@ -31,7 +30,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
 
 ## Installation
 
-Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik Import Export` site.
+Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik` site.
 
 **Note**: The plugins need Java 1.8, if you see error messages popping up that might be caused by an older Java version.
 
@@ -39,7 +38,7 @@ Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and 
 
 ## User documentation
 
-The ilastik workflow wrappers, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`, 
+The ilastik workflows, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`,
 or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2 -> Plugins -> ilastik`.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Menu.png)
@@ -47,9 +46,7 @@ or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2
 ### General
 
 All Plugins output status information to log files, so we suggest to keep an eye at the ImageJ `Windows -> Console`.
-
-All workflow wrappers have the option to produce only the input files, so that you can use those to train an ilastik project. 
-See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers) section for more details.
+You can find example macros for the different plugin commands in the [`examples`](./examples) directory.
 
 ### Import
 
@@ -95,6 +92,7 @@ The plugin uses (lossless) gzip compression.
 
 You can find a simple example macro in [`./examples/export.ijm`](./examples/export.ijm).
 Furthermore, there is an example macro demonstrating how to convert a whole folder of `.tiff` files to `.h5` in [`./examples/convert_tiff_to_ilastik_h5.ijm`](./examples/convert_tiff_to_ilastik_h5.ijm).
+
 
 ### How to train an ilastik project for use in the plugins
 
