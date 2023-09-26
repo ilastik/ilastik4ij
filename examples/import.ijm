@@ -1,7 +1,17 @@
-#@ File (label = "Input file", style = "file") input
-// input = "/absolute/path/to/some/directory/src/test/resources/2d_cells_apoptotic_1channel.h5";
+// Lines that start with "//" are comments.
+
+// Lines that start with "#@" declare input parameters that interactively ask the user for values.
+// You can remove those lines and set input parameters explicitly in order to run the macro without further user interaction.
+
+#@ File (label = "Input file", style = "directory") dataDir
+// dataDir = "/absolute/path/to/some/directory/with/h5-files/";
 
 datasetname = "/data";
 axisorder = "tzyxc";
 
-run("Import HDF5", "select=[" + input + "] datasetname=[" + datasetname + "] axisorder=[" + axisorder + "]");
+fileList = getFileList(dataDir);
+for (i = 0; i < fileList.length; i++) {
+  // import image from the H5
+  fileName = dataDir + fileList[i];
+  run("Import HDF5", "select=[" + fileName + "] datasetname=[" + datasetname + "] axisorder=[" + axisorder + "]");
+}

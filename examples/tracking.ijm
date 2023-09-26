@@ -4,17 +4,17 @@
 // You can remove those lines and set input parameters explicitly in order to run the macro without further user interaction.
 
 #@ File (label = "Project file", style = "file") project
-// project = "/absolute/path/to/some/directory/obj_class_2d_cells_apoptotic.ilp";
+// project = "/absolute/path/to/some/directory/tracking.ilp";
 
 #@ File (label = "Input file", style = "file") input
-// input = "/absolute/path/to/some/directory/2d_cells_apoptotic.tif";
+// input = "/absolute/path/to/some/directory/raw_data.tif";
 
 #@ File (label = "Second input file", style = "file") secondInput
-// secondInput = "/absolute/path/to/some/directory/2d_cells_apoptotic_1channel-data_Probabilities.tif";
+// secondInput = "/absolute/path/to/some/directory/probabilities.tif";
 
 type = "Probabilities";
 
 open(input);
 open(secondInput);
 
-run("Run Object Classification Prediction", "projectfilename=[" + project + "] input=[" + input + "] inputproborsegimage=[" + secondInput + "] secondinputtype=[" + type + "]");
+run("Run Tracking", "projectfilename=[" + project + "] input=[" + input + "] inputproborsegimage=[" + secondInput + "] secondinputtype=[" + type + "]");

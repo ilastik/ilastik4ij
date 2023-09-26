@@ -2,14 +2,14 @@
 
 [![Build Status](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml/badge.svg)](https://github.com/ilastik/ilastik4ij/actions/workflows/build-main.yml)
 
-_(c) Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
+Originally developed by Carsten Haubold, Adrian Wolny, Image Analysis and Learning Lab, HCI/IWR, University of Heidelberg._
+Current development and maintenance by the _ilastik team_, Kreshuk Lab, CBB, European Molecular Biology Laboratory Heidelberg.
 
 This repository contains ImageJ2 plugins that wrap ilastik workflows for usage in [ImageJ](https://imagej.net) 
 and [KNIME](https://www.knime.com). Data transfer is managed through temporary HDF5 file export/import, which can also be performed individually.
 The ilastik workflows are invoked by running the ilastik headless mode from the command line.
 
-Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and tracking.
-There is one additional setting showing up in the ImageJ menu, which configures the location of the ilastik binary.
+Currently, three workflows are wrapped: Pixel classification, Autocontext, Object classification, Boundary-based Segmentation with Multicut, and Tracking.
 
 ## Contents
 
@@ -18,8 +18,8 @@ There is one additional setting showing up in the ImageJ menu, which configures 
     - [General](#general)
     - [Import](#import)
     - [Export](#export)
-    - [How to train an ilastik project to be used with those wrappers](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers)
-    - [ilastik configuration for the workflow wrappers](#configuration)
+    - [How to train an ilastik project to be used with those wrappers](#How-to-train-an-ilastik-project-for-use-in-the-plugins)
+    - [Configuration](#configuration-for-running-ilastik-from-within-Fiji)
     - [Pixel Classification and Autocontext](#pixel-classification-and-autocontext)
     - [Object Classification](#object-classification)
     - [Boundary-based Segmentation with Multicut](#boundary-based-segmentation-with-multicut)
@@ -30,7 +30,7 @@ There is one additional setting showing up in the ImageJ menu, which configures 
 
 ## Installation
 
-Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik Import Export` site.
+Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and select the `ilastik` site.
 
 **Note**: The plugins need Java 1.8, if you see error messages popping up that might be caused by an older Java version.
 
@@ -38,7 +38,7 @@ Within ImageJ/Fiji you can install the plugin via the `Help -> Update` menu and 
 
 ## User documentation
 
-The ilastik workflow wrappers, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`, 
+The ilastik workflows, as well as importer and exporter, can be found in ImageJ under `Plugins -> ilastik`,
 or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2 -> Plugins -> ilastik`.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Menu.png)
@@ -46,44 +46,41 @@ or in KNIME in the `Community Contributions -> KNIME Image Processing -> ImageJ2
 ### General
 
 All Plugins output status information to log files, so we suggest to keep an eye at the ImageJ `Windows -> Console`.
-
-All workflow wrappers have the option to produce only the input files, so that you can use those to train an ilastik project. 
-See the [Training](#how-to-train-an-ilastik-project-to-be-used-with-those-wrappers) section for more details.
+You can find example macros for the different plugin commands in the [`examples`](./examples) directory.
 
 ### Import
 
 Found at `Plugins -> ilastik -> Import HDF5`.
 
 HDF5 files can contain multiple datasets. Thus, when you import an HDF5 file containing more than one dataset, 
-you will have to select which dataset you want to import. After choosing a given HDF5 file, you will be presented with the following dialog:
+you will have to select which dataset you want to import by selecting the _Dataset Name_:
 
 ![ImageJ Menu](./doc/screenshots/IJ-Import.png)
 
-where you should select or enter the correct meaning of the different dimensions of the dataset. 
+Here you should double check the correct meaning of the different _Dimensions_ of the dataset by specifying the _Axes_. 
 At least `x` and `y` must be present, and the number of characters (`x`,`y`,`z` spatial, `c` channels and `t` time)
 must be equal to the number of dimensions listed in the description above.
 
-#### Batch processing
+#### Example Macro usage
 
-The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro:
+The macro below demonstrates how to import many `.h5` files that were generated with ilastik using a macro.
 
-```
-dataDir = "<DATASET_DIR>";
-fileList = getFileList(dataDir);
-for (i = 0; i < fileList.length; i++) {
-	// import image from the H5
-	fileName = dataDir + fileList[i];	
-	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
-	run("Import HDF5", importArgs);
-}
+```javascript
+input = "/absolute/path/to/some/directory/src/test/resources/2d_cells_apoptotic_1channel.h5";
+
+datasetname = "/data";
+axisorder = "tzyxc";
+
+run("Import HDF5", "select=[" + input + "] datasetname=[" + datasetname + "] axisorder=[" + axisorder + "]");
 ```
 
+see also [`./examples/import.ijm`](./examples/import.ijm)
 
 ### Export
 
 Found at `Plugins -> ilastik -> Export HDF5`.
 
-If you want to save the currently opened image to a HDF5 file that can be immediately opened in ilastik,
+If you want to save the currently opened image to an HDF5 file that can be immediately opened in ilastik,
 use this export option. Additionally to the location where the file should be saved, you could specify the output
 data set name as well as how much the dataset should be compressed.
 Use `0` for raw data because it doesn't compress well, but `9` for segmentations etc, where many pixel values are equal.
@@ -91,22 +88,30 @@ The plugin uses (lossless) gzip compression.
 
 ![ImageJ Menu](./doc/screenshots/IJ-Export.png)
 
-### How to train an ilastik project to be used with those wrappers
+#### Example Macro usage
 
-For the workflow wrappers below, it is important that ilastik projects are trained from data that was 
-preprocessed and exported the same way as all further datasets will be. There are two ways how this can be achieved with this plugin:
+You can find a simple example macro in [`./examples/export.ijm`](./examples/export.ijm).
+Furthermore, there is an example macro demonstrating how to convert a whole folder of `.tiff` files to `.h5` in [`./examples/convert_tiff_to_ilastik_h5.ijm`](./examples/convert_tiff_to_ilastik_h5.ijm).
 
-1. You can manually use the export option as described [above](#export) to export your images from ImageJ to an ilastik-compatible 
-   HDF5 dataset with 5 dimensions. Then when you create an ilastik project, read the raw data / probabilities / segmentation from the exported HDF5 files.
-2. Each workflow wrapper has a `Save temporary file for training only, no prediction` option. If you select this option and run the plugin, 
-   the input files -- that would otherwise be passed to ilastik -- are exported to temporary files. 
-   ![Save temporary file checkbox](./doc/screenshots/IJ-Train-Checkbox.png)
-   The locations and names of those files are written to ImageJ's console, which you should open using `Window->Console`.
-   ![Temporary file location in console](./doc/screenshots/IJ-Train-Console.png)
-   Use this file as input in your ilastik project. Then processing any further files from ImageJ through the ilastik workflow wrappers
-   should give the desired results.
 
-### ilastik configuration of the workflow wrappers
+### How to train an ilastik project for use in the plugins
+
+In general you can use any project of the supported workflows that you trained.
+However, there are some things to keep in mind:
+  * The spatial dimensions (not the size along those) need to match.
+    Meaning if you trained your project with 3D (`x`,`y`,`z`) data, you can only process 3D images with it.
+  * The largest 3D filter you selected in ilastik, must fit inside the image.
+    It's roughly the largest 3D sigma you selected times 3.5 (so with default largest sigma `10.0` it would be a minimum of `35` pixels in `z`-dimension).
+  * The number of channels needs to match (also they should be in the same order), if you train e.g. on dapi + fitc, you should only process files with dapi + fitc channels.
+
+
+Ideally, you train your ilastik already with `.h5` files manually generated by the [above export functionality](#export).
+The export creates files with maximum compatibility with ilastik - and you will also get the best performance during training.
+With this you make sure that the whole processing chain will work.
+
+
+### Configuration for running ilastik from within Fiji
+
 Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ![configuration dialog](./doc/screenshots/IJ-Config.png)
@@ -117,7 +122,7 @@ Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 
 ### Pixel Classification and Autocontext
 
-Pixel Classification and Autocontext workflow have similar input settings.
+[Pixel Classification](https://www.ilastik.org/documentation/pixelclassification/pixelclassification) and [Autocontext](https://www.ilastik.org/documentation/autocontext/autocontext) workflow have similar input settings.
 
 The Pixel Classification Workflow can be found at `Plugins -> ilastik -> Run Pixel Classification Prediction`, the Autocontext Workflow at `Plugins -> ilastik -> Run Autocontext Prediction`.
 
@@ -134,46 +139,32 @@ The Pixel Classification Workflow can be found at `Plugins -> ilastik -> Run Pix
 
 * if _Probabilities_ was selected: a multi-channel float image that you can _e.g._ threshold to obtain a 
   segmentation ![Pixel Classification Output: Probabilities](./doc/screenshots/IJ-PC-predictions.png)
-* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to an _object ID_ inside a _connected component_.
-It is recommended to apply a LUT (e.g. `Image -> Lookup Tables -> glasbey`) to the result in order to see the _segmentation_ output. 
+* or a _Segmentation_:a single-channel image where each pixel gets a value corresponding to the label class.
+  e.g. all pixels belonging to your first label, will have the value `1`, all that belong to the 2nd class, will have the value `2` and so on.
+  ilastik will assign classes based on the _highest_ probability label for each pixel.
+  It is recommended to apply a LUT (e.g. `Image -> Lookup Tables -> glasbey`) to the result in order to see the _segmentation_ output. 
   ![Pixel Classification Output: Segmentation](./doc/screenshots/IJ-PC-segmentation.png).
   
-#### Batch processing
-The macro below demonstrates how to apply pixel classification to all HDF5 files in a given input directory and save
-resulting probability maps in separate HDF5 files inside the input directory.
+#### Example macro usage
+
+A simple example macro that opens a `.tif` file and processes it with a pre-trained ilastik pixel classification project would look like the following:
+
+```javascript
+project = "/absolute/path/to/some/directory/pixel_class_2d_cells_apoptotic.ilp";
+input = "/absolute/path/to/some/directory/2d_cells_apoptotic.tif";
+
+type = "Probabilities";
+
+open(input);
+run("Run Pixel Classification Prediction", "projectfilename=[" + project + "] input=[" + input + "] pixelclassificationtype=[" + type + "]");
 ```
-// set global variables
-pixelClassificationProject = "<ILASTIK_PROJECT_PATH>";
-outputType = "Probabilities"; //  or "Segmentation"
-inputDataset = "data";
-outputDataset = "exported_data";
-axisOrder = "tzyxc";
-compressionLevel = 0;
 
-// process all H5 files in a given directory
-dataDir = "<DATASET_DIR>";
-fileList = getFileList(dataDir);
-for (i = 0; i < fileList.length; i++) {
-	// import image from the H5
-	fileName = dataDir + fileList[i];	
-	importArgs = "select=" + fileName + " datasetname=" + inputDataset + " axisorder=" + axisOrder; 			
-	run("Import HDF5", importArgs);
+A more complex example can be found in [`./examples/pixel_classification.ijm`](./examples/pixel_classification.ijm).
 
-	// run pixel classification
-	inputImage = fileName + "/" + inputDataset;
-	pixelClassificationArgs = "projectfilename=" + pixelClassificationProject + " saveonly=false inputimage=" + inputImage + " pixelclassificationtype=" + outputType;
-	run("Run Pixel Classification Prediction", pixelClassificationArgs);
-
-	// export probability maps to H5
-	outputFile = dataDir + "output" + i + ".h5";
-	exportArgs = "select=" + outputFile + " datasetname=" + outputDataset + " compressionlevel=" + compressionLevel;
-	run("Export HDF5", exportArgs);
-}
-```
-replace `<DATASET_DIR>` with the input dataset where the HDF5 files reside (don't forget the trailing slash `/`) and `<ILASTIK_PROJECT_PATH>` with the path to your ilastik Pixel Classification project file.
 
 ### Object Classification
-Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
+
+Command to run pretrained [Object Classification](https://www.ilastik.org/documentation/objects/objects): `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 ![Object Classification Dialog](./doc/screenshots/IJ-OC-dialog.png)
 
@@ -186,30 +177,38 @@ Found at `Plugins -> ilastik -> Run Object Classification Prediction`.
 
 **Output:**
 
-* a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object. 
+* a new image where the pixels of each object get assigned the value that corresponds to the class that was predicted for this object (Object Predictions output from ilastik). 
+  Initially this image might appear black.
+  You can apply a colormap to it (e.g. `Image -> Lookup Tables -> glasbey_on_dark`) to see the result.
   ![Object Classification Output](./doc/screenshots/IJ-OC-output.png)
 
 
-### Boundary-based Segmentation with Multicut
-Found at `Plugins -> ilastik -> Run Multicut`.
+#### Example macro usage
 
-![Multicut Dialog](./doc/screenshots/multicut-dialog.png)
+A basic macro example for running object classification on a single image can be found in [`./examples/object_classification.ijm`](./examples/object_classification.ijm).
+
+
+### Boundary-based Segmentation with Multicut
+
+Command for [Boundary-based Segmentation with Multicut](https://www.ilastik.org/documentation/multicut/multicut): `Plugins -> ilastik -> Run Multicut`.
+
+![Multicut Dialog](./doc/screenshots/IJ-mc-dialog.png)
 
 **Inputs:**
 
 * a project file
 * one raw image (select the appropriate one in the dropdown box as shown above)
-* one additional image that contains boundary probabilities. Those can be generated, e.g. in Pixel Classification or with a pre-trained Neural Network.
+* one additional image that contains boundary probabilities. Those can be generated, e.g. in Pixel Classification, Autocontext, or with a pre-trained Neural Network.
 
 **Output:**
 
 * a new integer value image (label image) where the pixels belonging to the same object have the same value.
   The example image below shows (left to right) raw data, boundary probability map, and multicut segmentation result (with applied LUT).
-  ![Multicut Output](./doc/screenshots/MC-output.png)
+  ![Multicut Output](./doc/screenshots/IJ-mc-output.png)
 
+#### Example macro usage
 
-
-
+A basic macro example for running Multicut on a single image can be found in [`./examples/multicut.ijm`](./examples/multicut.ijm).
 
 ### Tracking
 Found at `Plugins -> ilastik -> Run Tracking`.
@@ -221,7 +220,7 @@ Found at `Plugins -> ilastik -> Run Tracking`.
 * a project file
 * one raw image (with a time axis!) ![Tracking Raw Input](./doc/screenshots/IJ-Track-inputRaw.png)
 * one additional image that contains either per-pixel probabilities or a segmentation with the same dimensions as the raw image. 
-  ![Tracking Segmentation Input](./doc/screenshots/IJ-Track-inputSeg.png)
+  ![Tracking Segmentation Input](./doc/screenshots/IJ-Track-inputProb.png)
 * select the appropriate input type (_Probabilities_ or _Segmentation_)
 
 **Output:**
@@ -230,6 +229,10 @@ Found at `Plugins -> ilastik -> Run Tracking`.
   corresponds to the _lineage ID_ of the tracked object. Whenever an object enters the field of view
   it will be assigned a new _lineage ID_. All descendants of this object will be assigned the same
   _lineage ID_. ![Tracking Output](./doc/screenshots/IJ-Track-output.png)
+
+#### Example macro usage
+
+A basic macro example for running Tracking on a single image can be found in [`./examples/tracking.ijm`](./examples/tracking.ijm).
 
 ### Usage in KNIME
 
