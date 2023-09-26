@@ -192,7 +192,7 @@ A basic macro example for running object classification on a single image can be
 
 Command for [Boundary-based Segmentation with Multicut](https://www.ilastik.org/documentation/multicut/multicut): `Plugins -> ilastik -> Run Multicut`.
 
-![Multicut Dialog](./doc/screenshots/IJ-mc-dialog.png)
+![Multicut Dialog](./doc/screenshots/IJ-MC-dialog.png)
 
 **Inputs:**
 
@@ -204,7 +204,7 @@ Command for [Boundary-based Segmentation with Multicut](https://www.ilastik.org/
 
 * a new integer value image (label image) where the pixels belonging to the same object have the same value.
   The example image below shows (left to right) raw data, boundary probability map, and multicut segmentation result (with applied LUT).
-  ![Multicut Output](./doc/screenshots/IJ-mc-output.png)
+  ![Multicut Output](./doc/screenshots/IJ-MC-output.png)
 
 #### Example macro usage
 
