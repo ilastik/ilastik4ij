@@ -120,6 +120,8 @@ Found at `Plugins -> ilastik -> Configure ilastik executable location`.
 * Number of threads to use (-1 for no limit)
 * Specify an upper bound of RAM that ilastik is allowed to use
 
+Note: When running the plugin for pre-trained ilastik projects, the project files (`.ilp`) have to be closed (i.e. can not be open in ilastik at the same time).
+
 ### Pixel Classification and Autocontext
 
 [Pixel Classification](https://www.ilastik.org/documentation/pixelclassification/pixelclassification) and [Autocontext](https://www.ilastik.org/documentation/autocontext/autocontext) workflow have similar input settings.
