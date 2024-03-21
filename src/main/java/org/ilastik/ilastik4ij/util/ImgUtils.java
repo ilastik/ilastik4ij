@@ -328,11 +328,30 @@ public final class ImgUtils {
     public static String axesToJSON(List<AxisType> axes)
     {
         JSONArray jsonAxesArray = new JSONArray();
-        for (AxisType axis : axes)
+        List<AxisType> axes_for_serialization = new ArrayList<>(axes);
+        Collections.reverse(axes_for_serialization);
+        for (AxisType axis : axes_for_serialization)
         {
             JSONObject jsonAxis = new JSONObject();
-            jsonAxis.put("key", axis.getLabel());
-            jsonAxesArray.put( jsonAxis );
+            String label = axis.getLabel().toLowerCase();
+            int vigraType;
+            String vigraKey;
+            if (axis.isSpatial()){
+                vigraType = 2;
+                vigraKey = label;
+            } else if (label.equals("time")) {
+                vigraType = 8;
+                vigraKey = "t";
+            } else if (label.equals("channel")) {
+                vigraType = 1;
+                vigraKey = "c";
+            } else {
+                throw new IllegalArgumentException(
+                        String.format("Unknown axis type found with label %s.", label));
+            }
+            jsonAxis.put("key", vigraKey);
+            jsonAxis.put("typeFlags", vigraType);
+            jsonAxesArray.put(jsonAxis);
         }
 
         JSONObject root = new JSONObject();
