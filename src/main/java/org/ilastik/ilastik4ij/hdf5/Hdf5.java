@@ -67,6 +67,7 @@ import java.util.stream.IntStream;
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.argbToMultiChannel;
 import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
+import static org.ilastik.ilastik4ij.util.ImgUtils.axesToJSON;
 import static org.ilastik.ilastik4ij.util.ImgUtils.inputBlockDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.outputDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
@@ -287,7 +288,7 @@ public final class Hdf5 {
                      compressionLevel)) {
 
             // Add axes tags
-            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesAsJSON( axes ) );
+            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesToJSON(axes));
 
             callback.accept(0L);
 

@@ -325,18 +325,18 @@ public final class ImgUtils {
         return axes;
     }
 
-    public static String axesAsJSON( List<AxisType> axes )
+    public static String axesToJSON(List<AxisType> axes)
     {
         JSONArray jsonAxesArray = new JSONArray();
-        for ( AxisType axis : axes )
+        for (AxisType axis : axes)
         {
             JSONObject jsonAxis = new JSONObject();
-            jsonAxis.put( "key", axis.getLabel() );
+            jsonAxis.put("key", axis.getLabel());
             jsonAxesArray.put( jsonAxis );
         }
 
         JSONObject root = new JSONObject();
-        root.put( "axes", jsonAxesArray );
+        root.put("axes", jsonAxesArray);
 
         return root.toString();
     }
