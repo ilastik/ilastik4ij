@@ -286,6 +286,9 @@ public final class Hdf5 {
                      reversed(chunkDims),
                      compressionLevel)) {
 
+            // Add axes tags
+            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesAsJSON( axes ) );
+
             callback.accept(0L);
 
             while (gridCursor.hasNext()) {

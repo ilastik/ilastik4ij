@@ -325,6 +325,22 @@ public final class ImgUtils {
         return axes;
     }
 
+    public static String axesAsJSON( List<AxisType> axes )
+    {
+        JSONArray jsonAxesArray = new JSONArray();
+        for ( AxisType axis : axes )
+        {
+            JSONObject jsonAxis = new JSONObject();
+            jsonAxis.put( "key", axis.getLabel() );
+            jsonAxesArray.put( jsonAxis );
+        }
+
+        JSONObject root = new JSONObject();
+        root.put( "axes", jsonAxesArray );
+
+        return root.toString();
+    }
+
     /**
      * Treat alpha, red, green, and blue values in {@link ARGBType} image
      * as a separate, last channel dimension.
