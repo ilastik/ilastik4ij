@@ -11,7 +11,7 @@
 
     <groupId>org.ilastik</groupId>
     <artifactId>ilastik4ij</artifactId>
-    <version>2.0.2-SNAPSHOT</version>
+    <version>2.0.2</version>
 
     <name>ilastik imageJ modules</name>
     <description>These ImageJ plugins wrap ilastik workflows</description>
@@ -95,7 +95,7 @@
     <scm>
         <connection>scm:git:https://github.com/ilastik/ilastik4ij</connection>
         <developerConnection>scm:git:git@github.com:ilastik/ilastik4ij</developerConnection>
-        <tag>HEAD</tag>
+        <tag>ilastik4ij-2.0.2</tag>
         <url>https://github.com/ilastik/ilastik4ij</url>
     </scm>
     <issueManagement>
