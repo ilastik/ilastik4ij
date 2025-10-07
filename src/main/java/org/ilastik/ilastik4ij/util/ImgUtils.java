@@ -296,7 +296,7 @@ public final class ImgUtils {
     /**
      * Parse axes from JSON string.
      * <p>
-     * JSON string {@code {"axes": [{"key": "y"}, {"key": "x}]}} produces axes {@code XY}.
+     * JSON string {@code {"axes": [{"key": "y"}, {"key": "x"}]}} produces axes {@code XY}.
      * Note the reversed axis order.
      *
      * @throws JSONException if JSON is malformed/invalid, or if axes are invalid.
