@@ -26,6 +26,8 @@
 package org.ilastik.ilastik4ij.io;
 
 import net.imagej.ImgPlus;
+import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.DatasetDescription;
@@ -96,6 +98,36 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
         // Show dimensions and axes in the row-major order for backwards compatibility.
         dimensions = dd != null ? Arrays.toString(reversed(dd.dims)) : NOT_SELECTED;
         axisOrder = dd != null ? reversed(toStringAxes(dd.axes)) : "";
+        pixelSize = formatPixelSize(dd);
+    }
+
+    private static String formatPixelSize(DatasetDescription dd) {
+        if (dd == null) {
+            return NOT_SELECTED;
+        }
+
+        AxisType[] pixelSizeDisplayAxes = {Axes.X, Axes.Y, Axes.Z, Axes.TIME};
+
+        boolean allResolutionsZero = Arrays.stream(dd.resolutions).allMatch(r -> r == 0.0);
+        boolean allUnitsEmpty = dd.units.stream().allMatch(String::isEmpty);
+
+        if (allResolutionsZero && allUnitsEmpty) {
+            return "(no pixel size metadata found)";
+        }
+
+        return Arrays.stream(pixelSizeDisplayAxes)
+                .filter(dd.axes::contains)
+                .map(axis -> {
+                    int index = dd.axes.indexOf(axis);
+                    double resolution = dd.resolutions[index];
+                    String unit = dd.units.get(index);
+
+                    String resolutionStr = (resolution == 0.0) ? "1" : String.format("%.2f", resolution);
+                    String unitStr = unit.isEmpty() ? "" : " " + unit;
+
+                    return String.format("%s: %s%s", axis.getLabel().toLowerCase(), resolutionStr, unitStr);
+                })
+                .collect(Collectors.joining(", "));
     }
 
     @Parameter(label = "Type", persist = false, required = false, visibility = MESSAGE)
@@ -103,6 +135,9 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
     @Parameter(label = "Dimensions", persist = false, required = false, visibility = MESSAGE)
     private String dimensions = NOT_SELECTED;
+
+    @Parameter(label = "Pixel size", persist = false, required = false, visibility = MESSAGE)
+    private String pixelSize = NOT_SELECTED;
 
     @Parameter(
             label = "Axes",

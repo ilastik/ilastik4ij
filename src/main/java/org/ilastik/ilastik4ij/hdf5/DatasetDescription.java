@@ -34,12 +34,15 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.guessAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutions;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnits;
 
 /**
  * Metadata for HDF5 dataset.
@@ -64,6 +67,16 @@ public final class DatasetDescription {
      * Dimension axes.
      */
     public final List<AxisType> axes;
+
+    /**
+     * Physical pixel size along each axis, as read from vigra {@code AxisInfo.resolution}.
+     */
+    public final double[] resolutions;
+
+    /**
+     * Physical pixel unit along each axis, e.g. "micrometer" (may be arbitrary string).
+     */
+    public final List<String> units;
 
     /**
      * Whether {@link #axes} are read by {@link ImgUtils#parseAxes}
@@ -91,25 +104,33 @@ public final class DatasetDescription {
         }
 
         List<AxisType> axes;
+        double[] resolutions;
+        List<String> units;
         boolean axesGuessed;
         try {
             axes = parseAxes(reader.string().getAttr(path, "axistags"));
+            resolutions = parseResolutions(reader.string().getAttr(path, "axistags"));
+            units = parseUnits(reader.string().getAttr(path, "axis_units"), axes);
             axesGuessed = false;
         } catch (HDF5AttributeException | JSONException ignored) {
             axes = guessAxes(dims);
+            resolutions = new double[axes.size()];
+            units = new ArrayList<>(Collections.nCopies(axes.size(), ""));
             axesGuessed = true;
         }
 
         path = "/" + path.replaceFirst("^/+", "");
-        return Optional.of(new DatasetDescription(path, type.get(), dims, axes, axesGuessed));
+        return Optional.of(new DatasetDescription(path, type.get(), dims, axes, resolutions, units, axesGuessed));
     }
 
     public DatasetDescription(
-            String path, DatasetType type, long[] dims, List<AxisType> axes, boolean axesGuessed) {
+            String path, DatasetType type, long[] dims, List<AxisType> axes, double[] resolutions, List<String> units, boolean axesGuessed) {
         this.path = Objects.requireNonNull(path);
         this.type = Objects.requireNonNull(type);
         this.dims = Objects.requireNonNull(dims).clone();
         this.axes = new ArrayList<>(Objects.requireNonNull(axes));
+        this.resolutions = Objects.requireNonNull(resolutions).clone();
+        this.units = new ArrayList<>(Objects.requireNonNull(units));
         this.axesGuessed = axesGuessed;
     }
 

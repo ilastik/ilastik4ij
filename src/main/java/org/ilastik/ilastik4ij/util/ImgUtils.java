@@ -325,6 +325,54 @@ public final class ImgUtils {
         return axes;
     }
 
+    /**
+     * Parse resolutions from JSON string.
+     * <p>
+     * Expected JSON string like {@code {"axes": [{"resolution": 25.0}, {"resolution": 12.0}]}}
+     *
+     * Like {@link #parseAxes}, assumes reversed axis order.
+     *
+     * @throws JSONException if JSON is malformed/invalid, or if resolutions are invalid.
+     */
+    public static double[] parseResolutions(String json) {
+        Objects.requireNonNull(json);
+        List<Double> resolutions = new ArrayList<>();
+        JSONArray arr = new JSONObject(json).getJSONArray("axes");
+        for (int d = 0; d < arr.length(); d++) {
+            resolutions.add(arr.getJSONObject(d).getDouble("resolution"));
+        }
+        Collections.reverse(resolutions);
+
+        return resolutions.stream().mapToDouble(Double::doubleValue).toArray();
+    }
+
+    /**
+     * Parse physical unit names from JSON string.
+     * <p>
+     * Expected JSON string like {@code {"x": "nm", "t": "hours"}}
+     *
+     * Returns units in the order of wantedAxes, adds empty strings for missing units.
+     *
+     * @throws JSONException if JSON is malformed/invalid.
+     */
+    public static List<String> parseUnits(String json, List<AxisType> wantedAxes) {
+        Objects.requireNonNull(json);
+        Objects.requireNonNull(wantedAxes);
+        List<String> units = new ArrayList<>();
+        JSONObject obj = new JSONObject(json);
+
+        for (AxisType axis : wantedAxes) {
+            String axisKey = axis.getLabel().toLowerCase();
+            if (obj.has(axisKey)) {
+                units.add(obj.getString(axisKey));
+            } else {
+                units.add("");
+            }
+        }
+
+        return units;
+    }
+
     public static String axesToJSON(List<AxisType> axes)
     {
         JSONArray jsonAxesArray = new JSONArray();
