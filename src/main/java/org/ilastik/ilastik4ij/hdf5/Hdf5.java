@@ -31,6 +31,7 @@ import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import ch.systemsx.cisd.hdf5.IHDF5Writer;
+import hdf.hdf5lib.exceptions.HDF5AttributeException;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
@@ -50,6 +51,7 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Fraction;
 import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.util.GridCoordinates;
+import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -70,6 +72,9 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
 import static org.ilastik.ilastik4ij.util.ImgUtils.axesToJSON;
 import static org.ilastik.ilastik4ij.util.ImgUtils.inputBlockDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.outputDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutions;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnits;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.transformDims;
 
@@ -144,6 +149,9 @@ public final class Hdf5 {
 
         DatasetType type;
         Img<T> img;
+        List<AxisType> storedAxes = new ArrayList<>();
+        List<Double> storedResolutions = new ArrayList<>();
+        List<String> storedUnits = new ArrayList<>();
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(file)) {
             HDF5DataSetInformation info = reader.getDataSetInformation(path);
@@ -172,6 +180,22 @@ public final class Hdf5 {
                     img = readCellImg(type, reader, dataset, dims, blockDims, callback);
                 }
             }
+
+            String tagsKey = "axistags";
+            try {
+                storedAxes = parseAxes(reader.string().getAttr(path, tagsKey));
+                storedResolutions = parseResolutions(reader.string().getAttr(path, tagsKey));
+                storedUnits = parseUnits(reader.string().getAttr(path, "axis_units"), storedAxes);
+            } catch (HDF5AttributeException | JSONException ignored) {
+                // No metadata
+            }
+        }
+
+        double[] resolutions = null;
+        String[] units = null;
+        if (axes != null && axes.equals(storedAxes) && storedAxes.size() == storedResolutions.size() && storedAxes.size() == storedUnits.size()) {
+            resolutions = storedResolutions.stream().mapToDouble(Double::doubleValue).toArray();
+            units = storedUnits.toArray(new String[0]);
         }
 
         String name = file.toPath()
@@ -187,7 +211,7 @@ public final class Hdf5 {
             img = transformDims(img, srcAxes, axes);
         }
 
-        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]));
+        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]), resolutions, units);
         imgPlus.setValidBits(8 * type.size);
         return imgPlus;
     }

@@ -334,7 +334,7 @@ public final class ImgUtils {
      *
      * @throws JSONException if JSON is malformed/invalid, or if resolutions are invalid.
      */
-    public static double[] parseResolutions(String json) {
+    public static List<Double> parseResolutions(String json) {
         Objects.requireNonNull(json);
         List<Double> resolutions = new ArrayList<>();
         JSONArray arr = new JSONObject(json).getJSONArray("axes");
@@ -343,7 +343,7 @@ public final class ImgUtils {
         }
         Collections.reverse(resolutions);
 
-        return resolutions.stream().mapToDouble(Double::doubleValue).toArray();
+        return resolutions;
     }
 
     /**
@@ -356,13 +356,14 @@ public final class ImgUtils {
      * @throws JSONException if JSON is malformed/invalid.
      */
     public static List<String> parseUnits(String json, List<AxisType> wantedAxes) {
+        if(wantedAxes == null) { return Collections.emptyList(); }
+
         Objects.requireNonNull(json);
-        Objects.requireNonNull(wantedAxes);
-        List<String> units = new ArrayList<>();
         JSONObject obj = new JSONObject(json);
 
-        for (AxisType axis : wantedAxes) {
-            String axisKey = axis.getLabel().toLowerCase();
+        List<String> units = new ArrayList<>();
+        String axesString = toStringAxes(wantedAxes);
+        for (String axisKey : axesString.split("")) {
             if (obj.has(axisKey)) {
                 units.add(obj.getString(axisKey));
             } else {

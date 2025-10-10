@@ -34,7 +34,6 @@ import org.json.JSONException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -71,7 +70,7 @@ public final class DatasetDescription {
     /**
      * Physical pixel size along each axis, as read from vigra {@code AxisInfo.resolution}.
      */
-    public final double[] resolutions;
+    public final List<Double> resolutions;
 
     /**
      * Physical pixel unit along each axis, e.g. "micrometer" (may be arbitrary string).
@@ -104,8 +103,8 @@ public final class DatasetDescription {
         }
 
         List<AxisType> axes;
-        double[] resolutions;
-        List<String> units;
+        List<Double> resolutions = new ArrayList<>();
+        List<String> units = new ArrayList<>();
         boolean axesGuessed;
         try {
             axes = parseAxes(reader.string().getAttr(path, "axistags"));
@@ -114,8 +113,6 @@ public final class DatasetDescription {
             axesGuessed = false;
         } catch (HDF5AttributeException | JSONException ignored) {
             axes = guessAxes(dims);
-            resolutions = new double[axes.size()];
-            units = new ArrayList<>(Collections.nCopies(axes.size(), ""));
             axesGuessed = true;
         }
 
@@ -124,12 +121,12 @@ public final class DatasetDescription {
     }
 
     public DatasetDescription(
-            String path, DatasetType type, long[] dims, List<AxisType> axes, double[] resolutions, List<String> units, boolean axesGuessed) {
+            String path, DatasetType type, long[] dims, List<AxisType> axes, List<Double> resolutions, List<String> units, boolean axesGuessed) {
         this.path = Objects.requireNonNull(path);
         this.type = Objects.requireNonNull(type);
         this.dims = Objects.requireNonNull(dims).clone();
         this.axes = new ArrayList<>(Objects.requireNonNull(axes));
-        this.resolutions = Objects.requireNonNull(resolutions).clone();
+        this.resolutions = new ArrayList<>(Objects.requireNonNull(resolutions));
         this.units = new ArrayList<>(Objects.requireNonNull(units));
         this.axesGuessed = axesGuessed;
     }

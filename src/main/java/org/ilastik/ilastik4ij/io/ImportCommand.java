@@ -108,18 +108,22 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
         AxisType[] pixelSizeDisplayAxes = {Axes.X, Axes.Y, Axes.Z, Axes.TIME};
 
-        boolean allResolutionsZero = Arrays.stream(dd.resolutions).allMatch(r -> r == 0.0);
+        boolean allResolutionsZero = dd.resolutions.stream().allMatch(r -> r == 0.0);
         boolean allUnitsEmpty = dd.units.stream().allMatch(String::isEmpty);
 
         if (allResolutionsZero && allUnitsEmpty) {
             return "(no pixel size metadata found)";
         }
 
+        if (dd.axes.size() != dd.resolutions.size() || dd.resolutions.size() != dd.units.size()) {
+            return "(pixel size metadata is corrupted)";
+        }
+
         return Arrays.stream(pixelSizeDisplayAxes)
                 .filter(dd.axes::contains)
                 .map(axis -> {
                     int index = dd.axes.indexOf(axis);
-                    double resolution = dd.resolutions[index];
+                    Double resolution = dd.resolutions.get(index);
                     String unit = dd.units.get(index);
 
                     String resolutionStr = (resolution == 0.0) ? "1" : String.format("%.2f", resolution);

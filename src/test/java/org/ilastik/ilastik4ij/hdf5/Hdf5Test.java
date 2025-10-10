@@ -71,11 +71,14 @@ public class Hdf5Test {
 
     static File sourceHdf5;
 
+    static File sourceHdf5WithMeta;
+
     static ImgPlus<UnsignedByteType> sampleImg;
 
     @BeforeAll
     static void setUpClass() throws IOException {
         sourceHdf5 = copyResource("/test.h5", tempDir).toFile();
+        sourceHdf5WithMeta = copyResource("/test_axes.h5", tempDir).toFile();
         sampleImg = new ImageJ()
                 .scifio()
                 .datasetIO()
@@ -87,14 +90,43 @@ public class Hdf5Test {
     @MethodSource
     void testReadAxes(long[] expected, String axes) {
         long[] actual = readDataset(axes).dimensionsAsLongArray();
-        assertDimsEquals(expected, actual);
+        assertLongsEqual(expected, actual);
     }
 
     static Stream<Arguments> testReadAxes() {
+        // Output axes are always ImageJ default (xyczt)
+        // Data axes are volumina default (tzyxc [7, 6, 5, 4, 3]), but readDataset takes axes in reverse order
         return Stream.of(
-                arguments(new long[]{4, 5, 3, 6, 7}, "cxyzt"),
-                arguments(new long[]{4, 5, 3, 7, 6}, "cxytz"),
-                arguments(new long[]{3, 5, 4, 7, 6}, "xcytz"));
+                arguments(new long[]{4, 5, 3, 6, 7}, "cxyzt"), // Correctly maps data axes to ImageJ
+                arguments(new long[]{4, 5, 3, 7, 6}, "cxytz"), // Equivalent to user entering "ztyxc" in the plugin
+                arguments(new long[]{3, 5, 4, 7, 6}, "xcytz")); // Flip t<>z and x<>c
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testReadAxisMetadata(String axes, long[] expectedShape, double[] expectedResolutions, String[] expectedUnits) {
+        ImgPlus<UnsignedShortType> read = readDatasetWithMeta(axes);
+        double[] resolutions = new double[read.numDimensions()];
+        String[] units = new String[read.numDimensions()];
+        for (int i = 0; i < read.numDimensions(); i++) {
+            resolutions[i] = read.axis(i).calibratedValue(1.0);
+            units[i] = read.axis(i).unit();
+        }
+        assertLongsEqual(expectedShape, read.dimensionsAsLongArray());
+        assertResolutionsEqual(expectedResolutions, resolutions);
+        assertArrayEqualsFormatted(expectedUnits, units);
+    }
+
+    static Stream<Arguments> testReadAxisMetadata() {
+        // sourceHdf5WithMeta is the same bogus data as sourceHdf5, but stored as tzcyx [7, 6, 3, 5, 4] instead of tzyxc.
+        // Asking to interpret the dataset as any other order than what's stored in its metadata
+        // implies that the resolution metadata are wrong/meaningless.
+        double[] imagejDefaultResolutions = {1, 1, 1, 1, 1};
+        String[] imagejDefaultUnits = {null, null, null, null, null};
+        return Stream.of(
+                arguments("xyczt", new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 0.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
+                arguments("cxyzt", new long[]{5, 3, 4, 6, 7}, imagejDefaultResolutions, imagejDefaultUnits),
+                arguments("cyxtz", new long[]{3, 5, 4, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits));
     }
 
     @Test
@@ -120,7 +152,7 @@ public class Hdf5Test {
     void testWrittenDims() {
         long[] expected = {400, 289, 3, 1, 1};
         long[] actual = readWrittenDataset(new UnsignedByteType()).dimensionsAsLongArray();
-        assertDimsEquals(expected, actual);
+        assertLongsEqual(expected, actual);
     }
 
     @ParameterizedTest
@@ -180,6 +212,10 @@ public class Hdf5Test {
         return Hdf5.readDataset(sourceHdf5, "/exported_data", ImgUtils.toImagejAxes(axes));
     }
 
+    private static ImgPlus<UnsignedShortType> readDatasetWithMeta(String axes) {
+        return Hdf5.readDataset(sourceHdf5WithMeta, "/test_with_meta", ImgUtils.toImagejAxes(axes));
+    }
+
     private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> readWrittenDataset(T type) {
         File file = tempDir.resolve("chocolate21.h5").toFile();
         ImgPlus<T> converted = new ImgPlus<>(
@@ -188,7 +224,24 @@ public class Hdf5Test {
         return Hdf5.readDataset(file, "/exported_data");
     }
 
-    private static void assertDimsEquals(long[] expected, long[] actual) {
+    private static void assertLongsEqual(long[] expected, long[] actual) {
+        assertArrayEquals(expected, actual, () -> String.format(
+                "Array contents differ: expected %s, actual %s",
+                Arrays.toString(expected),
+                Arrays.toString(actual)));
+    }
+
+    private static void assertResolutionsEqual(double[] expected, double[] actual) {
+        // test_axes.h5/test_with_axes actually contains 12.000048000192 for y resolution, so 1e-4 tolerance needed.
+        // The inaccuracy comes from FIJI, which saves this imprecise value in the tif metadata when the user enters 12.
+        double toleratedDelta = 1e-4;
+        assertArrayEquals(expected, actual, toleratedDelta, () -> String.format(
+                "Array contents differ: expected %s, actual %s",
+                Arrays.toString(expected),
+                Arrays.toString(actual)));
+    }
+
+    private static <T> void assertArrayEqualsFormatted(T[] expected, T[] actual) {
         assertArrayEquals(expected, actual, () -> String.format(
                 "Array contents differ: expected %s, actual %s",
                 Arrays.toString(expected),
