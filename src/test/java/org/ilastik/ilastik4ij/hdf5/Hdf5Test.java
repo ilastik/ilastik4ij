@@ -57,6 +57,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
@@ -75,6 +76,12 @@ public class Hdf5Test {
 
     static ImgPlus<UnsignedByteType> sampleImg;
 
+    static double[] sampleCalibrations = new double[]{0.148, 5.00000023, 0};
+
+    static String[] sampleUnits = new String[]{"meters", "ü☺µ", ""};
+
+    static ImgPlus<UnsignedByteType> sampleImgWithMeta;
+
     @BeforeAll
     static void setUpClass() throws IOException {
         sourceHdf5 = copyResource("/test.h5", tempDir).toFile();
@@ -84,6 +91,7 @@ public class Hdf5Test {
                 .datasetIO()
                 .open(copyResource("/chocolate21.jpg", tempDir).toString())
                 .typedImg(new UnsignedByteType());
+        sampleImgWithMeta = new ImgPlus<>(sampleImg, sampleImg.getName(), new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL}, sampleCalibrations, sampleUnits);
     }
 
     @ParameterizedTest
@@ -106,15 +114,10 @@ public class Hdf5Test {
     @MethodSource
     void testReadAxisMetadata(String axes, long[] expectedShape, double[] expectedResolutions, String[] expectedUnits) {
         ImgPlus<UnsignedShortType> read = readDatasetWithMeta(axes);
-        double[] resolutions = new double[read.numDimensions()];
-        String[] units = new String[read.numDimensions()];
-        for (int i = 0; i < read.numDimensions(); i++) {
-            resolutions[i] = read.axis(i).calibratedValue(1.0);
-            units[i] = read.axis(i).unit();
-        }
+        PixelSize sizeMeta = getPixelSize(read);
         assertLongsEqual(expectedShape, read.dimensionsAsLongArray());
-        assertResolutionsEqual(expectedResolutions, resolutions);
-        assertArrayEqualsFormatted(expectedUnits, units);
+        assertResolutionsEqual(expectedResolutions, sizeMeta.resolution);
+        assertArrayEqualsFormatted(expectedUnits, sizeMeta.unit);
     }
 
     static Stream<Arguments> testReadAxisMetadata() {
@@ -151,7 +154,7 @@ public class Hdf5Test {
     @Test
     void testWrittenDims() {
         long[] expected = {400, 289, 3, 1, 1};
-        long[] actual = readWrittenDataset(new UnsignedByteType()).dimensionsAsLongArray();
+        long[] actual = writeSampleAndReadBack(new UnsignedByteType()).dimensionsAsLongArray();
         assertLongsEqual(expected, actual);
     }
 
@@ -163,7 +166,7 @@ public class Hdf5Test {
         // and double is the most common real type.
         long[] dstIndex = Arrays.copyOf(index, DEFAULT_AXES.size());
         double expected = sampleImg.getAt(index).getRealDouble();
-        double actual = readWrittenDataset(typeClass.newInstance()).getAt(dstIndex).getRealDouble();
+        double actual = writeSampleAndReadBack(typeClass.newInstance()).getAt(dstIndex).getRealDouble();
         assertEquals(expected, actual);
     }
 
@@ -196,6 +199,50 @@ public class Hdf5Test {
                 arguments(FloatType.class, srcPos));
     }
 
+    @Test
+    void testWrittenMetadata() {
+        long[] expectedShape = new long[]{400, 289, 3, 1, 1};
+        double[] expectedCalibrations = DoubleStream.concat(
+                        Arrays.stream(sampleCalibrations),
+                        DoubleStream.of(1.0, 1.0)
+                )
+                .toArray();
+        String[] expectedUnits = Stream.concat(
+                        Arrays.stream(sampleUnits),
+                        Stream.of("", "")
+                )
+                .toArray(String[]::new);
+
+        ImgPlus<UnsignedByteType> read = writeSampleWithMetaAndReadBack();
+        PixelSize sizeMeta = getPixelSize(read);
+
+        // Note Hdf5.readDataset will ignore all metadata if there is any error
+        // like mismatching number of resolution numbers and unit strings.
+        assertLongsEqual(expectedShape, read.dimensionsAsLongArray());
+        assertResolutionsEqual(expectedCalibrations, sizeMeta.resolution);
+        assertArrayEqualsFormatted(expectedUnits, sizeMeta.unit);
+    }
+
+    private static <T extends NativeType<T> & RealType<T>> PixelSize getPixelSize(ImgPlus<T> img) {
+        double[] resolutions = new double[img.numDimensions()];
+        String[] units = new String[img.numDimensions()];
+        for (int i = 0; i < img.numDimensions(); i++) {
+            resolutions[i] = img.axis(i).calibratedValue(1.0);
+            units[i] = img.axis(i).unit();
+        }
+        return new PixelSize(resolutions, units);
+    }
+
+    private static class PixelSize {
+        public final double[] resolution;
+        public final String[] unit;
+
+        public PixelSize(double[] resolution, String[] unit) {
+            this.resolution = resolution;
+            this.unit = unit;
+        }
+    }
+
     private static Path copyResource(String resourcePath, Path dstDir) {
         try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
             Objects.requireNonNull(in);
@@ -216,12 +263,18 @@ public class Hdf5Test {
         return Hdf5.readDataset(sourceHdf5WithMeta, "/test_with_meta", ImgUtils.toImagejAxes(axes));
     }
 
-    private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> readWrittenDataset(T type) {
+    private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> writeSampleAndReadBack(T type) {
         File file = tempDir.resolve("chocolate21.h5").toFile();
         ImgPlus<T> converted = new ImgPlus<>(
                 ImgView.wrap(RealTypeConverters.convert(sampleImg, type)), sampleImg);
         Hdf5.writeDataset(file, "/exported_data", converted, 0, DEFAULT_AXES);
         return Hdf5.readDataset(file, "/exported_data");
+    }
+
+    private static ImgPlus<UnsignedByteType> writeSampleWithMetaAndReadBack() {
+        File file = tempDir.resolve("chocolate21.h5").toFile();
+        Hdf5.writeDataset(file, "/exported_data", sampleImgWithMeta, 0, DEFAULT_AXES);
+        return Hdf5.readDataset(file, "/exported_data", ImgUtils.toImagejAxes("xyczt"));
     }
 
     private static void assertLongsEqual(long[] expected, long[] actual) {

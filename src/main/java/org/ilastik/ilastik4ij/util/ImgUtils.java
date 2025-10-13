@@ -46,7 +46,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,6 +62,7 @@ public final class ImgUtils {
      */
     public static final List<AxisType> DEFAULT_AXES = Collections.unmodifiableList(Arrays.asList(
             Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME));
+    private static final double IMAGEJ_DEFAULT_RESOLUTION = 1.0;
 
     /**
      * Supported axes in the character format, in the same order as {@link #DEFAULT_AXES}.
@@ -219,6 +222,36 @@ public final class ImgUtils {
     }
 
     /**
+     * Extract Axis->Resolution map from {@link ImgPlus}.
+     *
+     * There is no way to directly retrieve the value originally passed to the ImgPlus constructor,
+     * so instead we ask it to calculate the axis value at 1px.
+     * https://forum.image.sc/t/how-to-get-calibration-info-in-imagej2/38151
+     */
+    public static Map<AxisType, Double> taggedResolutionsOf(ImgPlus<?> img) {
+        Objects.requireNonNull(img);
+        return IntStream.range(0, img.numDimensions())
+                .collect(
+                        HashMap::new,
+                        (map, d) -> map.put(img.axis(d).type(), img.axis(d).calibratedValue(1.0)),
+                        HashMap::putAll
+                );
+    }
+
+    /**
+     * Extract Axis->Unit map from {@link ImgPlus}.
+     */
+    public static Map<AxisType, String> taggedUnitsOf(ImgPlus<?> img) {
+        Objects.requireNonNull(img);
+        return IntStream.range(0, img.numDimensions())
+                .collect(
+                        HashMap::new,
+                        (map, d) -> map.put(img.axis(d).type(), img.axis(d).unit()),
+                        HashMap::putAll
+                );
+    }
+
+    /**
      * Guess axes from image dimensions.
      */
     public static List<AxisType> guessAxes(long[] dims) {
@@ -374,31 +407,20 @@ public final class ImgUtils {
         return units;
     }
 
-    public static String axesToJSON(List<AxisType> axes)
-    {
+    public static String axesToJSON(List<AxisType> axes, Map<AxisType, Double> taggedResolutions) {
         JSONArray jsonAxesArray = new JSONArray();
-        List<AxisType> axes_for_serialization = new ArrayList<>(axes);
-        Collections.reverse(axes_for_serialization);
-        for (AxisType axis : axes_for_serialization)
-        {
+        List<AxisType> axesForSerialization = new ArrayList<>(axes);
+        Collections.reverse(axesForSerialization);
+
+        for (AxisType axis : axesForSerialization) {
             JSONObject jsonAxis = new JSONObject();
-            String label = axis.getLabel().toLowerCase();
-            int vigraType;
-            String vigraKey;
-            if (axis.isSpatial()){
-                vigraType = 2;
-                vigraKey = label;
-            } else if (label.equals("time")) {
-                vigraType = 8;
-                vigraKey = "t";
-            } else if (label.equals("channel")) {
-                vigraType = 1;
-                vigraKey = "c";
-            } else {
-                throw new IllegalArgumentException(
-                        String.format("Unknown axis type found with label %s.", label));
-            }
+            String vigraKey = axisToVigraKey(axis);
+            int vigraType = axisToVigraType(axis);
+
             jsonAxis.put("key", vigraKey);
+            if (!taggedResolutions.isEmpty()) {
+                jsonAxis.put("resolution", taggedResolutions.getOrDefault(axis, IMAGEJ_DEFAULT_RESOLUTION));
+            }
             jsonAxis.put("typeFlags", vigraType);
             jsonAxesArray.put(jsonAxis);
         }
@@ -408,6 +430,49 @@ public final class ImgUtils {
 
         return root.toString();
     }
+
+    public static String unitsToJSON(List<AxisType> axes, Map<AxisType, String> taggedUnits) {
+        if (taggedUnits.isEmpty()) {
+            return "{}";
+        }
+        List<AxisType> axesForSerialization = new ArrayList<>(axes);
+        Collections.reverse(axesForSerialization);
+        JSONObject units = new JSONObject();
+        for (AxisType axis : axesForSerialization) {
+            String vigraKey = axisToVigraKey(axis);
+            units.put(vigraKey, taggedUnits.getOrDefault(axis, ""));
+        }
+        return units.toString();
+    }
+
+    private static String axisToVigraKey(AxisType axis) {
+        String label = axis.getLabel().toLowerCase();
+        if (axis.isSpatial()) {
+            return label;
+        } else if (label.equals("time")) {
+            return "t";
+        } else if (label.equals("channel")) {
+            return "c";
+        } else {
+            throw new IllegalArgumentException(
+                    String.format("Unknown axis type found with label %s.", label));
+        }
+    }
+
+    private static int axisToVigraType(AxisType axis) {
+        String label = axis.getLabel().toLowerCase();
+        if (axis.isSpatial()) {
+            return 2;
+        } else if (label.equals("time")) {
+            return 8;
+        } else if (label.equals("channel")) {
+            return 1;
+        } else {
+            throw new IllegalArgumentException(
+                    String.format("Unknown axis type found with label %s.", label));
+        }
+    }
+
 
     /**
      * Treat alpha, red, green, and blue values in {@link ARGBType} image

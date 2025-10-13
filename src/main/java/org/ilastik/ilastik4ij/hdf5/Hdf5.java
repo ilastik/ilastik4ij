@@ -60,6 +60,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongConsumer;
 import java.util.logging.Logger;
@@ -76,7 +77,10 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutions;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnits;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedResolutionsOf;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedUnitsOf;
 import static org.ilastik.ilastik4ij.util.ImgUtils.transformDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.unitsToJSON;
 
 /**
  * Read/write/list HDF5 datasets.
@@ -285,6 +289,9 @@ public final class Hdf5 {
             return;
         }
 
+        Map<AxisType, Double> taggedResolutions = taggedResolutionsOf(img);
+        Map<AxisType, String> taggedUnits = taggedUnitsOf(img);
+
         Img<T> data = axes == null ? img.getImg() : transformDims(img, axesOf(img), axes);
         if (axes == null) {
             axes = axesOf(img);
@@ -312,7 +319,10 @@ public final class Hdf5 {
                      compressionLevel)) {
 
             // Add axes tags
-            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesToJSON(axes));
+            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesToJSON(axes, taggedResolutions));
+            if (!taggedUnits.isEmpty()) {
+                writer.string().setAttr(dataset.getDataSetPath(), "axis_units", escapeUnicode(unitsToJSON(axes, taggedUnits)));
+            }
 
             callback.accept(0L);
 
@@ -371,5 +381,22 @@ public final class Hdf5 {
 
     private Hdf5() {
         throw new AssertionError();
+    }
+
+    /**
+     * IHDF5StringWriter doesn't escape unicode, so we have to do it manually.
+     * If more complex stuff specifically for JSON starts being needed at some point, should consider
+     * switching to com.google.code.gson instead of org.json.
+     */
+    private static String escapeUnicode(String input) {
+        StringBuilder b = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            if (c > 127) {
+                b.append(String.format("\\u%04x", (int) c));
+            } else {
+                b.append(c);
+            }
+        }
+        return b.toString();
     }
 }

@@ -58,6 +58,7 @@ import static org.scijava.widget.ChoiceWidget.LIST_BOX_STYLE;
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Import HDF5")
 public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends DynamicCommand {
     private static final String NOT_SELECTED = "<i>Select file and dataset...</i>";
+    private static final double VIGRA_AXISTAGS_DEFAULT_RESOLUTION = 0.0;
 
     @Parameter(label = "HDF5 file", persist = false, callback = "selectChanged")
     public File select;
@@ -108,10 +109,10 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
         AxisType[] pixelSizeDisplayAxes = {Axes.X, Axes.Y, Axes.Z, Axes.TIME};
 
-        boolean allResolutionsZero = dd.resolutions.stream().allMatch(r -> r == 0.0);
-        boolean allUnitsEmpty = dd.units.stream().allMatch(String::isEmpty);
+        boolean hasNoResolutions = dd.resolutions.stream().allMatch(r -> r == VIGRA_AXISTAGS_DEFAULT_RESOLUTION);
+        boolean hasNoUnits = dd.units.stream().allMatch(String::isEmpty);
 
-        if (allResolutionsZero && allUnitsEmpty) {
+        if (hasNoResolutions && hasNoUnits) {
             return "(no pixel size metadata found)";
         }
 
@@ -126,7 +127,7 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
                     Double resolution = dd.resolutions.get(index);
                     String unit = dd.units.get(index);
 
-                    String resolutionStr = (resolution == 0.0) ? "1" : String.format("%.2f", resolution);
+                    String resolutionStr = (resolution == VIGRA_AXISTAGS_DEFAULT_RESOLUTION) ? "1" : String.format("%.2f", resolution);
                     String unitStr = unit.isEmpty() ? "" : " " + unit;
 
                     return String.format("%s: %s%s", axis.getLabel().toLowerCase(), resolutionStr, unitStr);
