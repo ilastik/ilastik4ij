@@ -64,7 +64,7 @@ public final class IlastikOptions extends OptionsPlugin {
     public void initialize() {
         String path = "";
         if (PlatformUtils.isWindows()) {
-            path = "C:\\\\Program Files\\ilastik-1.4.0\\ilastik.exe";
+            path = "C:\\Program Files\\ilastik-1.4.0\\ilastik.exe";
         } else if (PlatformUtils.isLinux()) {
             path = "/opt/ilastik-1.4.0-Linux/run_ilastik.sh";
         } else if (PlatformUtils.isMac()) {
