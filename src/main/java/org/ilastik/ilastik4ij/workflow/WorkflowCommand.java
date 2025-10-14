@@ -27,6 +27,7 @@ package org.ilastik.ilastik4ij.workflow;
 
 import net.imagej.Dataset;
 import net.imagej.ImgPlus;
+import net.imagej.axis.AxisType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.Hdf5;
@@ -61,6 +62,8 @@ import java.util.function.LongConsumer;
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_STRING_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedResolutionsOf;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedUnitsOf;
 
 /**
  * Base class for all commands that run ilastik in a subprocess.
@@ -147,6 +150,10 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
 
             @SuppressWarnings("unchecked")
             ImgPlus<T> inputImg = (ImgPlus<T>) inputs.get(inputName).getImgPlus();
+
+            Map<AxisType, Double> res = taggedResolutionsOf(inputImg);
+            Map<AxisType, String> units = taggedUnitsOf(inputImg);
+            logger.info(String.format("Input has resolutions='%s' and units='%s'", res.values(), units.values()));
 
             logger.info(String.format("Write input '%s' starting", inputPath));
             Hdf5.writeDataset(
