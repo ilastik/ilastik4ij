@@ -186,7 +186,7 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         logger.info("Read output starting");
         startTime = System.nanoTime();
         statusBar.withSpinner("Reading output", () ->
-                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
+                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data", DEFAULT_AXES));
         logger.info(String.format(
                 "Read output finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
     }
@@ -209,7 +209,7 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
                 "--project=" + projectFileName.getAbsolutePath(),
                 "--output_format=hdf5",
                 "--output_axis_order=" + axes,
-                "--input_axes=" + axes,
+                "--ignore_training_axistags",
                 "--readonly=1",
                 "--output_internal_path=exported_data"));
     }
