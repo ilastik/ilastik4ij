@@ -359,52 +359,71 @@ public final class ImgUtils {
     }
 
     /**
-     * Parse resolutions from JSON string.
+     * Parse resolutions for a given set of axes from a vigra.AxisTags JSON string.
      * <p>
-     * Expected JSON string like {@code {"axes": [{"resolution": 25.0}, {"resolution": 12.0}]}}
+     * Expected JSON string like {@code {
+     *  "axes": [{"key": "x", "resolution": 25.0}, {"key": "y", "resolution": 12.0}]
+     * } }.
+     * Pads with {@link #IMAGEJ_DEFAULT_RESOLUTION} for requested `axes` that had no json entry (or 0.0).
      *
-     * Like {@link #parseAxes}, assumes reversed axis order.
-     *
-     * @throws JSONException if JSON is malformed/invalid, or if resolutions are invalid.
+     * @throws JSONException in nonsense cases (malformed json)
      */
-    public static List<Double> parseResolutions(String json) {
+    public static List<Double> parseResolutionsMatchingAxes(String json, List<AxisType> axes) {
         Objects.requireNonNull(json);
-        List<Double> resolutions = new ArrayList<>();
-        JSONArray arr = new JSONObject(json).getJSONArray("axes");
-        for (int d = 0; d < arr.length(); d++) {
-            resolutions.add(arr.getJSONObject(d).getDouble("resolution"));
+        Objects.requireNonNull(axes);
+        List<AxisType> storedAxes;
+        try {
+            storedAxes = parseAxes(json);
+        } catch(JSONException e) {
+            throw new JSONException("should have ensured parseAxes(json) is fine before calling this", e);
         }
-        Collections.reverse(resolutions);
-
-        return resolutions;
+        Collections.reverse(storedAxes);  // Undo inversion from parseAxes to match order in json string
+        Map<AxisType, Double> resolutions = new HashMap<>();
+        JSONArray arr = new JSONObject(json).getJSONArray("axes");
+        if (storedAxes.size() != arr.length()) {
+            throw new JSONException("impossible - parseAxes should parse the same json property");
+        }
+        for (int d = 0; d < arr.length(); d++) {
+            try {
+                double storedRes = arr.getJSONObject(d).getDouble("resolution");
+                resolutions.put(storedAxes.get(d), storedRes == 0.0 ? IMAGEJ_DEFAULT_RESOLUTION : storedRes);
+            } catch (JSONException ignored) {
+                // no valid meta for this axis
+            }
+        }
+        return axes.stream()
+                .mapToDouble(axis -> resolutions.getOrDefault(axis, IMAGEJ_DEFAULT_RESOLUTION))
+                .boxed()
+                .collect(Collectors.toList());
     }
 
     /**
-     * Parse physical unit names from JSON string.
+     * Parse resolutions for a given set of axes from an ilastik-style axis_units JSON string.
      * <p>
-     * Expected JSON string like {@code {"x": "nm", "t": "hours"}}
-     *
-     * Returns units in the order of wantedAxes, adds empty strings for missing units.
-     *
-     * @throws JSONException if JSON is malformed/invalid.
+     * Expected JSON string like {@code {"x": "nm", "t": "hours"}}.
+     * Pads with "" for requested `axes` that had no json entry.
+     * <p>
+     * Returns empty list if json invalid.
      */
-    public static List<String> parseUnits(String json, List<AxisType> wantedAxes) {
-        if(wantedAxes == null) { return Collections.emptyList(); }
-
+    public static List<String> parseUnitsMatchingAxes(String json, List<AxisType> axes) {
         Objects.requireNonNull(json);
-        JSONObject obj = new JSONObject(json);
+        Objects.requireNonNull(axes);
 
-        List<String> units = new ArrayList<>();
-        String axesString = toStringAxes(wantedAxes);
-        for (String axisKey : axesString.split("")) {
-            if (obj.has(axisKey)) {
-                units.add(obj.getString(axisKey));
-            } else {
-                units.add("");
-            }
+        JSONObject obj;
+        try {
+            obj = new JSONObject(json);
+        } catch(JSONException ignored) {
+            return Collections.emptyList();
         }
+        Map<String, String> storedUnits = obj.keySet().stream()
+                .collect(Collectors.toMap(
+                        key -> key,
+                        obj::getString
+                ));
 
-        return units;
+        return axes.stream()
+                .map(axis -> storedUnits.getOrDefault(axisToVigraKey(axis), ""))
+                .collect(Collectors.toList());
     }
 
     public static String axesToJSON(List<AxisType> axes, Map<AxisType, Double> taggedResolutions) {
@@ -418,8 +437,8 @@ public final class ImgUtils {
             int vigraType = axisToVigraType(axis);
 
             jsonAxis.put("key", vigraKey);
-            if (!taggedResolutions.isEmpty()) {
-                jsonAxis.put("resolution", taggedResolutions.getOrDefault(axis, IMAGEJ_DEFAULT_RESOLUTION));
+            if (taggedResolutions.containsKey(axis)) {
+                jsonAxis.put("resolution", taggedResolutions.get(axis));
             }
             jsonAxis.put("typeFlags", vigraType);
             jsonAxesArray.put(jsonAxis);

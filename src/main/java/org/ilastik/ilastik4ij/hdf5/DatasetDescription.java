@@ -40,8 +40,8 @@ import java.util.Optional;
 
 import static org.ilastik.ilastik4ij.util.ImgUtils.guessAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
-import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutions;
-import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnits;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutionsMatchingAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnitsMatchingAxes;
 
 /**
  * Metadata for HDF5 dataset.
@@ -108,8 +108,8 @@ public final class DatasetDescription {
         boolean axesGuessed;
         try {
             axes = parseAxes(reader.string().getAttr(path, "axistags"));
-            resolutions = parseResolutions(reader.string().getAttr(path, "axistags"));
-            units = parseUnits(reader.string().getAttr(path, "axis_units"), axes);
+            resolutions = parseResolutionsMatchingAxes(reader.string().getAttr(path, "axistags"), axes);
+            units = parseUnitsMatchingAxes(reader.string().getAttr(path, "axis_units"), axes);
             axesGuessed = false;
         } catch (HDF5AttributeException | JSONException ignored) {
             axes = guessAxes(dims);

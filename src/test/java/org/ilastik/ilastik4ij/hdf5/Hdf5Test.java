@@ -76,7 +76,7 @@ public class Hdf5Test {
 
     static ImgPlus<UnsignedByteType> sampleImg;
 
-    static double[] sampleCalibrations = new double[]{0.148, 5.00000023, 0};
+    static double[] sampleCalibrations = new double[]{0.148, 5.00000023, 1};
 
     static String[] sampleUnits = new String[]{"meters", "ü☺µ", ""};
 
@@ -121,15 +121,12 @@ public class Hdf5Test {
     }
 
     static Stream<Arguments> testReadAxisMetadata() {
-        // sourceHdf5WithMeta is the same bogus data as sourceHdf5, but stored as tzcyx [7, 6, 3, 5, 4] instead of tzyxc.
-        // Asking to interpret the dataset as any other order than what's stored in its metadata
-        // implies that the resolution metadata are wrong/meaningless.
         double[] imagejDefaultResolutions = {1, 1, 1, 1, 1};
         String[] imagejDefaultUnits = {null, null, null, null, null};
         return Stream.of(
-                arguments("xyczt", new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 0.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
-                arguments("cxyzt", new long[]{5, 3, 4, 6, 7}, imagejDefaultResolutions, imagejDefaultUnits),
-                arguments("cyxtz", new long[]{3, 5, 4, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits));
+                arguments("cxyzt", new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 1.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
+                arguments("cxytz", new long[]{4, 5, 3, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits),
+                arguments("xcytz", new long[]{3, 5, 4, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits));
     }
 
     @Test

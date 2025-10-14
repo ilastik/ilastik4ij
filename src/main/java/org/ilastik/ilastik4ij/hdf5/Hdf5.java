@@ -51,7 +51,6 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Fraction;
 import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.util.GridCoordinates;
-import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -74,8 +73,8 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.axesToJSON;
 import static org.ilastik.ilastik4ij.util.ImgUtils.inputBlockDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.outputDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
-import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutions;
-import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnits;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutionsMatchingAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnitsMatchingAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
 import static org.ilastik.ilastik4ij.util.ImgUtils.taggedResolutionsOf;
 import static org.ilastik.ilastik4ij.util.ImgUtils.taggedUnitsOf;
@@ -153,9 +152,8 @@ public final class Hdf5 {
 
         DatasetType type;
         Img<T> img;
-        List<AxisType> storedAxes = new ArrayList<>();
-        List<Double> storedResolutions = new ArrayList<>();
-        List<String> storedUnits = new ArrayList<>();
+        String axistagsJson;
+        String axisunitsJson;
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(file)) {
             HDF5DataSetInformation info = reader.getDataSetInformation(path);
@@ -185,21 +183,13 @@ public final class Hdf5 {
                 }
             }
 
-            String tagsKey = "axistags";
             try {
-                storedAxes = parseAxes(reader.string().getAttr(path, tagsKey));
-                storedResolutions = parseResolutions(reader.string().getAttr(path, tagsKey));
-                storedUnits = parseUnits(reader.string().getAttr(path, "axis_units"), storedAxes);
-            } catch (HDF5AttributeException | JSONException ignored) {
-                // No metadata
+                axistagsJson = reader.string().getAttr(path, "axistags");
+                axisunitsJson = reader.string().getAttr(path, "axis_units");
+            } catch (HDF5AttributeException ignored) {
+                axistagsJson = "";
+                axisunitsJson = "";
             }
-        }
-
-        double[] resolutions = null;
-        String[] units = null;
-        if (axes != null && axes.equals(storedAxes) && storedAxes.size() == storedResolutions.size() && storedAxes.size() == storedUnits.size()) {
-            resolutions = storedResolutions.stream().mapToDouble(Double::doubleValue).toArray();
-            units = storedUnits.toArray(new String[0]);
         }
 
         String name = file.toPath()
@@ -207,15 +197,24 @@ public final class Hdf5 {
                 .toString()
                 .replace('\\', '/');
 
-        if (axes == null) {
-            axes = DEFAULT_AXES.subList(0, img.numDimensions());
-        } else {
-            List<AxisType> srcAxes = axes;
-            axes = DEFAULT_AXES.stream().filter(srcAxes::contains).collect(Collectors.toList());
-            img = transformDims(img, srcAxes, axes);
+        double[] resolutions = null;
+        String[] units = null;
+        List<AxisType> imagejAxes = DEFAULT_AXES.subList(0, img.numDimensions());
+        if (axes != null) {
+            imagejAxes = DEFAULT_AXES.stream().filter(axes::contains).collect(Collectors.toList());
+            img = transformDims(img, axes, imagejAxes);
+
+            boolean axesMismatchDatasetMeta = axistagsJson.isEmpty() || !axes.equals(parseAxes(axistagsJson));
+            if (!axesMismatchDatasetMeta) {
+                // Pixel size metadata only make sense if user isn't forcing a reinterpretation of the dataset's axes.
+                resolutions = parseResolutionsMatchingAxes(axistagsJson, imagejAxes).stream()
+                        .mapToDouble(Double::doubleValue)
+                        .toArray();
+                units = parseUnitsMatchingAxes(axisunitsJson, imagejAxes).toArray(new String[0]);
+            }
         }
 
-        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]), resolutions, units);
+        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, imagejAxes.toArray(new AxisType[0]), resolutions, units);
         imgPlus.setValidBits(8 * type.size);
         return imgPlus;
     }
