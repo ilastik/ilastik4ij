@@ -139,13 +139,15 @@ public final class DatasetDescription {
         return Objects.equals(path, that.path) &&
                 type == that.type &&
                 Arrays.equals(dims, that.dims) &&
+                Objects.equals(resolutions, that.resolutions) &&
+                Objects.equals(units, that.units) &&
                 Objects.equals(axes, that.axes) &&
                 axesGuessed == that.axesGuessed;
     }
 
     @Override
     public int hashCode() {
-        int result = Objects.hash(path, type, axes, axesGuessed);
+        int result = Objects.hash(path, type, axes, resolutions, units, axesGuessed);
         result = 31 * result + Arrays.hashCode(dims);
         return result;
     }
@@ -153,11 +155,13 @@ public final class DatasetDescription {
     @Override
     public String toString() {
         return String.format(
-                "DatasetDescription{path='%s', type=%s, dims=%s, axes=%s, axesGuessed=%s}",
+                "DatasetDescription{path='%s', type=%s, dims=%s, axes=%s, resolutions=%s, units=%s, axesGuessed=%s}",
                 path,
                 type,
                 Arrays.toString(dims),
                 axes,
+                resolutions,
+                units,
                 axesGuessed);
     }
 }
