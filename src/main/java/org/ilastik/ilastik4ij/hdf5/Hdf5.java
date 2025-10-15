@@ -51,6 +51,7 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Fraction;
 import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.util.GridCoordinates;
+import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -170,6 +171,15 @@ public final class Hdf5 {
             } catch (HDF5AttributeException ignored) {
                 axistagsJson = "";
                 axisunitsJson = "";
+            }
+        }
+
+        if (axes == null && !axistagsJson.isEmpty()) {
+            try {
+                List<AxisType> storedAxes = parseAxes(axistagsJson);
+                axes = storedAxes.isEmpty() ? null : storedAxes;
+            } catch (JSONException ignored) {
+                // axis metadata unhelpful, proceed with null
             }
         }
 

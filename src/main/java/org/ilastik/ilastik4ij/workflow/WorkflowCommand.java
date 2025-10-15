@@ -186,7 +186,7 @@ public abstract class WorkflowCommand<T extends NativeType<T> & RealType<T>> ext
         logger.info("Read output starting");
         startTime = System.nanoTime();
         statusBar.withSpinner("Reading output", () ->
-                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data", DEFAULT_AXES));
+                predictions = Hdf5.readDataset(outputPath.toFile(), "exported_data"));
         logger.info(String.format(
                 "Read output finished in %.3f seconds", 1e-9 * (System.nanoTime() - startTime)));
     }

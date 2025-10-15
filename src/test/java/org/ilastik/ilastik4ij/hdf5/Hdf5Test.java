@@ -124,6 +124,7 @@ public class Hdf5Test {
         double[] imagejDefaultResolutions = {1, 1, 1, 1, 1};
         String[] imagejDefaultUnits = {null, null, null, null, null};
         return Stream.of(
+                arguments(null, new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 1.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
                 arguments("cxyzt", new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 1.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
                 arguments("cxytz", new long[]{4, 5, 3, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits),
                 arguments("xcytz", new long[]{3, 5, 4, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits));
@@ -257,7 +258,7 @@ public class Hdf5Test {
     }
 
     private static ImgPlus<UnsignedShortType> readDatasetWithMeta(String axes) {
-        return Hdf5.readDataset(sourceHdf5WithMeta, "/test_with_meta", ImgUtils.toImagejAxes(axes));
+        return Hdf5.readDataset(sourceHdf5WithMeta, "/test_with_meta", axes == null ? null : ImgUtils.toImagejAxes(axes));
     }
 
     private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> writeSampleAndReadBack(T type) {
