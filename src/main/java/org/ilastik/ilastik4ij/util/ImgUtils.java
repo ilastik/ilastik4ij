@@ -222,7 +222,7 @@ public final class ImgUtils {
     }
 
     /**
-     * Extract Axis->Resolution map from {@link ImgPlus}.
+     * Extract Axis : Resolution map from {@link ImgPlus}.
      *
      * There is no way to directly retrieve the value originally passed to the ImgPlus constructor,
      * so instead we ask it to calculate the axis value at 1px.
@@ -239,7 +239,7 @@ public final class ImgUtils {
     }
 
     /**
-     * Extract Axis->Unit map from {@link ImgPlus}.
+     * Extract Axis : Unit map from {@link ImgPlus}.
      */
     public static Map<AxisType, String> taggedUnitsOf(ImgPlus<?> img) {
         Objects.requireNonNull(img);
