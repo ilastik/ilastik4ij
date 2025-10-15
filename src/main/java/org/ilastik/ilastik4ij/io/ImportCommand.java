@@ -26,8 +26,6 @@
 package org.ilastik.ilastik4ij.io;
 
 import net.imagej.ImgPlus;
-import net.imagej.axis.Axes;
-import net.imagej.axis.AxisType;
 import net.imglib2.type.NativeType;
 import net.imglib2.type.numeric.RealType;
 import org.ilastik.ilastik4ij.hdf5.DatasetDescription;
@@ -58,7 +56,6 @@ import static org.scijava.widget.ChoiceWidget.LIST_BOX_STYLE;
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Import HDF5")
 public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends DynamicCommand {
     private static final String NOT_SELECTED = "<i>Select file and dataset...</i>";
-    private static final double VIGRA_AXISTAGS_DEFAULT_RESOLUTION = 0.0;
 
     @Parameter(label = "HDF5 file", persist = false, callback = "selectChanged")
     public File select;
@@ -95,44 +92,18 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     @SuppressWarnings("unused")
     private void datasetNameChanged() {
         DatasetDescription dd = datasetName.equals(" ") ? null : datasets.get(datasetName);
-        type = dd != null ? dd.type.toString().toLowerCase() : NOT_SELECTED;
-        // Show dimensions and axes in the row-major order for backwards compatibility.
-        dimensions = dd != null ? Arrays.toString(reversed(dd.dims)) : NOT_SELECTED;
-        axisOrder = dd != null ? reversed(toStringAxes(dd.axes)) : "";
-        pixelSize = formatPixelSize(dd);
-    }
-
-    private static String formatPixelSize(DatasetDescription dd) {
-        if (dd == null) {
-            return NOT_SELECTED;
+        if (dd != null) {
+            type = dd.type.toString().toLowerCase();
+            // Show dimensions and axes in the row-major order for backwards compatibility.
+            dimensions = Arrays.toString(reversed(dd.dims));
+            axisOrder = reversed(toStringAxes(dd.axes));
+            pixelSize = dd.formatPixelSize().isEmpty() ? "(no pixel size metadata)" : dd.formatPixelSize();
+        } else {
+            type = NOT_SELECTED;
+            dimensions = NOT_SELECTED;
+            axisOrder = "";
+            pixelSize = NOT_SELECTED;
         }
-
-        AxisType[] pixelSizeDisplayAxes = {Axes.X, Axes.Y, Axes.Z, Axes.TIME};
-
-        boolean hasNoResolutions = dd.resolutions.stream().allMatch(r -> r == VIGRA_AXISTAGS_DEFAULT_RESOLUTION);
-        boolean hasNoUnits = dd.units.stream().allMatch(String::isEmpty);
-
-        if (hasNoResolutions && hasNoUnits) {
-            return "(no pixel size metadata found)";
-        }
-
-        if (dd.axes.size() != dd.resolutions.size() || dd.resolutions.size() != dd.units.size()) {
-            return "(pixel size metadata is corrupted)";
-        }
-
-        return Arrays.stream(pixelSizeDisplayAxes)
-                .filter(dd.axes::contains)
-                .map(axis -> {
-                    int index = dd.axes.indexOf(axis);
-                    Double resolution = dd.resolutions.get(index);
-                    String unit = dd.units.get(index);
-
-                    String resolutionStr = (resolution == VIGRA_AXISTAGS_DEFAULT_RESOLUTION) ? "1" : String.format("%.2f", resolution);
-                    String unitStr = unit.isEmpty() ? "" : " " + unit;
-
-                    return String.format("%s: %s%s", axis.getLabel().toLowerCase(), resolutionStr, unitStr);
-                })
-                .collect(Collectors.joining(", "));
     }
 
     @Parameter(label = "Type", persist = false, required = false, visibility = MESSAGE)

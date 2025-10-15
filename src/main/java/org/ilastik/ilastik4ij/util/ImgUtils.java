@@ -62,7 +62,7 @@ public final class ImgUtils {
      */
     public static final List<AxisType> DEFAULT_AXES = Collections.unmodifiableList(Arrays.asList(
             Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME));
-    private static final double IMAGEJ_DEFAULT_RESOLUTION = 1.0;
+    public static final double IMAGEJ_DEFAULT_RESOLUTION = 1.0;
 
     /**
      * Supported axes in the character format, in the same order as {@link #DEFAULT_AXES}.

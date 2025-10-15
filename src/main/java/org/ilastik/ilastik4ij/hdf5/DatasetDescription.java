@@ -28,6 +28,7 @@ package org.ilastik.ilastik4ij.hdf5;
 import ch.systemsx.cisd.hdf5.HDF5DataSetInformation;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import hdf.hdf5lib.exceptions.HDF5AttributeException;
+import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
 import org.ilastik.ilastik4ij.util.ImgUtils;
 import org.json.JSONException;
@@ -37,7 +38,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
+import static org.ilastik.ilastik4ij.util.ImgUtils.IMAGEJ_DEFAULT_RESOLUTION;
 import static org.ilastik.ilastik4ij.util.ImgUtils.guessAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutionsMatchingAxes;
@@ -129,6 +132,35 @@ public final class DatasetDescription {
         this.resolutions = new ArrayList<>(Objects.requireNonNull(resolutions));
         this.units = new ArrayList<>(Objects.requireNonNull(units));
         this.axesGuessed = axesGuessed;
+    }
+
+    public String formatPixelSize() {
+        AxisType[] pixelSizeDisplayAxes = {Axes.X, Axes.Y, Axes.Z, Axes.TIME};
+
+        boolean hasAnyResolution = resolutions.stream().anyMatch(r -> r != IMAGEJ_DEFAULT_RESOLUTION);
+        boolean hasAnyUnit = units.stream().anyMatch(u -> !u.isEmpty());
+
+        if (!hasAnyResolution && !hasAnyUnit) {
+            return "";
+        }
+
+        if (axes.size() != resolutions.size() && axes.size() != units.size()) {
+            return "(corrupted pixel size metadata)";
+        }
+
+        return Arrays.stream(pixelSizeDisplayAxes)
+                .filter(axes::contains)
+                .map(axis -> {
+                    int index = axes.indexOf(axis);
+                    Double resolution = resolutions.get(index);
+                    String unit = units.get(index);
+
+                    String resolutionStr = (resolution == IMAGEJ_DEFAULT_RESOLUTION) ? "1" : String.format("%.2f", resolution);
+                    String unitStr = unit.isEmpty() ? "" : " " + unit;
+
+                    return String.format("%s: %s%s", axis.getLabel().toLowerCase(), resolutionStr, unitStr);
+                })
+                .collect(Collectors.joining(", "));
     }
 
     @Override

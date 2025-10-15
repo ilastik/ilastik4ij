@@ -53,11 +53,12 @@ public final class ListDatasetsCommand extends ContextCommand {
     public void run() {
         List<DatasetDescription> descriptions = Hdf5.datasets(file);
 
-        datasets = new DefaultGenericTable(4, descriptions.size());
+        datasets = new DefaultGenericTable(5, descriptions.size());
         datasets.setColumnHeader(0, "Path");
         datasets.setColumnHeader(1, "Type");
         datasets.setColumnHeader(2, "Dimensions");
         datasets.setColumnHeader(3, "Axes");
+        datasets.setColumnHeader(4, "Pixel size");
 
         for (int i = 0; i < descriptions.size(); i++) {
             DatasetDescription dd = descriptions.get(i);
@@ -65,6 +66,7 @@ public final class ListDatasetsCommand extends ContextCommand {
             datasets.set(1, i, dd.type.toString().toLowerCase());
             datasets.set(2, i, Arrays.stream(dd.dims).boxed().collect(Collectors.toList()));
             datasets.set(3, i, dd.axes);
+            datasets.set(4, i, dd.formatPixelSize());
         }
     }
 }
