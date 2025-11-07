@@ -96,18 +96,34 @@ public class Hdf5Test {
 
     @ParameterizedTest
     @MethodSource
-    void testReadAxes(long[] expected, String axes) {
+    void testForceAxes(long[] expected, String axes) {
         long[] actual = readDataset(axes).dimensionsAsLongArray();
         assertLongsEqual(expected, actual);
     }
 
-    static Stream<Arguments> testReadAxes() {
+    static Stream<Arguments> testForceAxes() {
         // Output axes are always ImageJ default (xyczt)
         // Data axes are volumina default (tzyxc [7, 6, 5, 4, 3]), but readDataset takes axes in reverse order
         return Stream.of(
+                arguments(new long[]{3, 4, 5, 6, 7}, null), // Default order (dataset contains no axistags)
                 arguments(new long[]{4, 5, 3, 6, 7}, "cxyzt"), // Correctly maps data axes to ImageJ
                 arguments(new long[]{4, 5, 3, 7, 6}, "cxytz"), // Equivalent to user entering "ztyxc" in the plugin
                 arguments(new long[]{3, 5, 4, 7, 6}, "xcytz")); // Flip t<>z and x<>c
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testReadAxistags(long[] expected, String axes) {
+        long[] actual = readDatasetWithAxes(axes).dimensionsAsLongArray();
+        assertLongsEqual(expected, actual);
+    }
+
+    static Stream<Arguments> testReadAxistags() {
+        // This dataset is 256x256x256x1 (zyxc)
+        return Stream.of(
+                arguments(new long[]{256, 256, 1, 256}, null), // Read axistags and map to ImageJ (xyczt)
+                arguments(new long[]{256, 256, 1, 256}, "cxyt"), // Force z to t
+                arguments(new long[]{256, 1, 256, 256}, "ycxz")); // Nonsense but should work
     }
 
     @ParameterizedTest
@@ -254,7 +270,11 @@ public class Hdf5Test {
     }
 
     private static ImgPlus<UnsignedShortType> readDataset(String axes) {
-        return Hdf5.readDataset(sourceHdf5, "/exported_data", ImgUtils.toImagejAxes(axes));
+        return Hdf5.readDataset(sourceHdf5, "/exported_data", axes == null ? null : ImgUtils.toImagejAxes(axes));
+    }
+
+    private static ImgPlus<UnsignedShortType> readDatasetWithAxes(String axes) {
+        return Hdf5.readDataset(sourceHdf5WithMeta, "/exported_data", axes == null ? null : ImgUtils.toImagejAxes(axes));
     }
 
     private static ImgPlus<UnsignedShortType> readDatasetWithMeta(String axes) {

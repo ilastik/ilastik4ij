@@ -403,7 +403,7 @@ public final class ImgUtils {
      * Expected JSON string like {@code {"x": "nm", "t": "hours"}}.
      * Pads with "" for requested `axes` that had no json entry.
      * <p>
-     * Returns empty list if json invalid.
+     * Returns list of empty strings matching `axes` if JSON invalid.
      */
     public static List<String> parseUnitsMatchingAxes(String json, List<AxisType> axes) {
         Objects.requireNonNull(json);
@@ -413,7 +413,7 @@ public final class ImgUtils {
         try {
             obj = new JSONObject(json);
         } catch(JSONException ignored) {
-            return Collections.emptyList();
+            return Collections.nCopies(axes.size(), "");
         }
         Map<String, String> storedUnits = obj.keySet().stream()
                 .collect(Collectors.toMap(

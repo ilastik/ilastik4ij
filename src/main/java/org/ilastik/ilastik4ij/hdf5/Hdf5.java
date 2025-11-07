@@ -87,6 +87,18 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.unitsToJSON;
  */
 public final class Hdf5 {
     /**
+     * Try to read String attribute `key` of dataset at `path` within `reader`,
+     * return `defaultValue` if the attribute does not exist.
+     */
+    public static String getAttrOrDefault(IHDF5Reader reader, String path, String key, String defaultValue) {
+        try {
+            return reader.string().getAttr(path, key);
+        } catch (HDF5AttributeException ignored) {
+            return defaultValue;
+        }
+    }
+
+    /**
      * Return descriptions of supported datasets in an HDF5 file, sorted by their paths.
      */
     public static List<DatasetDescription> datasets(File file) {
@@ -165,13 +177,8 @@ public final class Hdf5 {
 
             img = loadImg(reader, path, type, info, axes, callback);
 
-            try {
-                axistagsJson = reader.string().getAttr(path, "axistags");
-                axisunitsJson = reader.string().getAttr(path, "axis_units");
-            } catch (HDF5AttributeException ignored) {
-                axistagsJson = "";
-                axisunitsJson = "";
-            }
+            axistagsJson = getAttrOrDefault(reader, path, "axistags", "");
+            axisunitsJson = getAttrOrDefault(reader, path, "axis_units", "");
         }
 
         if (axes == null && !axistagsJson.isEmpty()) {

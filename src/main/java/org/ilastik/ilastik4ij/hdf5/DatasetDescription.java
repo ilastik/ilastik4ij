@@ -112,7 +112,7 @@ public final class DatasetDescription {
         try {
             axes = parseAxes(reader.string().getAttr(path, "axistags"));
             resolutions = parseResolutionsMatchingAxes(reader.string().getAttr(path, "axistags"), axes);
-            units = parseUnitsMatchingAxes(reader.string().getAttr(path, "axis_units"), axes);
+            units = parseUnitsMatchingAxes(Hdf5.getAttrOrDefault(reader, path, "axis_units", ""), axes);
             axesGuessed = false;
         } catch (HDF5AttributeException | JSONException ignored) {
             axes = guessAxes(dims);

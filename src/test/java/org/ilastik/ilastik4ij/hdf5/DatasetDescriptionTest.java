@@ -1,0 +1,79 @@
+/*-
+ * #%L
+ * ilastik
+ * %%
+ * Copyright (C) 2017 - 2025 N/A
+ * %%
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ * #L%
+ */
+package org.ilastik.ilastik4ij.hdf5;
+
+import ch.systemsx.cisd.hdf5.HDF5Factory;
+import ch.systemsx.cisd.hdf5.IHDF5Reader;
+import net.imagej.axis.Axes;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Objects;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+class DatasetDescriptionTest {
+    @TempDir
+    static Path tempDir;
+
+    static File sourceHdf5;
+
+    @BeforeAll
+    static void setUpClass() {
+        sourceHdf5 = copyResource("/test_axes.h5", tempDir).toFile();
+    }
+
+    @Test
+    void ofHdf5ReadsAxisTags() {
+        try (IHDF5Reader reader = HDF5Factory.openForReading(sourceHdf5)) {
+            DatasetDescription dd = DatasetDescription.ofHdf5(reader, "/exported_data").orElseThrow(() -> new IllegalStateException("test data not setup"));
+            assertFalse(dd.axesGuessed);
+            assertEquals(dd.axes, Collections.unmodifiableList(Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z)));
+        }
+    }
+
+    private static Path copyResource(String resourcePath, Path dstDir) {
+        try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
+            Objects.requireNonNull(in);
+            Path path = dstDir.resolve(resourcePath.replaceFirst("^/+", ""));
+            Files.createDirectories(path.getParent());
+            Files.copy(in, path);
+            return path;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+}
