@@ -28,20 +28,17 @@ package org.ilastik.ilastik4ij.hdf5;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import net.imagej.axis.Axes;
+import net.imagej.axis.AxisType;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Objects;
+import java.util.List;
 
+import static org.ilastik.ilastik4ij.ResourceLoader.copyResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
@@ -62,18 +59,6 @@ class DatasetDescriptionTest {
             DatasetDescription dd = DatasetDescription.ofHdf5(reader, "/exported_data").orElseThrow(() -> new IllegalStateException("test data not setup"));
             assertFalse(dd.axesGuessed);
             assertEquals(dd.axes, Collections.unmodifiableList(Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z)));
-        }
-    }
-
-    private static Path copyResource(String resourcePath, Path dstDir) {
-        try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
-            Objects.requireNonNull(in);
-            Path path = dstDir.resolve(resourcePath.replaceFirst("^/+", ""));
-            Files.createDirectories(path.getParent());
-            Files.copy(in, path);
-            return path;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 }

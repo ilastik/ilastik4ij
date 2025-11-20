@@ -50,16 +50,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import static org.ilastik.ilastik4ij.ResourceLoader.copyResource;
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -254,18 +251,6 @@ public class Hdf5Test {
         public PixelSize(double[] resolution, String[] unit) {
             this.resolution = resolution;
             this.unit = unit;
-        }
-    }
-
-    private static Path copyResource(String resourcePath, Path dstDir) {
-        try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
-            Objects.requireNonNull(in);
-            Path path = dstDir.resolve(resourcePath.replaceFirst("^/+", ""));
-            Files.createDirectories(path.getParent());
-            Files.copy(in, path);
-            return path;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
         }
     }
 
