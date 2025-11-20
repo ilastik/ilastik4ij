@@ -185,8 +185,9 @@ public final class Hdf5 {
             try {
                 List<AxisType> storedAxes = parseAxes(axistagsJson);
                 axes = storedAxes.isEmpty() ? null : storedAxes;
-            } catch (JSONException ignored) {
-                // axis metadata unhelpful, proceed with null
+            } catch (JSONException e) {
+                Logger.getLogger(Hdf5.class.getName()).warning(String.format(
+                        "Dataset contained invalid axis metadata. Problem: %s", e));
             }
         }
 
@@ -202,13 +203,16 @@ public final class Hdf5 {
             imagejAxes = DEFAULT_AXES.stream().filter(axes::contains).collect(Collectors.toList());
             img = transformDims(img, axes, imagejAxes);
 
-            boolean axesMismatchDatasetMeta = axistagsJson.isEmpty() || !axes.equals(parseAxes(axistagsJson));
-            if (!axesMismatchDatasetMeta) {
+            boolean axesMatchDatasetMeta = !axistagsJson.isEmpty() && axes.equals(parseAxes(axistagsJson));
+            if (axesMatchDatasetMeta) {
                 // Pixel size metadata only make sense if user isn't forcing a reinterpretation of the dataset's axes.
                 resolutions = parseResolutionsMatchingAxes(axistagsJson, imagejAxes).stream()
                         .mapToDouble(Double::doubleValue)
                         .toArray();
                 units = parseUnitsMatchingAxes(axisunitsJson, imagejAxes).toArray(new String[0]);
+            } else if (!axistagsJson.isEmpty()) {
+                Logger.getLogger(Hdf5.class.getName()).warning(
+                        "Specified axes are different from the dataset's stored axes. Any metadata from the dataset, like pixel size, will be ignored.");
             }
         }
 

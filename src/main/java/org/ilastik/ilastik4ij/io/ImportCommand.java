@@ -93,6 +93,10 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     private void datasetNameChanged() {
         DatasetDescription dd = datasetName.equals(" ") ? null : datasets.get(datasetName);
         if (dd != null) {
+            if (dd.axesGuessed) {
+                logService.subLogger(getClass().getName()).warn(
+                        "Selected dataset does not contain valid ilastik metadata. Axes were guessed.");
+            }
             type = dd.type.toString().toLowerCase();
             // Show dimensions and axes in the row-major order for backwards compatibility.
             dimensions = Arrays.toString(reversed(dd.dims));

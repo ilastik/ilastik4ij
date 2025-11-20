@@ -375,13 +375,13 @@ public final class ImgUtils {
         try {
             storedAxes = parseAxes(json);
         } catch(JSONException e) {
-            throw new JSONException("should have ensured parseAxes(json) is fine before calling this", e);
+            throw new AssertionError("should have ensured parseAxes(json) is fine before calling this", e);
         }
         Collections.reverse(storedAxes);  // Undo inversion from parseAxes to match order in json string
         Map<AxisType, Double> resolutions = new HashMap<>();
         JSONArray arr = new JSONObject(json).getJSONArray("axes");
         if (storedAxes.size() != arr.length()) {
-            throw new JSONException("impossible - parseAxes should parse the same json property");
+            throw new AssertionError("impossible - parseAxes should parse the same json property");
         }
         for (int d = 0; d < arr.length(); d++) {
             try {
