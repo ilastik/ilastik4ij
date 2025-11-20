@@ -54,11 +54,12 @@ class DatasetDescriptionTest {
     }
 
     @Test
-    void ofHdf5ReadsAxisTags() {
+    void testOfHdf5ReadsAxisTags() {
         try (IHDF5Reader reader = HDF5Factory.openForReading(sourceHdf5)) {
             DatasetDescription dd = DatasetDescription.ofHdf5(reader, "/exported_data").orElseThrow(() -> new IllegalStateException("test data not setup"));
+            List<AxisType> expectedAxes = Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z);
             assertFalse(dd.axesGuessed);
-            assertEquals(dd.axes, Collections.unmodifiableList(Arrays.asList(Axes.CHANNEL, Axes.X, Axes.Y, Axes.Z)));
+            assertEquals(expectedAxes, dd.axes);
         }
     }
 }
