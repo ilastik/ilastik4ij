@@ -32,6 +32,7 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -42,7 +43,7 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
 	private static final String EXPORT_PREDICTIONS = "Object Predictions";
 	private static final String EXPORT_PROBABILITIES = "Object Probabilities";
 	private static final String EXPORT_IDENTITIES = "Object Identities";
-	
+	private static final List<String> EXPORT_OPTIONS = Arrays.asList(EXPORT_PREDICTIONS, EXPORT_PROBABILITIES, EXPORT_IDENTITIES);
 	
 	@Parameter(label = "Pixel Probability or Segmentation image")
     public Dataset inputProbOrSegImage;
@@ -50,7 +51,7 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
     @Parameter(label = "Second Input Type", choices = {ROLE_PROBABILITIES, ROLE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String secondInputType = ROLE_PROBABILITIES;
     
-    @Parameter(label = "Output Type", choices = {"Object Predictions", "Object Probabilities", "Object Identities"}, style = "list")
+    @Parameter(label = "Output Type", choices = {EXPORT_PREDICTIONS, EXPORT_PROBABILITIES, EXPORT_IDENTITIES}, style = "list")
     public String objectExportSource = "Object Predictions";
 
     
@@ -67,15 +68,10 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
     
     @Override
     protected List<String> workflowArgs() {
-        if (EXPORT_PREDICTIONS.equals(objectExportSource)) {
-            return Collections.singletonList("--export_source=Object Predictions");
-        }
-        if (EXPORT_PROBABILITIES.equals(objectExportSource)) {
-            return Collections.singletonList("--export_source=Object Probabilities");
-        }
-        if (EXPORT_IDENTITIES.equals(objectExportSource)) {
-            return Collections.singletonList("--export_source=Object Identities");
-        }
+    	if (EXPORT_OPTIONS.contains(objectExportSource)) {
+    		return Collections.singletonList(String.format("--export_source=%s", objectExportSource));			
+		}
+    	
         throw new IllegalStateException("Unexpected value: " + objectExportSource);
     }
 }
