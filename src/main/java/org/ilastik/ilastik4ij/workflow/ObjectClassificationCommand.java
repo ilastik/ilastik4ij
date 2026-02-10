@@ -32,23 +32,29 @@ import org.scijava.command.Command;
 import org.scijava.plugin.Parameter;
 import org.scijava.plugin.Plugin;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 @Plugin(type = Command.class, headless = true, menuPath = "Plugins>ilastik>Run Object Classification Prediction")
 public final class ObjectClassificationCommand<T extends NativeType<T> & RealType<T>> extends WorkflowCommand<T> {
-    @Parameter(label = "Pixel Probability or Segmentation image")
+    
+	private static final String EXPORT_PREDICTIONS = "Object Predictions";
+	private static final String EXPORT_PROBABILITIES = "Object Probabilities";
+	private static final String EXPORT_IDENTITIES = "Object Identities";
+	private static final List<String> EXPORT_OPTIONS = Arrays.asList(EXPORT_PREDICTIONS, EXPORT_PROBABILITIES, EXPORT_IDENTITIES);
+	
+	@Parameter(label = "Pixel Probability or Segmentation image")
     public Dataset inputProbOrSegImage;
 
     @Parameter(label = "Second Input Type", choices = {ROLE_PROBABILITIES, ROLE_SEGMENTATION}, style = "radioButtonHorizontal")
     public String secondInputType = ROLE_PROBABILITIES;
+    
+    @Parameter(label = "Output Type", choices = {EXPORT_PREDICTIONS, EXPORT_PROBABILITIES, EXPORT_IDENTITIES}, style = "list")
+    public String objectExportSource = EXPORT_PREDICTIONS;
 
-    @Override
-    protected List<String> workflowArgs() {
-        return Collections.singletonList("--export_source=Object Predictions");
-    }
-
+    
     @Override
     protected Map<String, Dataset> workflowInputs() {
         if (ROLE_PROBABILITIES.equals(secondInputType)) {
@@ -58,5 +64,14 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
             return Collections.singletonMap("segmentation_image", inputProbOrSegImage);
         }
         throw new IllegalStateException("Unexpected value: " + secondInputType);
+    }
+    
+    @Override
+    protected List<String> workflowArgs() {
+    	if (EXPORT_OPTIONS.contains(objectExportSource)) {
+    		return Collections.singletonList(String.format("--export_source=%s", objectExportSource));			
+		}
+    	
+        throw new IllegalStateException("Unexpected value: " + objectExportSource);
     }
 }

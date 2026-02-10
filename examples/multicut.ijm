@@ -16,4 +16,4 @@ type = "Probabilities";
 
 open(input);
 open(secondInput);
-run("Run Multicut", "projectfilename=[" + input + "] boundarypredictionimage=[" + secondInput +"]");
+run("Run Multicut", "projectfilename=[" + inputimage + "] boundarypredictionimage=[" + secondInput +"]");
