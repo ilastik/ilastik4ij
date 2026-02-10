@@ -12,9 +12,9 @@
 #@ File (label = "Second input file", style = "file") secondInput
 // secondInput = "/absolute/path/to/some/directory/2d_cells_apoptotic_1channel-data_Probabilities.tif";
 
-type = "Probabilities";
+secondInputType = "Probabilities";  // alternative: "Segmentation"
 
 open(input);
 open(secondInput);
 
-run("Run Object Classification Prediction", "projectfilename=[" + project + "] input=[" + input + "] inputproborsegimage=[" + secondInput + "] secondinputtype=[" + type + "]");
+run("Run Object Classification Prediction", "projectfilename=[" + project + "] inputimage=[" + input + "] inputproborsegimage=[" + secondInput + "] secondinputtype=[" + type + "]");

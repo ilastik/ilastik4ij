@@ -52,7 +52,7 @@ public final class ObjectClassificationCommand<T extends NativeType<T> & RealTyp
     public String secondInputType = ROLE_PROBABILITIES;
     
     @Parameter(label = "Output Type", choices = {EXPORT_PREDICTIONS, EXPORT_PROBABILITIES, EXPORT_IDENTITIES}, style = "list")
-    public String objectExportSource = "Object Predictions";
+    public String objectExportSource = EXPORT_PREDICTIONS;
 
     
     @Override
