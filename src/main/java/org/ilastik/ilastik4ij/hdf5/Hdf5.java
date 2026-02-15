@@ -31,6 +31,7 @@ import ch.systemsx.cisd.hdf5.HDF5DataTypeInformation;
 import ch.systemsx.cisd.hdf5.HDF5Factory;
 import ch.systemsx.cisd.hdf5.IHDF5Reader;
 import ch.systemsx.cisd.hdf5.IHDF5Writer;
+import hdf.hdf5lib.exceptions.HDF5AttributeException;
 import net.imagej.ImgPlus;
 import net.imagej.axis.Axes;
 import net.imagej.axis.AxisType;
@@ -50,6 +51,7 @@ import net.imglib2.type.numeric.ARGBType;
 import net.imglib2.util.Fraction;
 import net.imglib2.view.Views;
 import org.ilastik.ilastik4ij.util.GridCoordinates;
+import org.json.JSONException;
 
 import java.io.File;
 import java.util.ArrayDeque;
@@ -58,6 +60,7 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.LongConsumer;
 import java.util.logging.Logger;
@@ -70,13 +73,31 @@ import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
 import static org.ilastik.ilastik4ij.util.ImgUtils.axesToJSON;
 import static org.ilastik.ilastik4ij.util.ImgUtils.inputBlockDims;
 import static org.ilastik.ilastik4ij.util.ImgUtils.outputDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseResolutionsMatchingAxes;
+import static org.ilastik.ilastik4ij.util.ImgUtils.parseUnitsMatchingAxes;
 import static org.ilastik.ilastik4ij.util.ImgUtils.reversed;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedResolutionsOf;
+import static org.ilastik.ilastik4ij.util.ImgUtils.taggedUnitsOf;
 import static org.ilastik.ilastik4ij.util.ImgUtils.transformDims;
+import static org.ilastik.ilastik4ij.util.ImgUtils.unitsToJSON;
 
 /**
  * Read/write/list HDF5 datasets.
  */
 public final class Hdf5 {
+    /**
+     * Try to read String attribute `key` of dataset at `path` within `reader`,
+     * return `defaultValue` if the attribute does not exist.
+     */
+    public static String getAttrOrDefault(IHDF5Reader reader, String path, String key, String defaultValue) {
+        try {
+            return reader.string().getAttr(path, key);
+        } catch (HDF5AttributeException ignored) {
+            return defaultValue;
+        }
+    }
+
     /**
      * Return descriptions of supported datasets in an HDF5 file, sorted by their paths.
      */
@@ -144,33 +165,29 @@ public final class Hdf5 {
 
         DatasetType type;
         Img<T> img;
+        String axistagsJson;
+        String axisunitsJson;
 
         try (IHDF5Reader reader = HDF5Factory.openForReading(file)) {
             HDF5DataSetInformation info = reader.getDataSetInformation(path);
-
-            long[] dims = reversed(info.getDimensions());
-            if (!(2 <= dims.length && dims.length <= 5)) {
-                throw new IllegalArgumentException(dims.length + "D datasets are not supported");
-            }
-            if (axes != null && axes.size() != dims.length) {
-                throw new IllegalArgumentException("Requested axes don't match dataset dimensions");
-            }
 
             HDF5DataTypeInformation typeInfo = info.getTypeInformation();
             type = DatasetType.ofHdf5(typeInfo).orElseThrow(() ->
                     new IllegalArgumentException("Unsupported dataset type " + typeInfo));
 
-            int[] blockDims = inputBlockDims(dims,
-                    info.tryGetChunkSizes() != null ? reversed(info.tryGetChunkSizes()) : null);
+            img = loadImg(reader, path, type, info, axes, callback);
 
-            try (HDF5DataSet dataset = reader.object().openDataSet(path)) {
-                callback.accept(0L);
-                if (IntStream.range(0, dims.length).allMatch(i -> dims[i] == blockDims[i])) {
-                    img = readArrayImg(type, reader, dataset, dims);
-                    callback.accept(Arrays.stream(dims).reduce(type.size, (l, r) -> l * r));
-                } else {
-                    img = readCellImg(type, reader, dataset, dims, blockDims, callback);
-                }
+            axistagsJson = getAttrOrDefault(reader, path, "axistags", "");
+            axisunitsJson = getAttrOrDefault(reader, path, "axis_units", "");
+        }
+
+        if (axes == null && !axistagsJson.isEmpty()) {
+            try {
+                List<AxisType> storedAxes = parseAxes(axistagsJson);
+                axes = storedAxes.isEmpty() ? null : storedAxes;
+            } catch (JSONException e) {
+                Logger.getLogger(Hdf5.class.getName()).warning(String.format(
+                        "Dataset contained invalid axis metadata. Problem: %s", e));
             }
         }
 
@@ -179,15 +196,27 @@ public final class Hdf5 {
                 .toString()
                 .replace('\\', '/');
 
-        if (axes == null) {
-            axes = DEFAULT_AXES.subList(0, img.numDimensions());
-        } else {
-            List<AxisType> srcAxes = axes;
-            axes = DEFAULT_AXES.stream().filter(srcAxes::contains).collect(Collectors.toList());
-            img = transformDims(img, srcAxes, axes);
+        double[] resolutions = null;
+        String[] units = null;
+        List<AxisType> imagejAxes = DEFAULT_AXES.subList(0, img.numDimensions());
+        if (axes != null) {
+            imagejAxes = DEFAULT_AXES.stream().filter(axes::contains).collect(Collectors.toList());
+            img = transformDims(img, axes, imagejAxes);
+
+            boolean axesMatchDatasetMeta = !axistagsJson.isEmpty() && axes.equals(parseAxes(axistagsJson));
+            if (axesMatchDatasetMeta) {
+                // Pixel size metadata only make sense if user isn't forcing a reinterpretation of the dataset's axes.
+                resolutions = parseResolutionsMatchingAxes(axistagsJson, imagejAxes).stream()
+                        .mapToDouble(Double::doubleValue)
+                        .toArray();
+                units = parseUnitsMatchingAxes(axisunitsJson, imagejAxes).toArray(new String[0]);
+            } else if (!axistagsJson.isEmpty()) {
+                Logger.getLogger(Hdf5.class.getName()).warning(
+                        "Specified axes are different from the dataset's stored axes. Any metadata from the dataset, like pixel size, will be ignored.");
+            }
         }
 
-        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, axes.toArray(new AxisType[0]));
+        ImgPlus<T> imgPlus = new ImgPlus<>(img, name, imagejAxes.toArray(new AxisType[0]), resolutions, units);
         imgPlus.setValidBits(8 * type.size);
         return imgPlus;
     }
@@ -261,6 +290,9 @@ public final class Hdf5 {
             return;
         }
 
+        Map<AxisType, Double> taggedResolutions = taggedResolutionsOf(img);
+        Map<AxisType, String> taggedUnits = taggedUnitsOf(img);
+
         Img<T> data = axes == null ? img.getImg() : transformDims(img, axesOf(img), axes);
         if (axes == null) {
             axes = axesOf(img);
@@ -288,7 +320,10 @@ public final class Hdf5 {
                      compressionLevel)) {
 
             // Add axes tags
-            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesToJSON(axes));
+            writer.string().setAttr(dataset.getDataSetPath(), "axistags", axesToJSON(axes, taggedResolutions));
+            if (!taggedUnits.isEmpty()) {
+                writer.string().setAttr(dataset.getDataSetPath(), "axis_units", escapeUnicode(unitsToJSON(axes, taggedUnits)));
+            }
 
             callback.accept(0L);
 
@@ -303,6 +338,31 @@ public final class Hdf5 {
                 callback.accept(bytes);
             }
         }
+    }
+
+    private static <T extends NativeType<T>> Img<T> loadImg(IHDF5Reader reader, String path, DatasetType type, HDF5DataSetInformation info, List<AxisType> axes, LongConsumer callback) {
+        long[] dims = reversed(info.getDimensions());
+        if (!(2 <= dims.length && dims.length <= 5)) {
+            throw new IllegalArgumentException(dims.length + "D datasets are not supported");
+        }
+        if (axes != null && axes.size() != dims.length) {
+            throw new IllegalArgumentException("Requested axes don't match dataset dimensions");
+        }
+
+        int[] blockDims = inputBlockDims(dims,
+                info.tryGetChunkSizes() != null ? reversed(info.tryGetChunkSizes()) : null);
+
+        Img<T> img;
+        try (HDF5DataSet dataset = reader.object().openDataSet(path)) {
+            callback.accept(0L);
+            if (IntStream.range(0, dims.length).allMatch(i -> dims[i] == blockDims[i])) {
+                img = readArrayImg(type, reader, dataset, dims);
+                callback.accept(Arrays.stream(dims).reduce(type.size, (l, r) -> l * r));
+            } else {
+                img = readCellImg(type, reader, dataset, dims, blockDims, callback);
+            }
+        }
+        return img;
     }
 
     private static <T extends NativeType<T>, A extends ArrayDataAccess<A>>
@@ -347,5 +407,22 @@ public final class Hdf5 {
 
     private Hdf5() {
         throw new AssertionError();
+    }
+
+    /**
+     * IHDF5StringWriter doesn't escape unicode, so we have to do it manually.
+     * If more complex stuff specifically for JSON starts being needed at some point, should consider
+     * switching to com.google.code.gson instead of org.json.
+     */
+    private static String escapeUnicode(String input) {
+        StringBuilder b = new StringBuilder();
+        for (char c : input.toCharArray()) {
+            if (c > 127) {
+                b.append(String.format("\\u%04x", (int) c));
+            } else {
+                b.append(c);
+            }
+        }
+        return b.toString();
     }
 }

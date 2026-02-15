@@ -50,15 +50,13 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.UncheckedIOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
+import java.util.stream.DoubleStream;
 import java.util.stream.Stream;
 
+import static org.ilastik.ilastik4ij.ResourceLoader.copyResource;
 import static org.ilastik.ilastik4ij.util.ImgUtils.DEFAULT_AXES;
 import static org.ilastik.ilastik4ij.util.ImgUtils.axesOf;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -71,30 +69,78 @@ public class Hdf5Test {
 
     static File sourceHdf5;
 
+    static File sourceHdf5WithMeta;
+
     static ImgPlus<UnsignedByteType> sampleImg;
+
+    static double[] sampleCalibrations = new double[]{0.148, 5.00000023, 1};
+
+    static String[] sampleUnits = new String[]{"meters", "ü☺µ", ""};
+
+    static ImgPlus<UnsignedByteType> sampleImgWithMeta;
 
     @BeforeAll
     static void setUpClass() throws IOException {
         sourceHdf5 = copyResource("/test.h5", tempDir).toFile();
+        sourceHdf5WithMeta = copyResource("/test_axes.h5", tempDir).toFile();
         sampleImg = new ImageJ()
                 .scifio()
                 .datasetIO()
                 .open(copyResource("/chocolate21.jpg", tempDir).toString())
                 .typedImg(new UnsignedByteType());
+        sampleImgWithMeta = new ImgPlus<>(sampleImg, sampleImg.getName(), new AxisType[]{Axes.X, Axes.Y, Axes.CHANNEL}, sampleCalibrations, sampleUnits);
     }
 
     @ParameterizedTest
     @MethodSource
-    void testReadAxes(long[] expected, String axes) {
+    void testForceAxes(long[] expected, String axes) {
         long[] actual = readDataset(axes).dimensionsAsLongArray();
-        assertDimsEquals(expected, actual);
+        assertLongsEqual(expected, actual);
     }
 
-    static Stream<Arguments> testReadAxes() {
+    static Stream<Arguments> testForceAxes() {
+        // Output axes are always ImageJ default (xyczt)
+        // Data axes are volumina default (tzyxc [7, 6, 5, 4, 3]), but readDataset takes axes in reverse order
         return Stream.of(
-                arguments(new long[]{4, 5, 3, 6, 7}, "cxyzt"),
-                arguments(new long[]{4, 5, 3, 7, 6}, "cxytz"),
-                arguments(new long[]{3, 5, 4, 7, 6}, "xcytz"));
+                arguments(new long[]{3, 4, 5, 6, 7}, null), // Default order (dataset contains no axistags)
+                arguments(new long[]{4, 5, 3, 6, 7}, "cxyzt"), // Correctly maps data axes to ImageJ
+                arguments(new long[]{4, 5, 3, 7, 6}, "cxytz"), // Equivalent to user entering "ztyxc" in the plugin
+                arguments(new long[]{3, 5, 4, 7, 6}, "xcytz")); // Flip t<>z and x<>c
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testReadAxistags(long[] expected, String axes) {
+        long[] actual = readDatasetWithAxes(axes).dimensionsAsLongArray();
+        assertLongsEqual(expected, actual);
+    }
+
+    static Stream<Arguments> testReadAxistags() {
+        // This dataset is 256x256x256x1 (zyxc)
+        return Stream.of(
+                arguments(new long[]{256, 256, 1, 256}, null), // Read axistags and map to ImageJ (xyczt)
+                arguments(new long[]{256, 256, 1, 256}, "cxyt"), // Force z to t
+                arguments(new long[]{256, 1, 256, 256}, "ycxz")); // Nonsense but should work
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void testReadAxisMetadata(String axes, long[] expectedShape, double[] expectedResolutions, String[] expectedUnits) {
+        ImgPlus<UnsignedShortType> read = readDatasetWithMeta(axes);
+        PixelSize sizeMeta = getPixelSize(read);
+        assertLongsEqual(expectedShape, read.dimensionsAsLongArray());
+        assertResolutionsEqual(expectedResolutions, sizeMeta.resolution);
+        assertArrayEqualsFormatted(expectedUnits, sizeMeta.unit);
+    }
+
+    static Stream<Arguments> testReadAxisMetadata() {
+        double[] imagejDefaultResolutions = {1, 1, 1, 1, 1};
+        String[] imagejDefaultUnits = {null, null, null, null, null};
+        return Stream.of(
+                arguments(null, new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 1.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
+                arguments("cxyzt", new long[]{4, 5, 3, 6, 7}, new double[]{0.5, 12.0, 1.0, 3.0, 2.3}, new String[]{"µm", "☺", "", "über", "seconds"}),
+                arguments("cxytz", new long[]{4, 5, 3, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits),
+                arguments("xcytz", new long[]{3, 5, 4, 7, 6}, imagejDefaultResolutions, imagejDefaultUnits));
     }
 
     @Test
@@ -119,8 +165,8 @@ public class Hdf5Test {
     @Test
     void testWrittenDims() {
         long[] expected = {400, 289, 3, 1, 1};
-        long[] actual = readWrittenDataset(new UnsignedByteType()).dimensionsAsLongArray();
-        assertDimsEquals(expected, actual);
+        long[] actual = writeSampleAndReadBack(new UnsignedByteType()).dimensionsAsLongArray();
+        assertLongsEqual(expected, actual);
     }
 
     @ParameterizedTest
@@ -131,7 +177,7 @@ public class Hdf5Test {
         // and double is the most common real type.
         long[] dstIndex = Arrays.copyOf(index, DEFAULT_AXES.size());
         double expected = sampleImg.getAt(index).getRealDouble();
-        double actual = readWrittenDataset(typeClass.newInstance()).getAt(dstIndex).getRealDouble();
+        double actual = writeSampleAndReadBack(typeClass.newInstance()).getAt(dstIndex).getRealDouble();
         assertEquals(expected, actual);
     }
 
@@ -164,23 +210,63 @@ public class Hdf5Test {
                 arguments(FloatType.class, srcPos));
     }
 
-    private static Path copyResource(String resourcePath, Path dstDir) {
-        try (InputStream in = Hdf5Test.class.getResourceAsStream(resourcePath)) {
-            Objects.requireNonNull(in);
-            Path path = dstDir.resolve(resourcePath.replaceFirst("^/+", ""));
-            Files.createDirectories(path.getParent());
-            Files.copy(in, path);
-            return path;
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
+    @Test
+    void testWrittenMetadata() {
+        long[] expectedShape = new long[]{400, 289, 3, 1, 1};
+        double[] expectedCalibrations = DoubleStream.concat(
+                        Arrays.stream(sampleCalibrations),
+                        DoubleStream.of(1.0, 1.0)
+                )
+                .toArray();
+        String[] expectedUnits = Stream.concat(
+                        Arrays.stream(sampleUnits),
+                        Stream.of("", "")
+                )
+                .toArray(String[]::new);
+
+        ImgPlus<UnsignedByteType> read = writeSampleWithMetaAndReadBack();
+        PixelSize sizeMeta = getPixelSize(read);
+
+        // Note Hdf5.readDataset will ignore all metadata if there is any error
+        // like mismatching number of resolution numbers and unit strings.
+        assertLongsEqual(expectedShape, read.dimensionsAsLongArray());
+        assertResolutionsEqual(expectedCalibrations, sizeMeta.resolution);
+        assertArrayEqualsFormatted(expectedUnits, sizeMeta.unit);
+    }
+
+    private static <T extends NativeType<T> & RealType<T>> PixelSize getPixelSize(ImgPlus<T> img) {
+        double[] resolutions = new double[img.numDimensions()];
+        String[] units = new String[img.numDimensions()];
+        for (int i = 0; i < img.numDimensions(); i++) {
+            resolutions[i] = img.axis(i).calibratedValue(1.0);
+            units[i] = img.axis(i).unit();
+        }
+        return new PixelSize(resolutions, units);
+    }
+
+    private static class PixelSize {
+        public final double[] resolution;
+        public final String[] unit;
+
+        public PixelSize(double[] resolution, String[] unit) {
+            this.resolution = resolution;
+            this.unit = unit;
         }
     }
 
     private static ImgPlus<UnsignedShortType> readDataset(String axes) {
-        return Hdf5.readDataset(sourceHdf5, "/exported_data", ImgUtils.toImagejAxes(axes));
+        return Hdf5.readDataset(sourceHdf5, "/exported_data", axes == null ? null : ImgUtils.toImagejAxes(axes));
     }
 
-    private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> readWrittenDataset(T type) {
+    private static ImgPlus<UnsignedShortType> readDatasetWithAxes(String axes) {
+        return Hdf5.readDataset(sourceHdf5WithMeta, "/exported_data", axes == null ? null : ImgUtils.toImagejAxes(axes));
+    }
+
+    private static ImgPlus<UnsignedShortType> readDatasetWithMeta(String axes) {
+        return Hdf5.readDataset(sourceHdf5WithMeta, "/test_with_meta", axes == null ? null : ImgUtils.toImagejAxes(axes));
+    }
+
+    private static <T extends NativeType<T> & RealType<T>> ImgPlus<T> writeSampleAndReadBack(T type) {
         File file = tempDir.resolve("chocolate21.h5").toFile();
         ImgPlus<T> converted = new ImgPlus<>(
                 ImgView.wrap(RealTypeConverters.convert(sampleImg, type)), sampleImg);
@@ -188,7 +274,30 @@ public class Hdf5Test {
         return Hdf5.readDataset(file, "/exported_data");
     }
 
-    private static void assertDimsEquals(long[] expected, long[] actual) {
+    private static ImgPlus<UnsignedByteType> writeSampleWithMetaAndReadBack() {
+        File file = tempDir.resolve("chocolate21.h5").toFile();
+        Hdf5.writeDataset(file, "/exported_data", sampleImgWithMeta, 0, DEFAULT_AXES);
+        return Hdf5.readDataset(file, "/exported_data", ImgUtils.toImagejAxes("xyczt"));
+    }
+
+    private static void assertLongsEqual(long[] expected, long[] actual) {
+        assertArrayEquals(expected, actual, () -> String.format(
+                "Array contents differ: expected %s, actual %s",
+                Arrays.toString(expected),
+                Arrays.toString(actual)));
+    }
+
+    private static void assertResolutionsEqual(double[] expected, double[] actual) {
+        // test_axes.h5/test_with_axes actually contains 12.000048000192 for y resolution, so 1e-4 tolerance needed.
+        // The inaccuracy comes from FIJI, which saves this imprecise value in the tif metadata when the user enters 12.
+        double toleratedDelta = 1e-4;
+        assertArrayEquals(expected, actual, toleratedDelta, () -> String.format(
+                "Array contents differ: expected %s, actual %s",
+                Arrays.toString(expected),
+                Arrays.toString(actual)));
+    }
+
+    private static <T> void assertArrayEqualsFormatted(T[] expected, T[] actual) {
         assertArrayEquals(expected, actual, () -> String.format(
                 "Array contents differ: expected %s, actual %s",
                 Arrays.toString(expected),

@@ -46,7 +46,9 @@ import org.json.JSONObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,6 +62,7 @@ public final class ImgUtils {
      */
     public static final List<AxisType> DEFAULT_AXES = Collections.unmodifiableList(Arrays.asList(
             Axes.X, Axes.Y, Axes.CHANNEL, Axes.Z, Axes.TIME));
+    public static final double IMAGEJ_DEFAULT_RESOLUTION = 1.0;
 
     /**
      * Supported axes in the character format, in the same order as {@link #DEFAULT_AXES}.
@@ -219,6 +222,36 @@ public final class ImgUtils {
     }
 
     /**
+     * Extract Axis : Resolution map from {@link ImgPlus}.
+     *
+     * There is no way to directly retrieve the value originally passed to the ImgPlus constructor,
+     * so instead we ask it to calculate the axis value at 1px.
+     * https://forum.image.sc/t/how-to-get-calibration-info-in-imagej2/38151
+     */
+    public static Map<AxisType, Double> taggedResolutionsOf(ImgPlus<?> img) {
+        Objects.requireNonNull(img);
+        return IntStream.range(0, img.numDimensions())
+                .collect(
+                        HashMap::new,
+                        (map, d) -> map.put(img.axis(d).type(), img.axis(d).calibratedValue(1.0)),
+                        HashMap::putAll
+                );
+    }
+
+    /**
+     * Extract Axis : Unit map from {@link ImgPlus}.
+     */
+    public static Map<AxisType, String> taggedUnitsOf(ImgPlus<?> img) {
+        Objects.requireNonNull(img);
+        return IntStream.range(0, img.numDimensions())
+                .collect(
+                        HashMap::new,
+                        (map, d) -> map.put(img.axis(d).type(), img.axis(d).unit()),
+                        HashMap::putAll
+                );
+    }
+
+    /**
      * Guess axes from image dimensions.
      */
     public static List<AxisType> guessAxes(long[] dims) {
@@ -296,7 +329,7 @@ public final class ImgUtils {
     /**
      * Parse axes from JSON string.
      * <p>
-     * JSON string {@code {"axes": [{"key": "y"}, {"key": "x}]}} produces axes {@code XY}.
+     * JSON string {@code {"axes": [{"key": "y"}, {"key": "x"}]}} produces axes {@code XY}.
      * Note the reversed axis order.
      *
      * @throws JSONException if JSON is malformed/invalid, or if axes are invalid.
@@ -325,31 +358,88 @@ public final class ImgUtils {
         return axes;
     }
 
-    public static String axesToJSON(List<AxisType> axes)
-    {
-        JSONArray jsonAxesArray = new JSONArray();
-        List<AxisType> axes_for_serialization = new ArrayList<>(axes);
-        Collections.reverse(axes_for_serialization);
-        for (AxisType axis : axes_for_serialization)
-        {
-            JSONObject jsonAxis = new JSONObject();
-            String label = axis.getLabel().toLowerCase();
-            int vigraType;
-            String vigraKey;
-            if (axis.isSpatial()){
-                vigraType = 2;
-                vigraKey = label;
-            } else if (label.equals("time")) {
-                vigraType = 8;
-                vigraKey = "t";
-            } else if (label.equals("channel")) {
-                vigraType = 1;
-                vigraKey = "c";
-            } else {
-                throw new IllegalArgumentException(
-                        String.format("Unknown axis type found with label %s.", label));
+    /**
+     * Parse resolutions for a given set of axes from a vigra.AxisTags JSON string.
+     * <p>
+     * Expected JSON string like {@code {
+     *  "axes": [{"key": "x", "resolution": 25.0}, {"key": "y", "resolution": 12.0}]
+     * } }.
+     * Pads with {@link #IMAGEJ_DEFAULT_RESOLUTION} for requested `axes` that had no json entry (or 0.0).
+     *
+     * @throws JSONException in nonsense cases (malformed json)
+     */
+    public static List<Double> parseResolutionsMatchingAxes(String json, List<AxisType> axes) {
+        Objects.requireNonNull(json);
+        Objects.requireNonNull(axes);
+        List<AxisType> storedAxes;
+        try {
+            storedAxes = parseAxes(json);
+        } catch(JSONException e) {
+            throw new AssertionError("should have ensured parseAxes(json) is fine before calling this", e);
+        }
+        Collections.reverse(storedAxes);  // Undo inversion from parseAxes to match order in json string
+        Map<AxisType, Double> resolutions = new HashMap<>();
+        JSONArray arr = new JSONObject(json).getJSONArray("axes");
+        if (storedAxes.size() != arr.length()) {
+            throw new AssertionError("impossible - parseAxes should parse the same json property");
+        }
+        for (int d = 0; d < arr.length(); d++) {
+            try {
+                double storedRes = arr.getJSONObject(d).getDouble("resolution");
+                resolutions.put(storedAxes.get(d), storedRes == 0.0 ? IMAGEJ_DEFAULT_RESOLUTION : storedRes);
+            } catch (JSONException ignored) {
+                // no valid meta for this axis
             }
+        }
+        return axes.stream()
+                .mapToDouble(axis -> resolutions.getOrDefault(axis, IMAGEJ_DEFAULT_RESOLUTION))
+                .boxed()
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Parse resolutions for a given set of axes from an ilastik-style axis_units JSON string.
+     * <p>
+     * Expected JSON string like {@code {"x": "nm", "t": "hours"}}.
+     * Pads with "" for requested `axes` that had no json entry.
+     * <p>
+     * Returns list of empty strings matching `axes` if JSON invalid.
+     */
+    public static List<String> parseUnitsMatchingAxes(String json, List<AxisType> axes) {
+        Objects.requireNonNull(json);
+        Objects.requireNonNull(axes);
+
+        JSONObject obj;
+        try {
+            obj = new JSONObject(json);
+        } catch(JSONException ignored) {
+            return Collections.nCopies(axes.size(), "");
+        }
+        Map<String, String> storedUnits = obj.keySet().stream()
+                .collect(Collectors.toMap(
+                        key -> key,
+                        obj::getString
+                ));
+
+        return axes.stream()
+                .map(axis -> storedUnits.getOrDefault(axisToVigraKey(axis), ""))
+                .collect(Collectors.toList());
+    }
+
+    public static String axesToJSON(List<AxisType> axes, Map<AxisType, Double> taggedResolutions) {
+        JSONArray jsonAxesArray = new JSONArray();
+        List<AxisType> axesForSerialization = new ArrayList<>(axes);
+        Collections.reverse(axesForSerialization);
+
+        for (AxisType axis : axesForSerialization) {
+            JSONObject jsonAxis = new JSONObject();
+            String vigraKey = axisToVigraKey(axis);
+            int vigraType = axisToVigraType(axis);
+
             jsonAxis.put("key", vigraKey);
+            if (taggedResolutions.containsKey(axis)) {
+                jsonAxis.put("resolution", taggedResolutions.get(axis));
+            }
             jsonAxis.put("typeFlags", vigraType);
             jsonAxesArray.put(jsonAxis);
         }
@@ -359,6 +449,49 @@ public final class ImgUtils {
 
         return root.toString();
     }
+
+    public static String unitsToJSON(List<AxisType> axes, Map<AxisType, String> taggedUnits) {
+        if (taggedUnits.isEmpty()) {
+            return "{}";
+        }
+        List<AxisType> axesForSerialization = new ArrayList<>(axes);
+        Collections.reverse(axesForSerialization);
+        JSONObject units = new JSONObject();
+        for (AxisType axis : axesForSerialization) {
+            String vigraKey = axisToVigraKey(axis);
+            units.put(vigraKey, taggedUnits.getOrDefault(axis, ""));
+        }
+        return units.toString();
+    }
+
+    private static String axisToVigraKey(AxisType axis) {
+        String label = axis.getLabel().toLowerCase();
+        if (axis.isSpatial()) {
+            return label;
+        } else if (label.equals("time")) {
+            return "t";
+        } else if (label.equals("channel")) {
+            return "c";
+        } else {
+            throw new IllegalArgumentException(
+                    String.format("Unknown axis type found with label %s.", label));
+        }
+    }
+
+    private static int axisToVigraType(AxisType axis) {
+        String label = axis.getLabel().toLowerCase();
+        if (axis.isSpatial()) {
+            return 2;
+        } else if (label.equals("time")) {
+            return 8;
+        } else if (label.equals("channel")) {
+            return 1;
+        } else {
+            throw new IllegalArgumentException(
+                    String.format("Unknown axis type found with label %s.", label));
+        }
+    }
+
 
     /**
      * Treat alpha, red, green, and blue values in {@link ARGBType} image

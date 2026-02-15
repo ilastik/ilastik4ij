@@ -92,10 +92,22 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
     @SuppressWarnings("unused")
     private void datasetNameChanged() {
         DatasetDescription dd = datasetName.equals(" ") ? null : datasets.get(datasetName);
-        type = dd != null ? dd.type.toString().toLowerCase() : NOT_SELECTED;
-        // Show dimensions and axes in the row-major order for backwards compatibility.
-        dimensions = dd != null ? Arrays.toString(reversed(dd.dims)) : NOT_SELECTED;
-        axisOrder = dd != null ? reversed(toStringAxes(dd.axes)) : "";
+        if (dd != null) {
+            if (dd.axesGuessed) {
+                logService.subLogger(getClass().getName()).warn(
+                        "Selected dataset does not contain valid ilastik metadata. Axes were guessed.");
+            }
+            type = dd.type.toString().toLowerCase();
+            // Show dimensions and axes in the row-major order for backwards compatibility.
+            dimensions = Arrays.toString(reversed(dd.dims));
+            axisOrder = reversed(toStringAxes(dd.axes));
+            pixelSize = dd.formatPixelSize().isEmpty() ? "(no pixel size metadata)" : dd.formatPixelSize();
+        } else {
+            type = NOT_SELECTED;
+            dimensions = NOT_SELECTED;
+            axisOrder = "";
+            pixelSize = NOT_SELECTED;
+        }
     }
 
     @Parameter(label = "Type", persist = false, required = false, visibility = MESSAGE)
@@ -103,6 +115,9 @@ public final class ImportCommand<T extends NativeType<T> & RealType<T>> extends 
 
     @Parameter(label = "Dimensions", persist = false, required = false, visibility = MESSAGE)
     private String dimensions = NOT_SELECTED;
+
+    @Parameter(label = "Pixel size", persist = false, required = false, visibility = MESSAGE)
+    private String pixelSize = NOT_SELECTED;
 
     @Parameter(
             label = "Axes",
