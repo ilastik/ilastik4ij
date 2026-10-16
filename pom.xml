@@ -113,12 +113,27 @@
         <license.copyrightOwners>N/A</license.copyrightOwners>
         <license.projectName>ilastik</license.projectName>
         <releaseProfiles>sign,deploy-to-scijava</releaseProfiles>
+
+        <!-- Temporary: remove once janelia-jhdf5 is released (then let pom-scijava manage the version). -->
+        <janelia-jhdf5.version>22.03.01-SNAPSHOT</janelia-jhdf5.version>
+        <!-- Temporary: remove once janelia-jhdf5 is released.
+             pom-scijava manages older bytedeco versions; match what janelia-jhdf5 is built against. -->
+        <javacpp.version>1.5.15-SNAPSHOT</javacpp.version>
+        <hdf5.version>2.2.0-${javacpp.version}</hdf5.version>
     </properties>
 
     <repositories>
         <repository>
             <id>scijava.public</id>
             <url>https://maven.scijava.org/content/groups/public</url>
+        </repository>
+        <!-- Temporary: remove once janelia-jhdf5 is released.
+             org.bytedeco snapshots (javacpp, hdf5) needed by janelia-jhdf5 until they are released. -->
+        <repository>
+            <id>central-portal-snapshots</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+            <releases><enabled>false</enabled></releases>
+            <snapshots><enabled>true</enabled></snapshots>
         </repository>
     </repositories>
 
@@ -148,8 +163,10 @@
             <artifactId>imglib2-ij</artifactId>
         </dependency>
         <dependency>
-            <groupId>cisd</groupId>
-            <artifactId>jhdf5</artifactId>
+            <groupId>org.scijava</groupId>
+            <artifactId>janelia-jhdf5</artifactId>
+            <!-- Temporary: remove the version once janelia-jhdf5 is released and managed by pom-scijava. -->
+            <version>${janelia-jhdf5.version}</version>
         </dependency>
         <!-- test dependencies -->
         <dependency>
